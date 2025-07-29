@@ -1,0 +1,24 @@
+{
+  "name": "fue-controller-monorepo",
+  "version": "1.0.0",
+  "description": "FUE Hair Transplant Micro Motor Control Unit Project",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "install-all": "npm install --workspaces --if-present"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/progesor/FUE_Controller.git"
+  },
+  "keywords": [],
+  "author": "Progesor",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/progesor/FUE_Controller/issues"
+  },
+  "homepage": "https://github.com/progesor/FUE_Controller#readme"
+}
