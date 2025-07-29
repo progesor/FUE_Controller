@@ -17,6 +17,33 @@ let motorStatus: MotorStatus = {
     direction: 0,
 };
 
+// Osilasyon döngüsünü yönetecek olan interval'ı tutar
+let oscillationInterval: NodeJS.Timeout | null = null;
+let oscillationDirection: MotorDirection = 0; // Osilasyonun mevcut yönünü tutar
+
+/**
+ * Verilen PWM hızı ve açıya göre motorun dönmesi gereken süreyi (ms) hesaplar.
+ * BU FONKSİYON, CİHAZIN GERÇEK PERFORMANSINA GÖRE KALİBRE EDİLMELİDİR!
+ * @param pwm Motorun hızı (0-255)
+ * @param angle İstenen dönüş açısı (derece)
+ * @returns {number} Milisaniye cinsinden süre
+ */
+const calculateMsForAngle = (pwm: number, angle: number): number => {
+    if (pwm === 0) return 0;
+
+    // Bu, tam hızda (255 PWM) 360 derecelik bir tur için gereken sürenin (ms)
+    // tahmini bir kalibrasyon değeridir. Gerçek motorunuza göre ayarlanmalıdır.
+    const BASE_MS_FOR_360_DEG_AT_MAX_SPEED = 200; // Örnek değer
+
+    // Hız arttıkça süre azalır (ters orantı)
+    const speedFactor = 255 / pwm;
+
+    // Açı arttıkça süre artar (doğru orantı)
+    const angleFactor = angle / 360;
+
+    return Math.round(BASE_MS_FOR_360_DEG_AT_MAX_SPEED * speedFactor * angleFactor);
+};
+
 export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => {
     io = socketIoServer;
 };
@@ -127,6 +154,11 @@ export const setMotorDirection = (direction: MotorDirection) => {
 };
 
 export const stopMotor = () => {
+    // Eğer bir osilasyon döngüsü çalışıyorsa, onu temizle
+    if (oscillationInterval) {
+        clearInterval(oscillationInterval);
+        oscillationInterval = null;
+    }
     motorStatus.isActive = false;
     sendCommand('DEV.MOTOR.STOP');
     broadcastMotorStatus();
@@ -137,6 +169,38 @@ export const startMotor = () => {
     if (motorStatus.pwm === 0) motorStatus.pwm = 100;
     sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm}`);
     broadcastMotorStatus();
+};
+
+/**
+ * Osilasyon modunu başlatır ve yönetir.
+ */
+export const startOscillation = (options: { pwm: number, angle: number }) => {
+    // Önce çalışan başka bir mod varsa durdur
+    stopMotor();
+
+    // Durumu güncelle ve arayüze bildir
+    motorStatus.isActive = true;
+    motorStatus.pwm = options.pwm;
+    broadcastMotorStatus();
+
+    // Süreyi hesapla
+    const ms = calculateMsForAngle(options.pwm, options.angle);
+    if (ms === 0) return;
+
+    // Osilasyon döngüsünü başlatan fonksiyon
+    const performStep = () => {
+        // Yönü ayarla
+        sendCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
+        // Belirlenen süre kadar motoru çalıştır
+        sendCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${motorStatus.pwm}|${ms}`);
+        // Bir sonraki adım için yönü değiştir
+        oscillationDirection = oscillationDirection === 0 ? 1 : 0;
+    };
+
+    // İlk adımı hemen at, sonrakileri interval ile periyodik yap
+    performStep();
+    // Her adımın süresi + küçük bir bekleme payı (örn: 50ms)
+    oscillationInterval = setInterval(performStep, ms * 2 + 50);
 };
 
 export const pingArduino = () => {

@@ -9,7 +9,8 @@ import {
     setMotorPwm,
     setMotorDirection,
     stopMotor,
-    executeTimedRun, startMotor
+    startMotor,
+    startOscillation
 } from './services/arduinoService';
 
 // Sunucu kurulumu
@@ -56,8 +57,8 @@ io.on('connection', (socket) => {
     // Osilasyon için daha karmaşık bir olay (şimdilik iskeleti)
     socket.on('start_oscillation', (options) => {
         console.log(`[Client -> Server]: start_oscillation isteği:`, options);
-        // Burada, options.pwm ve options.ms değerlerini kullanarak
-        // executeTimedRun fonksiyonunu periyodik olarak çağıran bir mantık olacak.
+        // --- DEĞİŞİKLİK BURADA ---
+        startOscillation(options);
     });
 
 
