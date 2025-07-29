@@ -1,9 +1,16 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { connectToArduino } from './services/arduinoService';
 import config from './config';
 import { ClientToServerEvents, ServerToClientEvents } from '../../shared-types';
+import {
+    connectToArduino,
+    initializeArduinoService,
+    setMotorPwm,
+    setMotorDirection,
+    stopMotor,
+    executeTimedRun
+} from './services/arduinoService';
 
 // Sunucu kurulumu
 const app = express();
@@ -25,22 +32,41 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`Bir istemci bağlandı: ${socket.id}`);
 
-    // TODO: Buraya frontend'den gelen olayları dinleyecek olan kod eklenecek.
-    // Örnek:
-    // socket.on('set_motor_pwm', (value) => {
-    //   console.log(`İstemciden set_motor_pwm isteği geldi: ${value}`);
-    //   setMotorPwm(value);
-    // });
+    // --- DEĞİŞİKLİK: Frontend'den gelen olayları dinliyoruz ---
+    socket.on('set_motor_pwm', (value) => {
+        console.log(`[Client -> Server]: set_motor_pwm isteği: ${value}`);
+        setMotorPwm(value);
+    });
+
+    socket.on('set_motor_direction', (direction) => {
+        console.log(`[Client -> Server]: set_motor_direction isteği: ${direction}`);
+        setMotorDirection(direction);
+    });
+
+    socket.on('stop_motor', () => {
+        console.log(`[Client -> Server]: stop_motor isteği`);
+        stopMotor();
+    });
+
+    // Osilasyon için daha karmaşık bir olay (şimdilik iskeleti)
+    socket.on('start_oscillation', (options) => {
+        console.log(`[Client -> Server]: start_oscillation isteği:`, options);
+        // Burada, options.pwm ve options.ms değerlerini kullanarak
+        // executeTimedRun fonksiyonunu periyodik olarak çağıran bir mantık olacak.
+    });
+
 
     socket.on('disconnect', () => {
         console.log(`İstemcinin bağlantısı kesildi: ${socket.id}`);
     });
 });
 
-
 // Sunucuyu başlatma
 httpServer.listen(PORT, () => {
     console.log(`Backend sunucusu http://localhost:${PORT} adresinde başlatıldı.`);
+
+    // --- DEĞİŞİKLİK: Servisi io nesnesi ile başlatıyoruz ---
+    initializeArduinoService(io);
 
     // Arduino'ya bağlanmayı başlat
     connectToArduino();

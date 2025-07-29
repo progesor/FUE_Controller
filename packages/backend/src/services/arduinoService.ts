@@ -1,13 +1,25 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
-import type { MotorDirection } from '../../../shared-types';
+import { Server } from 'socket.io';
+import type { MotorDirection, ClientToServerEvents, ServerToClientEvents } from '../../../shared-types';
 import config from '../config';
+
+// io nesnesini tutacak bir değişken ekliyoruz.
+let io: Server<ClientToServerEvents, ServerToClientEvents> | null = null;
 
 // Servisimizin durumunu tutacak modül seviyesinde değişkenler
 let port: SerialPort | null = null;
 let parser: ReadlineParser | null = null;
 let isConnected = false;
 let pingInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Bu servis modülünü ana Socket.IO sunucusu ile başlatır.
+ * @param socketIoServer server.ts'de oluşturulan io nesnesi.
+ */
+export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => {
+    io = socketIoServer;
+};
 
 /**
  * Arduino'nun bağlı olduğu portu otomatik olarak bulmaya çalışır.
@@ -35,7 +47,16 @@ const findArduinoPort = async (): Promise<string | null> => {
  */
 const handleData = (data: string) => {
     console.log(`[Arduino -> RPi]: ${data}`);
-    // TODO: Bu veri, Socket.IO ile arayüze gönderilecek.
+
+    // Gelen veriyi ayrıştırıp doğru Socket.IO olayını yayınla
+    if (data.startsWith('EVT:PEDAL:')) {
+        const state = parseInt(data.split(':')[2]) as 0 | 1;
+        io?.emit('arduino_event', { type: 'PEDAL', state });
+    } else if (data.startsWith('EVT:FTSW:')) {
+        const state = parseInt(data.split(':')[2]) as 0 | 1;
+        io?.emit('arduino_event', { type: 'FTSW', state });
+    }
+    // Diğer olaylar (DATA:, PONG, ACK, DONE vb.) burada işlenebilir.
 };
 
 /**
@@ -65,7 +86,7 @@ export const connectToArduino = async () => {
         console.log(`Arduino'ya başarıyla bağlanıldı: ${portPath}`);
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(pingArduino, config.arduino.pingInterval);
-        // TODO: Arayüze 'arduino_connected' olayını gönder
+        io?.emit('arduino_connected');
     });
 
     parser.on('data', handleData);
@@ -74,7 +95,7 @@ export const connectToArduino = async () => {
         isConnected = false;
         console.warn("Arduino bağlantısı kesildi. Yeniden bağlanmaya çalışılıyor...");
         if (pingInterval) clearInterval(pingInterval);
-        // TODO: Arayüze 'arduino_disconnected' olayını gönder
+        io?.emit('arduino_disconnected');
         setTimeout(connectToArduino, config.arduino.reconnectTimeout);
     });
 
