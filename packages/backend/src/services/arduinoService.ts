@@ -61,18 +61,28 @@ const handleData = (data: string) => {
     } else {
         console.log(`[Arduino -> RPi]: ${data}`);
     }
-    // Gelen veriyi ayrıştırıp doğru Socket.IO olayını yayınla
-    // Arduino'dan gelen olaylara göre durumu güncelle
+
+    // Pedal basma olayı
     if (data.startsWith('EVT:PEDAL:1')) {
         motorStatus.isActive = true;
-        sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm || 100}`); // Pedal basıldığında kayıtlı son hızla veya varsayılan bir hızla başla
+        sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm || 100}`);
         broadcastMotorStatus();
-    } else if (data.startsWith('EVT:PEDAL:0')) {
+
+        // --- EKLENECEK KOD ---
+        // Bu olayı arayüze de bildir.
+        io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
+
+    }
+    // Pedal bırakma olayı
+    else if (data.startsWith('EVT:PEDAL:0')) {
         motorStatus.isActive = false;
         sendCommand('DEV.MOTOR.STOP');
         broadcastMotorStatus();
+
+        // --- EKLENECEK KOD ---
+        // Bu olayı arayüze de bildir. Arayüz bu olayı sayım için kullanacak.
+        io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
     }
-    // Diğer olaylar (DATA:, PONG, ACK, DONE vb.) burada işlenebilir.
 };
 
 /**
