@@ -18,7 +18,7 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SER
  * Bu fonksiyon App.tsx'de sadece bir kez çağrılacak.
  */
 export const listenToEvents = () => {
-    const { setConnectionStatus, setMotorStatus, startSession, stopSession } = useControllerStore.getState();
+    const { setConnectionStatus, setMotorStatus, startSession, stopSession,incrementGraftCount,  } = useControllerStore.getState();
 
     socket.on('connect', () => {
         setConnectionStatus('connected');
@@ -43,7 +43,13 @@ export const listenToEvents = () => {
     // Arduino'dan gelen pedal, switch gibi olayları dinliyoruz
     socket.on('arduino_event', (data) => {
         console.log('Arduino Olayı:', data);
-        // TODO: Bu veriye göre arayüzde bir gösterge güncellenebilir.
+
+        // Eğer olay pedal bırakma olayı ise, greft sayacını artır.
+        // data.state === 0, PULLUP olduğu için pedalın bırakıldığı anlamına gelir.
+        if (data.type === 'PEDAL' && data.state === 0) {
+            incrementGraftCount();
+            console.log('Pedal bırakıldı, greft sayısı artırıldı!');
+        }
     });
 
     // Motor durumu güncellemelerini dinliyoruz
