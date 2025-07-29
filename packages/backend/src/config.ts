@@ -22,6 +22,7 @@ const config = {
         baudRate: 115200,
         reconnectTimeout: 5000, // ms cinsinden yeniden bağlanma deneme süresi
         pingInterval: 3000,     // ms cinsinden bağlantı kontrol sıklığı
+        logPings: false,
 
         // Arduino kartını otomatik bulmak için kullanılacak anahtar kelimeler
         // Bu liste, farklı Arduino klonları için genişletilebilir.

@@ -9,7 +9,7 @@ import {
     setMotorPwm,
     setMotorDirection,
     stopMotor,
-    executeTimedRun
+    executeTimedRun, startMotor
 } from './services/arduinoService';
 
 // Sunucu kurulumu
@@ -41,6 +41,11 @@ io.on('connection', (socket) => {
     socket.on('set_motor_direction', (direction) => {
         console.log(`[Client -> Server]: set_motor_direction isteği: ${direction}`);
         setMotorDirection(direction);
+    });
+
+    socket.on('start_motor', () => {
+        console.log(`[Client -> Server]: start_motor isteği`);
+        startMotor();
     });
 
     socket.on('stop_motor', () => {

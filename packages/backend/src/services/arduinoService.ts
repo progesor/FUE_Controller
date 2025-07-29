@@ -1,7 +1,7 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import type { MotorDirection, ClientToServerEvents, ServerToClientEvents } from '../../../shared-types';
+import type {MotorDirection, ClientToServerEvents, ServerToClientEvents, MotorStatus} from '../../../shared-types';
 import config from '../config';
 
 // io nesnesini tutacak bir değişken ekliyoruz.
@@ -13,12 +13,22 @@ let parser: ReadlineParser | null = null;
 let isConnected = false;
 let pingInterval: NodeJS.Timeout | null = null;
 
+let motorStatus: MotorStatus = {
+    isActive: false,
+    pwm: 0,
+    direction: 0,
+};
+
 /**
  * Bu servis modülünü ana Socket.IO sunucusu ile başlatır.
  * @param socketIoServer server.ts'de oluşturulan io nesnesi.
  */
 export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => {
     io = socketIoServer;
+};
+
+const broadcastMotorStatus = () => {
+    io?.emit('motor_status_update', motorStatus);
 };
 
 /**
@@ -46,15 +56,19 @@ const findArduinoPort = async (): Promise<string | null> => {
  * @param {string} data Arduino'dan gelen ham veri satırı.
  */
 const handleData = (data: string) => {
-    console.log(`[Arduino -> RPi]: ${data}`);
-
+    if (!config.arduino.logPings || !data.startsWith('PONG')) {
+        console.log(`[Arduino -> RPi]: ${data}`);
+    }
     // Gelen veriyi ayrıştırıp doğru Socket.IO olayını yayınla
-    if (data.startsWith('EVT:PEDAL:')) {
-        const state = parseInt(data.split(':')[2]) as 0 | 1;
-        io?.emit('arduino_event', { type: 'PEDAL', state });
-    } else if (data.startsWith('EVT:FTSW:')) {
-        const state = parseInt(data.split(':')[2]) as 0 | 1;
-        io?.emit('arduino_event', { type: 'FTSW', state });
+    // Arduino'dan gelen olaylara göre durumu güncelle
+    if (data.startsWith('EVT:PEDAL:1')) {
+        motorStatus.isActive = true;
+        sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm || 100}`); // Pedal basıldığında kayıtlı son hızla veya varsayılan bir hızla başla
+        broadcastMotorStatus();
+    } else if (data.startsWith('EVT:PEDAL:0')) {
+        motorStatus.isActive = false;
+        sendCommand('DEV.MOTOR.STOP');
+        broadcastMotorStatus();
     }
     // Diğer olaylar (DATA:, PONG, ACK, DONE vb.) burada işlenebilir.
 };
@@ -111,15 +125,17 @@ export const connectToArduino = async () => {
  * @param {string} command Gönderilecek komut.
  */
 const sendCommand = (command: string) => {
-    if (port && isConnected) {
+    if (port && port.isOpen) {
         port.write(`${command}\n`, (err) => {
-            if (err) {
-                return console.error('Komut gönderilirken hata:', err.message);
+            if (err) return console.error('Komut gönderilirken hata:', err.message);
+
+            // Ping loglama kontrolü
+            if (!command.startsWith('SYS.PING') || config.arduino.logPings) {
+                console.log(`[RPi -> Arduino]: ${command}`);
             }
-            console.log(`[RPi -> Arduino]: ${command}`);
         });
     } else {
-        console.warn("Komut gönderilemedi. Arduino bağlı değil.");
+        console.warn("Komut gönderilemedi. Arduino bağlı değil veya port açık değil.");
     }
 };
 
@@ -127,15 +143,29 @@ const sendCommand = (command: string) => {
 
 export const setMotorPwm = (value: number) => {
     const pwm = Math.max(0, Math.min(255, value));
-    sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+    motorStatus.pwm = pwm; // Önce durumu güncelle
+    if (motorStatus.isActive) {
+        sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+    }
+    broadcastMotorStatus(); // Durumu yayınla
 };
 
 export const setMotorDirection = (direction: MotorDirection) => {
+    motorStatus.direction = direction;
     sendCommand(`DEV.MOTOR.SET_DIR:${direction}`);
+    broadcastMotorStatus();
 };
 
 export const stopMotor = () => {
+    motorStatus.isActive = false;
     sendCommand('DEV.MOTOR.STOP');
+    broadcastMotorStatus();
+};
+
+export const startMotor = () => {
+    motorStatus.isActive = true;
+    sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm || 100}`); // Kayıtlı son hızla veya varsayılan bir hızla başla
+    broadcastMotorStatus();
 };
 
 export const executeTimedRun = (pwm: number, ms: number) => {
