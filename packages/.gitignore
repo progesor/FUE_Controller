@@ -1,0 +1,3 @@
+# Bu dosya, alt paketlerin de bir git projesi olarak
+# yanlışlıkla başlatılmasını önlemek için buradadır.
+# Ana .gitignore dosyası tüm kuralları yönetir.

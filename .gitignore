@@ -1,0 +1,43 @@
+# =========================
+# Ana Bağımlılıklar
+# =========================
+node_modules/
+
+# =========================
+# Derlenmiş Dosyalar
+# =========================
+# Backend ve Frontend'in build çıktılarını yok say
+packages/backend/dist/
+packages/frontend/dist/
+packages/frontend/.vite/
+
+# =========================
+# Loglar ve Raporlar
+# =========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =========================
+# Ortam Değişkenleri
+# =========================
+# Asla .env dosyalarını commit'leme!
+.env
+.env.*
+!/.env.example
+
+# =========================
+# İşletim Sistemi ve IDE
+# =========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
