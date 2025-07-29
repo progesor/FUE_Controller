@@ -1,18 +1,9 @@
-// packages/frontend/src/components/panels/SettingsPanel.tsx
-import { Paper, Title, Stack, Text, Group, ActionIcon, Collapse } from '@mantine/core';
-import { IconMinus, IconPlus } from '@tabler/icons-react';
+import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
+import {VALID_ANGLES} from "backend/src/config/calibration.ts";
 
 export function SettingsPanel() {
     const { operatingMode, oscillationSettings, setOscillationAngle } = useControllerStore();
-
-    const handleAngleChange = (delta: number) => {
-        // Açı değerini 90 derecelik adımlarla değiştir
-        const newAngle = oscillationSettings.angle + delta;
-        if (newAngle >= 90 && newAngle <= 540) { // Örnek min/max değerler
-            setOscillationAngle(newAngle);
-        }
-    };
 
     return (
         <Paper withBorder p="md" h="100%">
@@ -20,22 +11,20 @@ export function SettingsPanel() {
                 <Title order={3} mb="md">Ayar Paneli</Title>
                 <Collapse in={operatingMode === 'oscillation'}>
                     <Stack gap="xl">
-                        {/* Açı Ayarı */}
+                        {/* Açı Ayarı (YENİ YAPI) */}
                         <Stack gap="xs">
-                            <Text fw={500}>Osilasyon Açısı (Derece)</Text>
-                            <Group justify="center">
-                                <ActionIcon variant="default" size="xl" onClick={() => handleAngleChange(-90)}>
-                                    <IconMinus />
-                                </ActionIcon>
-                                <Text w={100} ta="center" fz={24} fw={600}>
-                                    {oscillationSettings.angle}°
-                                </Text>
-                                <ActionIcon variant="default" size="xl" onClick={() => handleAngleChange(90)}>
-                                    <IconPlus />
-                                </ActionIcon>
-                            </Group>
+                            <Text fw={500}>Osilasyon Açısı</Text>
+                            <Text fz={32} fw={700}>{oscillationSettings.angle}°</Text>
+                            <Slider
+                                value={oscillationSettings.angle}
+                                onChange={setOscillationAngle}
+                                min={VALID_ANGLES[0]}
+                                max={VALID_ANGLES[VALID_ANGLES.length - 1]}
+                                marks={VALID_ANGLES.map(angle => ({ value: angle, label: `${angle}°` }))}
+                                step={45} // 225 gibi ara değerler için
+                                label={null}
+                            />
                         </Stack>
-                        {/* Gelecekte diğer osilasyon ayarları buraya eklenebilir */}
                     </Stack>
                 </Collapse>
             </Stack>

@@ -1,22 +1,43 @@
-import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
+import {
+    Paper,
+    Title,
+    Stack,
+    Text,
+    Group,
+    ActionIcon,
+    Button,
+    SegmentedControl,
+    Center,
+    Box,
+    Slider
+} from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
 import { useControllerStore, type OperatingMode } from '../../store/useControllerStore';
 import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
+import {VALID_RPMS} from "backend/src/config/calibration.ts";
 
 
+const rpmToPwm = (rpm: number) => Math.round((rpm / 18000) * 255);
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
     const { motorStatus, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
 
-    const handlePwmChange = (delta: number) => {
-        const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
-        // Önce arayüz durumunu anında güncelle (İyimser Güncelleme)
+    // Slider'dan gelen RPM değerini işleyen fonksiyon
+    const handleRpmChange = (newRpm: number) => {
+        const newPwm = rpmToPwm(newRpm);
         setMotorStatus({ pwm: newPwm });
-        // Sonra bu yeni değeri backend'e gönder
         sendMotorPwm(newPwm);
     };
+
+    // const handlePwmChange = (delta: number) => {
+    //     const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
+    //     // Önce arayüz durumunu anında güncelle (İyimser Güncelleme)
+    //     setMotorStatus({ pwm: newPwm });
+    //     // Sonra bu yeni değeri backend'e gönder
+    //     sendMotorPwm(newPwm);
+    // };
 
     const handleDirectionChange = (direction: MotorDirection) => {
         // İyimser güncelleme yerine, bu komutun sonucunu doğrudan backend'den beklemek daha güvenilir.
@@ -48,17 +69,27 @@ export function ControlPanel() {
                     {/* Hız Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Motor Hızı (RPM)</Text>
-                        <Group justify="center">
-                            <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(-5)}>
-                                <IconMinus />
-                            </ActionIcon>
-                            <Text w={100} ta="center" fz={24} fw={600}>
-                                {pwmToRpm(motorStatus.pwm)}
-                            </Text>
-                            <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(5)}>
-                                <IconPlus />
-                            </ActionIcon>
-                        </Group>
+                        <Text fz={32} fw={700}>{pwmToRpm(motorStatus.pwm)} RPM</Text>
+                        <Slider
+                            value={pwmToRpm(motorStatus.pwm)}
+                            onChange={handleRpmChange}
+                            min={VALID_RPMS[0]}
+                            max={VALID_RPMS[VALID_RPMS.length - 1]}
+                            step={1} // Adımı 1 yapıyoruz ama 'marks' ile sadece belirli değerlere atlamasını sağlayacağız
+                            marks={VALID_RPMS.map(rpm => ({ value: rpm, label: '' }))} // Sadece atlama noktaları
+                            label={null} // Değer etiketini gizle
+                        />
+                        {/*<Group justify="center">*/}
+                        {/*    <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(-5)}>*/}
+                        {/*        <IconMinus />*/}
+                        {/*    </ActionIcon>*/}
+                        {/*    <Text w={100} ta="center" fz={24} fw={600}>*/}
+                        {/*        {pwmToRpm(motorStatus.pwm)}*/}
+                        {/*    </Text>*/}
+                        {/*    <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(5)}>*/}
+                        {/*        <IconPlus />*/}
+                        {/*    </ActionIcon>*/}
+                        {/*</Group>*/}
                     </Stack>
 
                     {/* Yön Kontrolü */}
