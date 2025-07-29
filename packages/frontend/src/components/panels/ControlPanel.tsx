@@ -1,13 +1,13 @@
 import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
 import {type OperatingMode, useControllerStore} from '../../store/useControllerStore';
-import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor } from '../../services/socketService';
+import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor,sendStartOscillation  } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
 
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
-    const { motorStatus, operatingMode, setOperatingMode } = useControllerStore();
+    const { motorStatus, operatingMode, oscillationSettings, setOperatingMode } = useControllerStore();
 
     const handlePwmChange = (delta: number) => {
         const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
@@ -24,7 +24,16 @@ export function ControlPanel() {
         if (motorStatus.isActive) {
             sendStopMotor();
         } else {
-            sendStartMotor();
+            // Hangi mod aktifse, o modun başlatma komutunu gönder
+            if (operatingMode === 'continuous') {
+                sendStartMotor();
+            } else {
+                // Osilasyon için gerekli ayarları gönder
+                sendStartOscillation({
+                    pwm: motorStatus.pwm,
+                    angle: oscillationSettings.angle,
+                });
+            }
         }
     };
 
