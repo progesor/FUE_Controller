@@ -1,6 +1,6 @@
 import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
-import { useControllerStore, OperatingMode } from '../../store/useControllerStore';
+import { useControllerStore, type OperatingMode } from '../../store/useControllerStore';
 import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
 
