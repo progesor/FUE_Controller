@@ -1,33 +1,25 @@
-// packages/frontend/src/components/panels/ControlPanel.tsx
-
 import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
 import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
 
-// PWM'i RPM'e çeviren yardımcı fonksiyon
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
-    // Store'dan sadece verileri okuyoruz. Butonlar doğrudan servis fonksiyonlarını çağıracak.
-    const { motorStatus, setMotorStatus } = useControllerStore();
+    const motorStatus = useControllerStore((state) => state.motorStatus);
 
     const handlePwmChange = (delta: number) => {
         const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
-        // Sadece store'daki hedef PWM'i güncelle. Motor aktifse, yeni değeri gönder.
-        setMotorStatus({ pwm: newPwm });
-        if (motorStatus.isActive) {
-            sendMotorPwm(newPwm);
-        }
+        // Yeni hedef hızı koşulsuz olarak backend'e gönder.
+        // Arayüzün güncellemesi, backend'den gelecek olan 'motor_status_update' ile olacak.
+        sendMotorPwm(newPwm);
     };
 
     const handleDirectionChange = (direction: MotorDirection) => {
-        // Yön değişikliği anında gönderilir. Store güncellemesi backend'den gelecek.
         sendMotorDirection(direction);
     };
 
-    // Bu fonksiyon artık çok daha basit. Sadece doğru komutu gönderiyor.
     const toggleMotorActive = () => {
         if (motorStatus.isActive) {
             sendStopMotor();
@@ -40,9 +32,7 @@ export function ControlPanel() {
         <Paper withBorder p="md" h="100%">
             <Stack justify="space-between" h="100%">
                 <Title order={3} mb="md">Kontrol Paneli</Title>
-
                 <Stack gap="xl">
-                    {/* Hız Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Motor Hızı (RPM)</Text>
                         <Group justify="center">
@@ -57,8 +47,6 @@ export function ControlPanel() {
                             </ActionIcon>
                         </Group>
                     </Stack>
-
-                    {/* Yön Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Dönüş Yönü</Text>
                         <SegmentedControl
@@ -73,8 +61,6 @@ export function ControlPanel() {
                         />
                     </Stack>
                 </Stack>
-
-                {/* Başlat / Durdur Butonu */}
                 <Button
                     fullWidth
                     size="lg"
