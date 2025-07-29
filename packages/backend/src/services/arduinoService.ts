@@ -56,7 +56,9 @@ const findArduinoPort = async (): Promise<string | null> => {
  * @param {string} data Arduino'dan gelen ham veri satırı.
  */
 const handleData = (data: string) => {
-    if (!config.arduino.logPings || !data.startsWith('PONG')) {
+    if (data.startsWith('PONG') && !config.arduino.logPings) {
+        // Sessizce geç
+    } else {
         console.log(`[Arduino -> RPi]: ${data}`);
     }
     // Gelen veriyi ayrıştırıp doğru Socket.IO olayını yayınla
