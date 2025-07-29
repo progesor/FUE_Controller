@@ -1,47 +1,34 @@
-import {
-    Paper,
-    Title,
-    Stack,
-    Text,
-    Group,
-    ActionIcon,
-    Button,
-    SegmentedControl,
-    Center,
-    Box,
-    Slider
-} from '@mantine/core';
-import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
+import { Paper, Title, Stack, Text, SegmentedControl, Center, Box, Slider, Button } from '@mantine/core';
+import { IconArrowBackUp, IconArrowForwardUp, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
 import { useControllerStore, type OperatingMode } from '../../store/useControllerStore';
 import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation } from '../../services/socketService';
+
+import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
 import type {MotorDirection} from "../../../../shared-types";
-import {VALID_RPMS} from "backend/src/config/calibration.ts";
 
-
-const rpmToPwm = (rpm: number) => Math.round((rpm / 18000) * 255);
-const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
+// PWM'den en yakın kalibre edilmiş RPM değerini bulan fonksiyon
+const pwmToClosestRpm = (pwm: number) => {
+    // En yakın 'mark'ı (kalibrasyon noktasını) bul
+    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
+        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
+    );
+    return closestMark.rpm;
+};
 
 export function ControlPanel() {
     const { motorStatus, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
 
-    // Slider'dan gelen RPM değerini işleyen fonksiyon
-    const handleRpmChange = (newRpm: number) => {
-        const newPwm = rpmToPwm(newRpm);
-        setMotorStatus({ pwm: newPwm });
-        sendMotorPwm(newPwm);
+    // Slider'dan gelen DEĞER, artık RPM değil, 0'dan başlayan bir İNDEKSTİR.
+    const handleSliderChange = (markIndex: number) => {
+        const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
+        if (!selectedMark) return;
+
+        // Hem arayüzü (iyimser güncelleme) hem de backend'i bu kesin değerlerle güncelle
+        setMotorStatus({ pwm: selectedMark.pwm });
+        sendMotorPwm(selectedMark.pwm);
     };
 
-    // const handlePwmChange = (delta: number) => {
-    //     const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
-    //     // Önce arayüz durumunu anında güncelle (İyimser Güncelleme)
-    //     setMotorStatus({ pwm: newPwm });
-    //     // Sonra bu yeni değeri backend'e gönder
-    //     sendMotorPwm(newPwm);
-    // };
-
     const handleDirectionChange = (direction: MotorDirection) => {
-        // İyimser güncelleme yerine, bu komutun sonucunu doğrudan backend'den beklemek daha güvenilir.
-        // Çünkü yön değişikliği anlık bir eylemdir.
         sendMotorDirection(direction);
     };
 
@@ -49,50 +36,52 @@ export function ControlPanel() {
         if (motorStatus.isActive) {
             sendStopMotor();
         } else {
+            const currentRpm = pwmToClosestRpm(motorStatus.pwm);
             if (operatingMode === 'continuous') {
                 sendStartMotor();
             } else {
                 sendStartOscillation({
                     pwm: motorStatus.pwm,
                     angle: oscillationSettings.angle,
-                    rpm: pwmToRpm(motorStatus.pwm)
+                    rpm: currentRpm
                 });
             }
         }
     };
+
+    // Mevcut PWM değerine karşılık gelen slider indeksini bul
+    // Eğer tam eşleşme yoksa, en yakın olanı bul
+    const findClosestMarkIndex = (pwm: number) => {
+        const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
+            Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
+        );
+        return RPM_CALIBRATION_MARKS.indexOf(closestMark);
+    }
+
+    const currentMarkIndex = findClosestMarkIndex(motorStatus.pwm);
 
     return (
         <Paper withBorder p="md" h="100%">
             <Stack justify="space-between" h="100%">
                 <Title order={3} mb="md">Kontrol Paneli</Title>
                 <Stack gap="xl">
-                    {/* Hız Kontrolü */}
                     <Stack gap="xs">
-                        <Text fw={500}>Motor Hızı (RPM)</Text>
-                        <Text fz={32} fw={700}>{pwmToRpm(motorStatus.pwm)} RPM</Text>
+                        <Text fw={500}>Motor Hızı</Text>
+                        <Text fz={32} fw={700}>{pwmToClosestRpm(motorStatus.pwm)} RPM</Text>
                         <Slider
-                            value={pwmToRpm(motorStatus.pwm)}
-                            onChange={handleRpmChange}
-                            min={VALID_RPMS[0]}
-                            max={VALID_RPMS[VALID_RPMS.length - 1]}
-                            step={1} // Adımı 1 yapıyoruz ama 'marks' ile sadece belirli değerlere atlamasını sağlayacağız
-                            marks={VALID_RPMS.map(rpm => ({ value: rpm, label: '' }))} // Sadece atlama noktaları
+                            // Değer olarak 0'dan başlayan indeksi kullanıyoruz
+                            value={currentMarkIndex !== -1 ? currentMarkIndex : 0}
+                            onChange={handleSliderChange}
+                            min={0}
+                            max={RPM_CALIBRATION_MARKS.length - 1}
+                            step={1} // Her adımda bir sonraki kalibrasyon noktasına atla
                             label={null} // Değer etiketini gizle
+                            // İşaretleri RPM değerleri olarak göster
+                            marks={RPM_CALIBRATION_MARKS.map((mark, index) => ({ value: index, label: `${mark.rpm}` }))}
+                            mb={40} // Etiketlerin (marks) rahat sığması için alttan boşluk
                         />
-                        {/*<Group justify="center">*/}
-                        {/*    <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(-5)}>*/}
-                        {/*        <IconMinus />*/}
-                        {/*    </ActionIcon>*/}
-                        {/*    <Text w={100} ta="center" fz={24} fw={600}>*/}
-                        {/*        {pwmToRpm(motorStatus.pwm)}*/}
-                        {/*    </Text>*/}
-                        {/*    <ActionIcon variant="default" size="xl" onClick={() => handlePwmChange(5)}>*/}
-                        {/*        <IconPlus />*/}
-                        {/*    </ActionIcon>*/}
-                        {/*</Group>*/}
                     </Stack>
 
-                    {/* Yön Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Dönüş Yönü</Text>
                         <SegmentedControl
@@ -107,7 +96,6 @@ export function ControlPanel() {
                         />
                     </Stack>
 
-                    {/* Çalışma Modu */}
                     <Stack gap="xs">
                         <Text fw={500}>Çalışma Modu</Text>
                         <SegmentedControl
@@ -123,7 +111,6 @@ export function ControlPanel() {
                     </Stack>
                 </Stack>
 
-                {/* Başlat / Durdur Butonu */}
                 <Button
                     fullWidth
                     size="lg"
