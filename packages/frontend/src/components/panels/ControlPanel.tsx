@@ -1,13 +1,13 @@
 import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
-import { useControllerStore } from '../../store/useControllerStore';
+import {type OperatingMode, useControllerStore} from '../../store/useControllerStore';
 import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
 
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
-    const motorStatus = useControllerStore((state) => state.motorStatus);
+    const { motorStatus, operatingMode, setOperatingMode } = useControllerStore();
 
     const handlePwmChange = (delta: number) => {
         const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
@@ -57,6 +57,19 @@ export function ControlPanel() {
                             data={[
                                 { label: (<Center><IconArrowBackUp size={16} /><Box ml={10}>CCW</Box></Center>), value: '1' },
                                 { label: (<Center><IconArrowForwardUp size={16} /><Box ml={10}>CW</Box></Center>), value: '0' },
+                            ]}
+                        />
+                    </Stack>
+                    <Stack gap="xs">
+                        <Text fw={500}>Çalışma Modu</Text>
+                        <SegmentedControl
+                            fullWidth
+                            size="md"
+                            value={operatingMode}
+                            onChange={(value) => setOperatingMode(value as OperatingMode)}
+                            data={[
+                                { label: 'Sürekli', value: 'continuous' },
+                                { label: 'Osilasyon', value: 'oscillation' },
                             ]}
                         />
                     </Stack>
