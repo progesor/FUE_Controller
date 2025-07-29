@@ -1,44 +1,40 @@
 // packages/frontend/src/components/panels/ControlPanel.tsx
 
-import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl } from '@mantine/core';
+import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
-import { sendMotorPwm, sendStopMotor, sendMotorDirection } from '../../services/socketService';
+import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor } from '../../services/socketService';
+import type {MotorDirection} from "../../../../shared-types";
+
+// PWM'i RPM'e çeviren yardımcı fonksiyon
+const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
-    // Store'dan motorun anlık durumunu ve durumunu değiştirecek fonksiyonu alıyoruz
+    // Store'dan sadece verileri okuyoruz. Butonlar doğrudan servis fonksiyonlarını çağıracak.
     const { motorStatus, setMotorStatus } = useControllerStore();
 
     const handlePwmChange = (delta: number) => {
         const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
+        // Sadece store'daki hedef PWM'i güncelle. Motor aktifse, yeni değeri gönder.
         setMotorStatus({ pwm: newPwm });
-
-        // Eğer motor zaten aktifse, yeni hızı anında gönder
         if (motorStatus.isActive) {
             sendMotorPwm(newPwm);
         }
     };
 
     const handleDirectionChange = (direction: MotorDirection) => {
-        setMotorStatus({ direction });
+        // Yön değişikliği anında gönderilir. Store güncellemesi backend'den gelecek.
         sendMotorDirection(direction);
     };
 
+    // Bu fonksiyon artık çok daha basit. Sadece doğru komutu gönderiyor.
     const toggleMotorActive = () => {
-        const newIsActive = !motorStatus.isActive;
-        setMotorStatus({ isActive: newIsActive });
-
-        if (newIsActive) {
-            // Motoru başlatırken mevcut PWM değeriyle başlat
-            sendMotorPwm(motorStatus.pwm);
-        } else {
-            // Motoru durdur
+        if (motorStatus.isActive) {
             sendStopMotor();
+        } else {
+            sendStartMotor();
         }
     };
-
-    // PWM'i RPM'e çeviren yardımcı fonksiyon
-    const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
     return (
         <Paper withBorder p="md" h="100%">
@@ -71,18 +67,8 @@ export function ControlPanel() {
                             value={motorStatus.direction.toString()}
                             onChange={(value) => handleDirectionChange(parseInt(value) as MotorDirection)}
                             data={[
-                                { label: (
-                                        <Center>
-                                            <IconArrowBackUp size={16} />
-                                            <Box ml={10}>CCW</Box>
-                                        </Center>
-                                    ), value: '0' },
-                                { label: (
-                                        <Center>
-                                            <IconArrowForwardUp size={16} />
-                                            <Box ml={10}>CW</Box>
-                                        </Center>
-                                    ), value: '1' },
+                                { label: (<Center><IconArrowBackUp size={16} /><Box ml={10}>CCW</Box></Center>), value: '1' },
+                                { label: (<Center><IconArrowForwardUp size={16} /><Box ml={10}>CW</Box></Center>), value: '0' },
                             ]}
                         />
                     </Stack>
@@ -102,9 +88,3 @@ export function ControlPanel() {
         </Paper>
     );
 }
-
-// SegmentedControl içinde ikonları ve metni hizalamak için
-// bu bileşenleri de import etmemiz gerekiyor.
-import { Center, Box } from '@mantine/core';
-import React from 'react';
-import type {MotorDirection} from "../../../../shared-types";

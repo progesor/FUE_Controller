@@ -18,8 +18,7 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SER
  * Bu fonksiyon App.tsx'de sadece bir kez çağrılacak.
  */
 export const listenToEvents = () => {
-    // Store'dan state'i değiştirecek fonksiyonları alıyoruz
-    const { setConnectionStatus, setMotorStatus } = useControllerStore.getState();
+    const { setConnectionStatus, setMotorStatus, startSession, stopSession } = useControllerStore.getState();
 
     socket.on('connect', () => {
         setConnectionStatus('connected');
@@ -50,7 +49,14 @@ export const listenToEvents = () => {
     // Motor durumu güncellemelerini dinliyoruz
     socket.on('motor_status_update', (status) => {
         setMotorStatus(status);
+        // Gelen duruma göre seansı başlat veya durdur
+        if (status.isActive) {
+            startSession();
+        } else {
+            stopSession();
+        }
     });
+
 
     // Manuel olarak bağlantıyı başlat
     socket.connect();
@@ -64,6 +70,10 @@ export const sendMotorPwm = (value: number) => {
 
 export const sendMotorDirection = (direction: 0 | 1) => {
     socket.emit('set_motor_direction', direction);
+}
+
+export const sendStartMotor = () => {
+    socket.emit('start_motor');
 }
 
 export const sendStopMotor = () => {
