@@ -36,5 +36,5 @@ export interface ClientToServerEvents {
     'set_motor_direction': (direction: MotorDirection) => void;
     'start_motor': () => void;
     'stop_motor': () => void;
-    'start_oscillation': (options: { pwm: number, angle: number }) => void;
+    'start_oscillation': (options: { pwm: number, angle: number, rpm: number }) => void;
 }

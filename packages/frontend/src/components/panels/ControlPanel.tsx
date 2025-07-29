@@ -1,22 +1,26 @@
 import { Paper, Title, Stack, Text, Group, ActionIcon, Button, SegmentedControl, Center, Box } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconMinus, IconPlayerPlay, IconPlayerStop, IconPlus } from '@tabler/icons-react';
-import {type OperatingMode, useControllerStore} from '../../store/useControllerStore';
-import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor,sendStartOscillation  } from '../../services/socketService';
+import { useControllerStore, OperatingMode } from '../../store/useControllerStore';
+import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation } from '../../services/socketService';
 import type {MotorDirection} from "../../../../shared-types";
+
 
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
 export function ControlPanel() {
-    const { motorStatus, operatingMode, oscillationSettings, setOperatingMode } = useControllerStore();
+    const { motorStatus, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
 
     const handlePwmChange = (delta: number) => {
         const newPwm = Math.max(0, Math.min(255, motorStatus.pwm + delta));
-        // Yeni hedef hızı koşulsuz olarak backend'e gönder.
-        // Arayüzün güncellemesi, backend'den gelecek olan 'motor_status_update' ile olacak.
+        // Önce arayüz durumunu anında güncelle (İyimser Güncelleme)
+        setMotorStatus({ pwm: newPwm });
+        // Sonra bu yeni değeri backend'e gönder
         sendMotorPwm(newPwm);
     };
 
     const handleDirectionChange = (direction: MotorDirection) => {
+        // İyimser güncelleme yerine, bu komutun sonucunu doğrudan backend'den beklemek daha güvenilir.
+        // Çünkü yön değişikliği anlık bir eylemdir.
         sendMotorDirection(direction);
     };
 
@@ -24,14 +28,13 @@ export function ControlPanel() {
         if (motorStatus.isActive) {
             sendStopMotor();
         } else {
-            // Hangi mod aktifse, o modun başlatma komutunu gönder
             if (operatingMode === 'continuous') {
                 sendStartMotor();
             } else {
-                // Osilasyon için gerekli ayarları gönder
                 sendStartOscillation({
                     pwm: motorStatus.pwm,
                     angle: oscillationSettings.angle,
+                    rpm: pwmToRpm(motorStatus.pwm)
                 });
             }
         }
@@ -42,6 +45,7 @@ export function ControlPanel() {
             <Stack justify="space-between" h="100%">
                 <Title order={3} mb="md">Kontrol Paneli</Title>
                 <Stack gap="xl">
+                    {/* Hız Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Motor Hızı (RPM)</Text>
                         <Group justify="center">
@@ -56,6 +60,8 @@ export function ControlPanel() {
                             </ActionIcon>
                         </Group>
                     </Stack>
+
+                    {/* Yön Kontrolü */}
                     <Stack gap="xs">
                         <Text fw={500}>Dönüş Yönü</Text>
                         <SegmentedControl
@@ -69,6 +75,8 @@ export function ControlPanel() {
                             ]}
                         />
                     </Stack>
+
+                    {/* Çalışma Modu */}
                     <Stack gap="xs">
                         <Text fw={500}>Çalışma Modu</Text>
                         <SegmentedControl
@@ -83,6 +91,8 @@ export function ControlPanel() {
                         />
                     </Stack>
                 </Stack>
+
+                {/* Başlat / Durdur Butonu */}
                 <Button
                     fullWidth
                     size="lg"
