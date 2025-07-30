@@ -159,24 +159,19 @@ export const setMotorDirection = (direction: MotorDirection) => {
 
 export const setOperatingMode = (mode: OperatingMode) => {
     if (deviceStatus.operatingMode === mode) return;
-
     const wasActive = deviceStatus.motor.isActive;
     if (wasActive) {
-        internalStop(); // Sadece fiziksel motoru ve zamanlayıcıları durdur, durumu (isActive) DEĞİŞTİRME
+        internalStop();
     }
-
-    deviceStatus.operatingMode = mode; // Yeni modu ayarla
-
+    deviceStatus.operatingMode = mode;
     if (wasActive) {
-        // Motor daha önce çalışıyorsa, yeni modda yeniden başlat
         if (mode === 'continuous') {
-            startMotor(true); // `true` parametresi, "zaten aktifti, sadece devam et" anlamına gelir
+            startMotor(true);
         } else {
             const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm }, true);
         }
     } else {
-        // Motor çalışmıyorsa, sadece yeni durumu arayüze bildir
         broadcastDeviceStatus();
     }
 };
@@ -187,8 +182,9 @@ export const setOscillationSettings = (settings: OscillationSettings) => {
     deviceStatus.oscillationSettings = settings;
 
     if (wasActive && deviceStatus.operatingMode === 'oscillation') {
+        // --- DEĞİŞİKLİK BURADA: Artık kaba formül yerine doğru kalibrasyon fonksiyonunu kullanıyoruz ---
         const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
-        startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm });
+        startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm }, true);
     } else {
         broadcastDeviceStatus();
     }
@@ -203,13 +199,10 @@ export const stopMotor = () => {
 
 
 export const startMotor = (isContinuation = false) => {
-    // Eğer bu bir devam işlemi değilse ve motor zaten aktifse, bir şey yapma
     if (!isContinuation && deviceStatus.motor.isActive) return;
-
-    internalStop(); // Başka mod çalışıyorsa diye temizle
+    internalStop();
     deviceStatus.motor.isActive = true;
     if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100;
-
     sendCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
     sendCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
     broadcastDeviceStatus();
@@ -217,7 +210,6 @@ export const startMotor = (isContinuation = false) => {
 
 export const startOscillation = (options: { pwm: number; angle: number; rpm: number }, isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
-
     internalStop();
     deviceStatus.motor.isActive = true;
     deviceStatus.motor.pwm = options.pwm;
