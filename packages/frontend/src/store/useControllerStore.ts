@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import type { MotorStatus } from '../../../shared-types';
 
 export type OperatingMode = 'continuous' | 'oscillation';
+export type FtswMode = 'foot' | 'hand';
 
 export interface OscillationSettings {
     angle: number; // 90, 180, 270 gibi
@@ -20,6 +21,7 @@ interface ControllerState {
     isSessionActive: boolean;
     operatingMode: OperatingMode;
     oscillationSettings: OscillationSettings;
+    ftswMode: FtswMode;
 }
 
 // Store'daki verileri değiştirecek fonksiyonların yapısı
@@ -34,6 +36,7 @@ interface ControllerActions {
     tickSecond: () => void;
     setOperatingMode: (mode: OperatingMode) => void;
     setOscillationAngle: (angle: number) => void;
+    setFtswMode: (mode: FtswMode) => void;
 }
 
 export const useControllerStore = create<ControllerState & ControllerActions>((set) => ({
@@ -48,6 +51,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     oscillationSettings: {
         angle: 180, // Varsayılan açı
     },
+    ftswMode: 'foot',
 
     // Aksiyonlar (Fonksiyonlar)
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -64,4 +68,5 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     setOscillationAngle: (angle) => set((state) => ({
         oscillationSettings: { ...state.oscillationSettings, angle }
     })),
+    setFtswMode: (mode) => set({ ftswMode: mode }),
 }));

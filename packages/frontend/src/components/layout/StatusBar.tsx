@@ -1,15 +1,26 @@
 // packages/frontend/src/components/layout/StatusBar.tsx
 
-import { Paper, Group, Badge, Text, Divider } from '@mantine/core';
+import { Paper, Group, Text, Divider, Badge } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
-// --- DEĞİŞİKLİK BURADA: IconUsbOff yerine IconPlugConnectedX import ediliyor ---
-import { IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX } from '@tabler/icons-react';
+import {
+    IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX,
+    IconPower, IconInfinity, IconRepeat, IconHandGrab
+} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { socket } from '../../services/socketService';
 
+const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
+
 export function StatusBar() {
-    // Merkezi store'dan ilgili durumları alıyoruz
-    const { connectionStatus, arduinoStatus } = useControllerStore();
+    // Store'dan gerekli tüm durumları çekiyoruz
+    const {
+        connectionStatus,
+        arduinoStatus,
+        motorStatus,
+        operatingMode,
+        oscillationSettings,
+        ftswMode
+    } = useControllerStore();
 
     const [isPedalPressed, setIsPedalPressed] = useState(false);
 
@@ -19,9 +30,7 @@ export function StatusBar() {
                 setIsPedalPressed(data.state === 1);
             }
         };
-
         socket.on('arduino_event', onArduinoEvent);
-
         return () => {
             socket.off('arduino_event', onArduinoEvent);
         };
@@ -29,33 +38,48 @@ export function StatusBar() {
 
     return (
         <Paper withBorder p="xs" radius="md">
-            <Group justify="space-between">
+            <Group justify="space-between" wrap="nowrap">
                 {/* Sol Taraf: Bağlantı Durumları */}
-                <Group>
-                    {/* Arayüz <-> Sunucu Bağlantısı */}
-                    <Group gap="xs">
-                        {connectionStatus === 'connected' ? <IconWifi color="green" /> : <IconWifiOff color="red" />}
-                        <Text size="sm">Sunucu</Text>
+                <Group gap="xs">
+                    <Group gap={5}>
+                        {connectionStatus === 'connected' ? <IconWifi size={20} color="green" /> : <IconWifiOff size={20} color="red" />}
+                        <Text size="xs">Sunucu</Text>
                     </Group>
-
                     <Divider orientation="vertical" />
-
-                    {/* Sunucu <-> Arduino Bağlantısı */}
-                    <Group gap="xs">
-                        {/* --- DEĞİŞİKLİK BURADA: IconUsbOff yerine IconPlugConnectedX kullanılıyor --- */}
-                        {arduinoStatus === 'connected' ? <IconUsb color="green" /> : <IconPlugConnectedX color="red" />}
-                        <Text size="sm">Cihaz</Text>
+                    <Group gap={5}>
+                        {arduinoStatus === 'connected' ? <IconUsb size={20} color="green" /> : <IconPlugConnectedX size={20} color="red" />}
+                        <Text size="xs">Cihaz</Text>
                     </Group>
                 </Group>
 
-                {/* Sağ Taraf: Anlık Durum İkonları */}
-                <Group>
+                {/* Orta Taraf: Anlık Cihaz Bilgileri */}
+                <Group gap="xs">
+                    <Badge color={motorStatus.isActive ? 'green' : 'gray'} leftSection={<IconPower size={14} />}>
+                        {motorStatus.isActive ? `${pwmToRpm(motorStatus.pwm)} RPM` : 'DURUYOR'}
+                    </Badge>
+
+                    <Badge
+                        variant="light"
+                        color="cyan"
+                        leftSection={operatingMode === 'continuous' ? <IconInfinity size={14} /> : <IconRepeat size={14} />}
+                    >
+                        {operatingMode === 'continuous' ? 'Sürekli' : `Osilasyon: ${oscillationSettings.angle}°`}
+                    </Badge>
+                </Group>
+
+                {/* Sağ Taraf: Kontrol Modu ve Pedal Durumu */}
+                <Group gap="xs">
+                    <Badge
+                        variant="outline"
+                        color="gray"
+                        leftSection={ftswMode === 'foot' ? <IconShoe size={14} /> : <IconHandGrab size={14} />}
+                    >
+                        {ftswMode === 'foot' ? 'Ayak Kontrol' : 'El Kontrol'}
+                    </Badge>
                     {isPedalPressed && (
                         <Badge
-                            variant="light"
+                            variant="filled"
                             color="blue"
-                            size="lg"
-                            leftSection={<IconShoe size={16} />}
                         >
                             Pedal Aktif
                         </Badge>

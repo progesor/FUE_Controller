@@ -68,6 +68,10 @@ const handleData = (data: string) => {
         sendCommand('DEV.MOTOR.STOP');
         broadcastMotorStatus();
         io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
+    } else if (data.startsWith('EVT:FTSW:')) { // Foot/Hand Switch durumu değişti
+        const state = parseInt(data.split(':')[2]) as 0 | 1;
+        // Bu olayı doğrudan arayüze yayınla
+        io?.emit('arduino_event', { type: 'FTSW', state });
     }
 };
 

@@ -18,7 +18,7 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SER
  * Bu fonksiyon App.tsx'de sadece bir kez çağrılacak.
  */
 export const listenToEvents = () => {
-    const { setConnectionStatus, setArduinoStatus, setMotorStatus, startSession, stopSession,incrementGraftCount,  } = useControllerStore.getState();
+    const { setConnectionStatus, setArduinoStatus, setMotorStatus, startSession, stopSession,incrementGraftCount, setFtswMode } = useControllerStore.getState();
 
     socket.on('connect', () => {
         setConnectionStatus('connected');
@@ -50,6 +50,9 @@ export const listenToEvents = () => {
         if (data.type === 'PEDAL' && data.state === 0) {
             incrementGraftCount();
             console.log('Pedal bırakıldı, greft sayısı artırıldı!');
+        } else if (data.type === 'FTSW') {
+            // Arduino'dan gelen 1 (basılı/hand) veya 0 (bırakılmış/foot) durumuna göre state'i güncelle
+            setFtswMode(data.state === 1 ? 'hand' : 'foot');
         }
     });
 
