@@ -1,14 +1,11 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import type { MotorDirection, MotorStatus, ClientToServerEvents, ServerToClientEvents } from '../../../shared-types';
+import type { MotorDirection, MotorStatus, ClientToServerEvents, ServerToClientEvents, OperatingMode, OscillationSettings } from '../../../shared-types';
 import config from '../config';
-import { getMsFromCalibration } from './calibrationService'; // Kalibrasyon servisini import et
+import { getMsFromCalibration } from './calibrationService';
 
-// io nesnesini tutacak bir değişken ekliyoruz.
 let io: Server<ClientToServerEvents, ServerToClientEvents> | null = null;
-
-// Servisimizin durumunu tutacak modül seviyesinde değişkenler
 let port: SerialPort | null = null;
 let parser: ReadlineParser | null = null;
 let isConnected = false;
@@ -16,24 +13,25 @@ let pingInterval: NodeJS.Timeout | null = null;
 let oscillationInterval: NodeJS.Timeout | null = null;
 let oscillationDirection: MotorDirection = 0;
 
-// Backend'in Tek Doğruluk Kaynağı olarak motor durumu
-let motorStatus: MotorStatus = {
-    isActive: false,
-    pwm: 100, // Başlangıçta varsayılan bir hız
-    direction: 0,
+// Backend'in Tek Doğruluk Kaynağı
+let deviceStatus = {
+    motor: {
+        isActive: false,
+        pwm: 100,
+        direction: 0 as MotorDirection, // Varsayılan yön: Saat yönü (CW)
+    },
+    operatingMode: 'continuous' as OperatingMode,
+    oscillationSettings: {
+        angle: 180,
+    } as OscillationSettings,
 };
 
 /**
  * Bu servis modülünü ana Socket.IO sunucusu ile başlatır.
  * @param socketIoServer server.ts'de oluşturulan io nesnesi.
  */
-export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => {
-    io = socketIoServer;
-};
-
-const broadcastMotorStatus = () => {
-    io?.emit('motor_status_update', motorStatus);
-};
+export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => { io = socketIoServer; };
+const broadcastMotorStatus = () => { io?.emit('motor_status_update', deviceStatus.motor); };
 
 const findArduinoPort = async (): Promise<string | null> => {
     try {
@@ -52,25 +50,23 @@ const findArduinoPort = async (): Promise<string | null> => {
 };
 
 const handleData = (data: string) => {
-    if (data.startsWith('PONG') && !config.arduino.logPings) {
-        return; // Sessizce geç
-    }
+    if (data.startsWith('PONG') && !config.arduino.logPings) return;
     console.log(`[Arduino -> RPi]: ${data}`);
 
     if (data.startsWith('EVT:PEDAL:1')) { // Pedal basıldı
-        motorStatus.isActive = true;
-        if (motorStatus.pwm === 0) motorStatus.pwm = 100;
-        sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm}`);
-        broadcastMotorStatus();
+        // O anki seçili moda göre doğru işlemi başlat
+        if (deviceStatus.operatingMode === 'continuous') {
+            startMotor();
+        } else {
+            const rpm = Math.round((deviceStatus.motor.pwm / 255) * 18000);
+            startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm });
+        }
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
     } else if (data.startsWith('EVT:PEDAL:0')) { // Pedal bırakıldı
-        motorStatus.isActive = false;
-        sendCommand('DEV.MOTOR.STOP');
-        broadcastMotorStatus();
+        stopMotor();
         io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
-    } else if (data.startsWith('EVT:FTSW:')) { // Foot/Hand Switch durumu değişti
+    } else if (data.startsWith('EVT:FTSW:')) {
         const state = parseInt(data.split(':')[2]) as 0 | 1;
-        // Bu olayı doğrudan arayüze yayınla
         io?.emit('arduino_event', { type: 'FTSW', state });
     }
 };
@@ -131,17 +127,42 @@ const sendCommand = (command: string) => {
 
 export const setMotorPwm = (value: number) => {
     const pwm = Math.max(0, Math.min(255, value));
-    motorStatus.pwm = pwm;
-    if (motorStatus.isActive) {
-        sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+    deviceStatus.motor.pwm = pwm;
+    // Eğer motor zaten çalışıyorsa, değişikliği anında uygula
+    if (deviceStatus.motor.isActive) {
+        if (deviceStatus.operatingMode === 'continuous') {
+            sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+        } else {
+            // Osilasyon çalışırken hız değişirse, durdur ve yeni hızla yeniden başlat
+            const rpm = Math.round((pwm / 255) * 18000);
+            startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm });
+        }
     }
     broadcastMotorStatus();
 };
 
 export const setMotorDirection = (direction: MotorDirection) => {
-    motorStatus.direction = direction;
+    deviceStatus.motor.direction = direction;
+    // Yön değişikliği her zaman anında gönderilir
     sendCommand(`DEV.MOTOR.SET_DIR:${direction}`);
     broadcastMotorStatus();
+};
+
+export const setOperatingMode = (mode: OperatingMode) => {
+    deviceStatus.operatingMode = mode;
+    // Eğer motor çalışıyorsa, durdur. Kullanıcı yeni modda tekrar başlatmalı.
+    if (deviceStatus.motor.isActive) {
+        stopMotor();
+    }
+};
+
+export const setOscillationSettings = (settings: OscillationSettings) => {
+    deviceStatus.oscillationSettings = settings;
+    // Eğer osilasyon modunda çalışıyorsa, durdur ve yeni ayarlarla yeniden başlat
+    if (deviceStatus.motor.isActive && deviceStatus.operatingMode === 'oscillation') {
+        const rpm = Math.round((deviceStatus.motor.pwm / 255) * 18000);
+        startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm });
+    }
 };
 
 export const stopMotor = () => {
@@ -149,22 +170,24 @@ export const stopMotor = () => {
         clearInterval(oscillationInterval);
         oscillationInterval = null;
     }
-    motorStatus.isActive = false;
+    deviceStatus.motor.isActive = false;
     sendCommand('DEV.MOTOR.STOP');
     broadcastMotorStatus();
 };
 
+
 export const startMotor = () => {
-    motorStatus.isActive = true;
-    if (motorStatus.pwm === 0) motorStatus.pwm = 100;
-    sendCommand(`DEV.MOTOR.SET_PWM:${motorStatus.pwm}`);
+    if (deviceStatus.motor.isActive) return; // Zaten çalışıyorsa tekrar başlatma
+    deviceStatus.motor.isActive = true;
+    if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100;
+    sendCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
     broadcastMotorStatus();
 };
 
 export const startOscillation = (options: { pwm: number; angle: number; rpm: number }) => {
-    stopMotor(); // Önce çalışan başka bir mod varsa durdur
-    motorStatus.isActive = true;
-    motorStatus.pwm = options.pwm;
+    stopMotor(); // Her zaman önce durdurarak temiz bir başlangıç yap
+    deviceStatus.motor.isActive = true;
+    deviceStatus.motor.pwm = options.pwm;
     broadcastMotorStatus();
 
     const ms = getMsFromCalibration(options.rpm, options.angle);
@@ -176,7 +199,7 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
 
     const performStep = () => {
         sendCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
-        sendCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${motorStatus.pwm}|${ms}`);
+        sendCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${ms}`);
         oscillationDirection = oscillationDirection === 0 ? 1 : 0;
     };
 

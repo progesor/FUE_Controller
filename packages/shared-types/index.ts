@@ -1,4 +1,5 @@
 // packages/shared-types/index.ts
+import type {OperatingMode, OscillationSettings} from "frontend/src/store/useControllerStore";
 
 /**
  * Motorun dönüş yönünü belirtir.
@@ -37,4 +38,6 @@ export interface ClientToServerEvents {
     'start_motor': () => void;
     'stop_motor': () => void;
     'start_oscillation': (options: { pwm: number, angle: number, rpm: number }) => void;
+    'set_operating_mode': (mode: OperatingMode) => void;
+    'set_oscillation_settings': (settings: OscillationSettings) => void;
 }

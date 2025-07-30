@@ -1,14 +1,19 @@
 import { Paper, Title, Stack, Text, SegmentedControl, Center, Box, Slider, Button } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
 import { useControllerStore, type OperatingMode } from '../../store/useControllerStore';
-import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation } from '../../services/socketService';
-
+import {
+    sendMotorPwm,
+    sendStopMotor,
+    sendMotorDirection,
+    sendStartMotor,
+    sendStartOscillation,
+    sendOperatingMode // Yeni servis fonksiyonu
+} from '../../services/socketService';
 import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
 import type {MotorDirection} from "../../../../shared-types";
 
 // PWM'den en yakın kalibre edilmiş RPM değerini bulan fonksiyon
 const pwmToClosestRpm = (pwm: number) => {
-    // En yakın 'mark'ı (kalibrasyon noktasını) bul
     const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
         Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
     );
@@ -16,20 +21,22 @@ const pwmToClosestRpm = (pwm: number) => {
 };
 
 export function ControlPanel() {
-    const { motorStatus, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
+    const { motorStatus, operatingMode, oscillationSettings, setMotorStatus } = useControllerStore();
 
-    // Slider'dan gelen DEĞER, artık RPM değil, 0'dan başlayan bir İNDEKSTİR.
     const handleSliderChange = (markIndex: number) => {
         const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
         if (!selectedMark) return;
-
-        // Hem arayüzü (iyimser güncelleme) hem de backend'i bu kesin değerlerle güncelle
         setMotorStatus({ pwm: selectedMark.pwm });
         sendMotorPwm(selectedMark.pwm);
     };
 
     const handleDirectionChange = (direction: MotorDirection) => {
         sendMotorDirection(direction);
+    };
+
+    const handleModeChange = (mode: OperatingMode) => {
+        // Mod değişikliğini anında backend'e bildir
+        sendOperatingMode(mode);
     };
 
     const toggleMotorActive = () => {
@@ -49,8 +56,6 @@ export function ControlPanel() {
         }
     };
 
-    // Mevcut PWM değerine karşılık gelen slider indeksini bul
-    // Eğer tam eşleşme yoksa, en yakın olanı bul
     const findClosestMarkIndex = (pwm: number) => {
         const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
             Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
@@ -69,16 +74,14 @@ export function ControlPanel() {
                         <Text fw={500}>Motor Hızı</Text>
                         <Text fz={32} fw={700}>{pwmToClosestRpm(motorStatus.pwm)} RPM</Text>
                         <Slider
-                            // Değer olarak 0'dan başlayan indeksi kullanıyoruz
                             value={currentMarkIndex !== -1 ? currentMarkIndex : 0}
                             onChange={handleSliderChange}
                             min={0}
                             max={RPM_CALIBRATION_MARKS.length - 1}
-                            step={1} // Her adımda bir sonraki kalibrasyon noktasına atla
-                            label={null} // Değer etiketini gizle
-                            // İşaretleri RPM değerleri olarak göster
+                            step={1}
+                            label={null}
                             marks={RPM_CALIBRATION_MARKS.map((mark, index) => ({ value: index, label: `${mark.rpm}` }))}
-                            mb={40} // Etiketlerin (marks) rahat sığması için alttan boşluk
+                            mb={40}
                         />
                     </Stack>
 
@@ -102,7 +105,7 @@ export function ControlPanel() {
                             fullWidth
                             size="md"
                             value={operatingMode}
-                            onChange={(value) => setOperatingMode(value as OperatingMode)}
+                            onChange={(value) => handleModeChange(value as OperatingMode)}
                             data={[
                                 { label: 'Sürekli', value: 'continuous' },
                                 { label: 'Osilasyon', value: 'oscillation' },

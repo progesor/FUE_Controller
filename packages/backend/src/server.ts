@@ -10,7 +10,7 @@ import {
     setMotorDirection,
     stopMotor,
     startMotor,
-    startOscillation
+    startOscillation, setOscillationSettings, setOperatingMode
 } from './services/arduinoService';
 
 // Sunucu kurulumu
@@ -38,6 +38,9 @@ io.on('connection', (socket) => {
         console.log(`[Client -> Server]: set_motor_pwm isteği: ${value}`);
         setMotorPwm(value);
     });
+
+    socket.on('set_operating_mode', (mode) => {setOperatingMode(mode)});
+    socket.on('set_oscillation_settings', (settings) => setOscillationSettings(settings));
 
     socket.on('set_motor_direction', (direction) => {
         console.log(`[Client -> Server]: set_motor_direction isteği: ${direction}`);

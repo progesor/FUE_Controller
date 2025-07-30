@@ -1,7 +1,7 @@
 // packages/frontend/src/services/socketService.ts
 
 import { io, Socket } from 'socket.io-client';
-import { useControllerStore } from '../store/useControllerStore';
+import {type OperatingMode, type OscillationSettings, useControllerStore} from '../store/useControllerStore';
 import type { ServerToClientEvents, ClientToServerEvents } from '../../../shared-types';
 import config from '../../../backend/src/config'; // Backend config'ini doğrudan kullanabiliriz!
 
@@ -93,3 +93,6 @@ export const sendStopMotor = () => {
 export const sendStartOscillation = (options: { pwm: number, angle: number }) => {
     socket.emit('start_oscillation', options);
 }
+
+export const sendOperatingMode = (mode: OperatingMode) => socket.emit('set_operating_mode', mode);
+export const sendOscillationSettings = (settings: OscillationSettings) => socket.emit('set_oscillation_settings', settings);
