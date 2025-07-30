@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import { useControllerStore } from '../store/useControllerStore';
 import type { ServerToClientEvents, ClientToServerEvents, DeviceStatus, MotorDirection, OperatingMode, OscillationSettings } from '../../../shared-types';
 import config from '../../../backend/src/config';
+import {NotificationService} from "./notificationService.tsx";
 
 // ===================================================================
 //
@@ -60,9 +61,18 @@ export const listenToEvents = () => {
 
     // --- Bağlantı Durum Olayları ---
     socket.on('connect', () => setConnectionStatus('connected'));
-    socket.on('disconnect', () => setConnectionStatus('disconnected'));
-    socket.on('arduino_connected', () => setArduinoStatus('connected'));
-    socket.on('arduino_disconnected', () => setArduinoStatus('disconnected'));
+    socket.on('disconnect', () => {
+        setConnectionStatus('disconnected');
+        NotificationService.showError('Sunucu ile bağlantı koptu!');
+    });
+    socket.on('arduino_connected', () => {
+        setArduinoStatus('connected');
+        NotificationService.showSuccess('Cihaz (Arduino) başarıyla bağlandı.')
+    });
+    socket.on('arduino_disconnected', () => {
+        setArduinoStatus('disconnected');
+        NotificationService.showError('Cihaz (Arduino) bağlantısı kesildi!');
+    });
 
     // --- Cihaz Durum Güncelleme Olayı ---
     // Backend'den cihazın tam durumu geldiğinde, bu olay tetiklenir ve
