@@ -4,13 +4,10 @@ import { Grid, Paper, Title } from '@mantine/core';
 import { ControlPanel } from '../panels/ControlPanel';
 import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';
+import {StatusBar} from "./StatusBar.tsx";
 
 // Şimdilik panelleri basit birer kutu olarak tanımlıyoruz.
 // Birazdan bunları kendi dosyalarına taşıyacağız.
-
-function StatusBar() {
-    return <Paper withBorder p="md" h="100%"><Title order={3}>Durum Çubuğu</Title></Paper>;
-}
 
 
 export function MainLayout() {
