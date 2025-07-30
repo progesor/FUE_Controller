@@ -2,31 +2,23 @@ import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
 import { sendOscillationSettings } from '../../services/socketService';
-import { useState, useEffect } from 'react'; // useState ve useEffect'i import ediyoruz
-
-// En yakın geçerli değeri bulan yardımcı fonksiyon
-const findClosestValue = (goal: number, arr: number[]) => {
-    return arr.reduce((prev, curr) => (Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev));
-};
+import React from 'react';
 
 export function SettingsPanel() {
-    const { operatingMode, oscillationSettings } = useControllerStore();
+    const { operatingMode, oscillationSettings, setOscillationSettings: setGlobalOscillationSettings } = useControllerStore();
 
-    // --- YENİ: Slider'ın akıcı hareketi için yerel bir state tutuyoruz ---
-    const [localAngle, setLocalAngle] = useState(oscillationSettings.angle);
+    // Slider'dan gelen DEĞER, artık Açı değil, 0'dan başlayan bir İNDEKSTİR.
+    const handleSliderChange = (markIndex: number) => {
+        const selectedAngle = VALID_ANGLES[markIndex];
+        if (selectedAngle === undefined) return;
 
-    // Global durum (backend'den gelen) değiştiğinde, yerel state'i de senkronize et
-    useEffect(() => {
-        setLocalAngle(oscillationSettings.angle);
-    }, [oscillationSettings.angle]);
-
-
-    // Kullanıcı parmağını kaldırdığında, en yakın geçerli değere yapış ve backend'e gönder
-    const handleAngleChangeEnd = (valueFromSlider: number) => {
-        const snappedAngle = findClosestValue(valueFromSlider, VALID_ANGLES);
-        // Yeni ayarları backend'e bildir. Store güncellemesi backend'den gelen yayınla olacak.
-        sendOscillationSettings({ angle: snappedAngle });
+        // Hem arayüzü (iyimser güncelleme) hem de backend'i bu kesin değerle güncelle
+        setGlobalOscillationSettings({ angle: selectedAngle });
+        sendOscillationSettings({ angle: selectedAngle });
     };
+
+    // Mevcut Açı değerine karşılık gelen slider indeksini bul
+    const currentMarkIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
 
     return (
         <Paper withBorder p="md" h="100%">
@@ -36,20 +28,19 @@ export function SettingsPanel() {
                     <Stack gap="xl">
                         <Stack gap="xs">
                             <Text fw={500}>Osilasyon Açısı</Text>
-                            <Text fz={32} fw={700}>{localAngle}°</Text>
+                            <Text fz={32} fw={700}>{oscillationSettings.angle}°</Text>
                             <Slider
-                                // Değeri artık yerel state'den alıyoruz
-                                value={localAngle}
-                                // Sürüklerken sadece yerel state'i güncelle
-                                onChange={setLocalAngle}
-                                // Asıl işlem, kullanıcı slider'ı bıraktığında gerçekleşir
-                                onChangeEnd={handleAngleChangeEnd}
-                                min={VALID_ANGLES[0]}
-                                max={VALID_ANGLES[VALID_ANGLES.length - 1]}
-                                marks={VALID_ANGLES.map(angle => ({ value: angle, label: `${angle}°` }))}
-                                step={1}
-                                label={(value) => `${findClosestValue(value, VALID_ANGLES)}°`}
-                                mb={40}
+                                // Değer olarak 0'dan başlayan indeksi kullanıyoruz
+                                value={currentMarkIndex !== -1 ? currentMarkIndex : 0}
+                                // Değişim anında hem arayüzü hem backend'i güncelliyoruz
+                                onChange={handleSliderChange}
+                                min={0}
+                                max={VALID_ANGLES.length - 1}
+                                step={1} // Her adımda bir sonraki kalibrasyon noktasına atla
+                                label={null} // Değer etiketini gizle
+                                // İşaretleri Açı değerleri olarak göster
+                                marks={VALID_ANGLES.map((angle, index) => ({ value: index, label: `${angle}°` }))}
+                                mb={40} // Etiketlerin (marks) rahat sığması için alttan boşluk
                             />
                         </Stack>
                     </Stack>
