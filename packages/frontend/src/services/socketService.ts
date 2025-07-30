@@ -20,6 +20,7 @@ import {NotificationService} from "./notificationService.tsx";
 //
 // ===================================================================
 
+let isSocketInitialized = false;
 
 // --- Socket İstemcisi Kurulumu ---
 
@@ -47,6 +48,10 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SER
  * Bu fonksiyon, uygulamanın en başında (App.tsx içinde) yalnızca bir kez çağrılmalıdır.
  */
 export const listenToEvents = () => {
+    // Fonksiyon daha önce çalıştıysa, hiçbir şey yapmadan çık
+    if (isSocketInitialized) {
+        return;
+    }
     // Gerekli eylemleri store'dan alıyoruz.
     // Not: `getState()` anlık durumu almak içindir. Sürekli güncellenen değerler
     // için bileşen içinde hook (`useControllerStore()`) kullanılmalıdır.
@@ -96,6 +101,9 @@ export const listenToEvents = () => {
 
     // Tüm dinleyiciler kurulduktan sonra sunucuya manuel olarak bağlan.
     socket.connect();
+
+    // Fonksiyonun sonunda bayrağı true yapın ki bir daha çalışmasın
+    isSocketInitialized = true;
 };
 
 

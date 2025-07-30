@@ -22,6 +22,8 @@ import { useControllerStore } from '../store/useControllerStore';
  */
 let timerInterval: NodeJS.Timeout | null = null;
 
+let isSessionServiceInitialized = false;
+
 /**
  * Seans servisini başlatır.
  * Bu fonksiyon, `App.tsx` içinde uygulama ilk başladığında sadece bir kez çağrılır.
@@ -29,6 +31,10 @@ let timerInterval: NodeJS.Timeout | null = null;
  * zamanlayıcıyı yönetir.
  */
 export const initializeSessionService = () => {
+    // Fonksiyon daha önce çalıştıysa, hiçbir şey yapmadan çık
+    if (isSessionServiceInitialized) {
+        return;
+    }
     // `useControllerStore.subscribe` metodu, store'daki herhangi bir state
     // değişikliğinde içine verilen fonksiyonu tetikler.
     useControllerStore.subscribe(
@@ -59,4 +65,5 @@ export const initializeSessionService = () => {
             }
         }
     );
+    isSessionServiceInitialized = true;
 };
