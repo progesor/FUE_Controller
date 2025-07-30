@@ -10,7 +10,7 @@ const pwmToRpm = (pwm: number) => {
 
 export function DisplayPanel() {
     // Tüm verileri doğrudan store'dan alıyoruz
-    const { motorStatus, graftCount, sessionTime, incrementGraftCount, resetSession } = useControllerStore();
+    const { motor, graftCount, sessionTime, incrementGraftCount, resetSession } = useControllerStore();
 
     const formatTime = (timeInSeconds: number) => {
         const minutes = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
@@ -24,8 +24,8 @@ export function DisplayPanel() {
                 {/* RPM Göstergesi */}
                 <Stack gap={0} align="center">
                     <Text size="xl" c="dimmed">MOTOR HIZI</Text>
-                    <Text fz={80} fw={700} c={motorStatus.isActive ? 'teal.4' : 'dimmed'}>
-                        {pwmToRpm(motorStatus.pwm)}
+                    <Text fz={80} fw={700} c={motor.isActive ? 'teal.4' : 'dimmed'}>
+                        {pwmToRpm(motor.pwm)}
                     </Text>
                     <Text size="xl" c="dimmed">RPM</Text>
                 </Stack>

@@ -1,37 +1,34 @@
 // packages/shared-types/index.ts
-import type {OperatingMode, OscillationSettings} from "frontend/src/store/useControllerStore";
 
-/**
- * Motorun dönüş yönünü belirtir.
- * 0 = İleri (Saat Yönü)
- * 1 = Geri (Saat Yönü Tersi)
- */
 export type MotorDirection = 0 | 1;
+export type OperatingMode = 'continuous' | 'oscillation';
 
-/**
- * Motorun anlık durumunu temsil eden veri yapısı.
- * Bu yapı, arayüzde gösterilecek veriler için kullanılabilir.
- */
+export interface OscillationSettings {
+    angle: number;
+}
+
 export interface MotorStatus {
     pwm: number;
     direction: MotorDirection;
-    rpm?: number; // RPM ölçümü eklenirse kullanılacak (isteğe bağlı)
     isActive: boolean;
 }
 
-/**
- * Socket.IO ile backend'den frontend'e gönderilecek olaylar ve veri tipleri.
- */
+// Backend'in arayüze göndereceği tüm durumu içeren ana veri yapısı
+export interface DeviceStatus {
+    motor: MotorStatus;
+    operatingMode: OperatingMode;
+    oscillationSettings: OscillationSettings;
+}
+
+// Backend'den arayüze giden olayları güncelliyoruz
 export interface ServerToClientEvents {
-    'motor_status_update': (status: MotorStatus) => void;
+    'device_status_update': (status: DeviceStatus) => void; // motor_status_update yerine bunu kullanacağız
     'arduino_event': (data: { type: 'PEDAL' | 'FTSW', state: 0 | 1 }) => void;
     'arduino_disconnected': () => void;
     'arduino_connected': () => void;
 }
 
-/**
- * Socket.IO ile frontend'den backend'e gönderilecek olaylar ve veri tipleri.
- */
+// Arayüzden backend'e giden olaylar (değişiklik yok)
 export interface ClientToServerEvents {
     'set_motor_pwm': (value: number) => void;
     'set_motor_direction': (direction: MotorDirection) => void;

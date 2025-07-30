@@ -1,7 +1,7 @@
 // packages/frontend/src/store/useControllerStore.ts
 
 import { create } from 'zustand';
-import type { MotorStatus } from '../../../shared-types';
+import type {DeviceStatus, MotorStatus} from '../../../shared-types';
 
 export type OperatingMode = 'continuous' | 'oscillation';
 export type FtswMode = 'foot' | 'hand';
@@ -12,15 +12,11 @@ export interface OscillationSettings {
 }
 
 // Store'umuzun tutacağı verilerin yapısı
-interface ControllerState {
+interface ControllerState extends DeviceStatus {
     connectionStatus: 'connected' | 'disconnected' | 'connecting';
     arduinoStatus: 'connected' | 'disconnected';
-    motorStatus: MotorStatus;
     graftCount: number;
-    sessionTime: number; // saniye cinsinden
-    isSessionActive: boolean;
-    operatingMode: OperatingMode;
-    oscillationSettings: OscillationSettings;
+    sessionTime: number;
     ftswMode: FtswMode;
 }
 
@@ -28,45 +24,57 @@ interface ControllerState {
 interface ControllerActions {
     setConnectionStatus: (status: ControllerState['connectionStatus']) => void;
     setArduinoStatus: (status: ControllerState['arduinoStatus']) => void;
-    setMotorStatus: (status: Partial<MotorStatus>) => void;
     incrementGraftCount: () => void;
     resetSession: () => void;
-    startSession: () => void;
-    stopSession: () => void;
     tickSecond: () => void;
-    setOperatingMode: (mode: OperatingMode) => void;
-    setOscillationAngle: (angle: number) => void;
     setFtswMode: (mode: FtswMode) => void;
+    setMotorStatus: (newStatus: Partial<MotorStatus>) => void;
+    setOperatingMode: (mode: OperatingMode) => void;
+    setOscillationSettings: (settings: Partial<OscillationSettings>) => void;
+    updateDeviceStatus: (status: DeviceStatus) => void;
 }
 
-export const useControllerStore = create<ControllerState & ControllerActions>((set) => ({
-    // Başlangıç değerleri
+let timerInterval: NodeJS.Timeout | null = null;
+
+export const useControllerStore = create<ControllerState & ControllerActions>((set, get) => ({
     connectionStatus: 'connecting',
     arduinoStatus: 'disconnected',
-    motorStatus: { isActive: false, pwm: 100, direction: 0 }, // Başlangıç PWM'i belirleyelim
+    motor: { isActive: false, pwm: 100, direction: 0 },
+    operatingMode: 'continuous',
+    oscillationSettings: { angle: 180 },
     graftCount: 0,
     sessionTime: 0,
-    isSessionActive: false,
-    operatingMode: 'continuous', // Varsayılan mod
-    oscillationSettings: {
-        angle: 180, // Varsayılan açı
-    },
     ftswMode: 'foot',
 
-    // Aksiyonlar (Fonksiyonlar)
     setConnectionStatus: (status) => set({ connectionStatus: status }),
     setArduinoStatus: (status) => set({ arduinoStatus: status }),
-    setMotorStatus: (newStatus) => set((state) => ({
-        motorStatus: { ...state.motorStatus, ...newStatus }
-    })),
     incrementGraftCount: () => set((state) => ({ graftCount: state.graftCount + 1 })),
-    resetSession: () => set({ sessionTime: 0, graftCount: 0, isSessionActive: false }),
-    startSession: () => set({ isSessionActive: true }),
-    stopSession: () => set({ isSessionActive: false }),
+    resetSession: () => {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        set({ sessionTime: 0, graftCount: 0 });
+    },
     tickSecond: () => set((state) => ({ sessionTime: state.sessionTime + 1 })),
-    setOperatingMode: (mode) => set({ operatingMode: mode }),
-    setOscillationAngle: (angle) => set((state) => ({
-        oscillationSettings: { ...state.oscillationSettings, angle }
-    })),
     setFtswMode: (mode) => set({ ftswMode: mode }),
+    setMotorStatus: (newStatus) => set((state) => ({ motor: { ...state.motor, ...newStatus } })),
+    setOperatingMode: (mode) => set({ operatingMode: mode }),
+    setOscillationSettings: (settings) => set((state) => ({
+        oscillationSettings: { ...state.oscillationSettings, ...settings }
+    })),
+
+    updateDeviceStatus: (status) => {
+        const wasActive = get().motor.isActive;
+        set(status);
+        const isActive = status.motor.isActive;
+
+        if (isActive && !wasActive) {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => get().tickSecond(), 1000);
+        } else if (!isActive && wasActive) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+    },
 }));

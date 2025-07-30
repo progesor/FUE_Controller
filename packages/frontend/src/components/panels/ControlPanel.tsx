@@ -1,18 +1,13 @@
+// packages/frontend/src/components/panels/ControlPanel.tsx
+
 import { Paper, Title, Stack, Text, SegmentedControl, Center, Box, Slider, Button } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
-import { useControllerStore, type OperatingMode } from '../../store/useControllerStore';
-import {
-    sendMotorPwm,
-    sendStopMotor,
-    sendMotorDirection,
-    sendStartMotor,
-    sendStartOscillation,
-    sendOperatingMode // Yeni servis fonksiyonu
-} from '../../services/socketService';
-import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
-import type {MotorDirection} from "../../../../shared-types";
+import { useControllerStore } from '../../store/useControllerStore';
+import { sendMotorPwm, sendStopMotor, sendMotorDirection, sendStartMotor, sendStartOscillation, sendOperatingMode } from '../../services/socketService';
 
-// PWM'den en yakın kalibre edilmiş RPM değerini bulan fonksiyon
+import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
+import type {MotorDirection, OperatingMode} from "../../../../shared-types";
+
 const pwmToClosestRpm = (pwm: number) => {
     const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
         Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
@@ -21,13 +16,14 @@ const pwmToClosestRpm = (pwm: number) => {
 };
 
 export function ControlPanel() {
-    const { motorStatus, operatingMode, oscillationSettings, setMotorStatus } = useControllerStore();
+    // --- DEĞİŞİKLİK: 'motor' olarak okuyoruz ---
+    const { motor, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
 
     const handleSliderChange = (markIndex: number) => {
         const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
         if (!selectedMark) return;
-        setMotorStatus({ pwm: selectedMark.pwm });
-        sendMotorPwm(selectedMark.pwm);
+        setMotorStatus({ pwm: selectedMark.pwm }); // Yerel durumu anında güncelle
+        sendMotorPwm(selectedMark.pwm); // Backend'e bildir
     };
 
     const handleDirectionChange = (direction: MotorDirection) => {
@@ -35,20 +31,20 @@ export function ControlPanel() {
     };
 
     const handleModeChange = (mode: OperatingMode) => {
-        // Mod değişikliğini anında backend'e bildir
-        sendOperatingMode(mode);
+        setOperatingMode(mode); // Yerel durumu anında güncelle
+        sendOperatingMode(mode); // Backend'e bildir
     };
 
     const toggleMotorActive = () => {
-        if (motorStatus.isActive) {
+        if (motor.isActive) {
             sendStopMotor();
         } else {
-            const currentRpm = pwmToClosestRpm(motorStatus.pwm);
+            const currentRpm = pwmToClosestRpm(motor.pwm);
             if (operatingMode === 'continuous') {
                 sendStartMotor();
             } else {
                 sendStartOscillation({
-                    pwm: motorStatus.pwm,
+                    pwm: motor.pwm,
                     angle: oscillationSettings.angle,
                     rpm: currentRpm
                 });
@@ -63,7 +59,7 @@ export function ControlPanel() {
         return RPM_CALIBRATION_MARKS.indexOf(closestMark);
     }
 
-    const currentMarkIndex = findClosestMarkIndex(motorStatus.pwm);
+    const currentMarkIndex = findClosestMarkIndex(motor.pwm);
 
     return (
         <Paper withBorder p="md" h="100%">
@@ -72,7 +68,7 @@ export function ControlPanel() {
                 <Stack gap="xl">
                     <Stack gap="xs">
                         <Text fw={500}>Motor Hızı</Text>
-                        <Text fz={32} fw={700}>{pwmToClosestRpm(motorStatus.pwm)} RPM</Text>
+                        <Text fz={32} fw={700}>{pwmToClosestRpm(motor.pwm)} RPM</Text>
                         <Slider
                             value={currentMarkIndex !== -1 ? currentMarkIndex : 0}
                             onChange={handleSliderChange}
@@ -84,13 +80,12 @@ export function ControlPanel() {
                             mb={40}
                         />
                     </Stack>
-
                     <Stack gap="xs">
                         <Text fw={500}>Dönüş Yönü</Text>
                         <SegmentedControl
                             fullWidth
                             size="md"
-                            value={motorStatus.direction.toString()}
+                            value={motor.direction.toString()}
                             onChange={(value) => handleDirectionChange(parseInt(value) as MotorDirection)}
                             data={[
                                 { label: (<Center><IconArrowBackUp size={16} /><Box ml={10}>CCW</Box></Center>), value: '1' },
@@ -98,7 +93,6 @@ export function ControlPanel() {
                             ]}
                         />
                     </Stack>
-
                     <Stack gap="xs">
                         <Text fw={500}>Çalışma Modu</Text>
                         <SegmentedControl
@@ -113,15 +107,14 @@ export function ControlPanel() {
                         />
                     </Stack>
                 </Stack>
-
                 <Button
                     fullWidth
                     size="lg"
-                    color={motorStatus.isActive ? 'red' : 'green'}
-                    leftSection={motorStatus.isActive ? <IconPlayerStop /> : <IconPlayerPlay />}
+                    color={motor.isActive ? 'red' : 'green'}
+                    leftSection={motor.isActive ? <IconPlayerStop /> : <IconPlayerPlay />}
                     onClick={toggleMotorActive}
                 >
-                    {motorStatus.isActive ? 'DURDUR' : 'BAŞLAT'}
+                    {motor.isActive ? 'DURDUR' : 'BAŞLAT'}
                 </Button>
             </Stack>
         </Paper>

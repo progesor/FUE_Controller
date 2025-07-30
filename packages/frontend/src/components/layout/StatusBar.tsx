@@ -16,7 +16,7 @@ export function StatusBar() {
     const {
         connectionStatus,
         arduinoStatus,
-        motorStatus,
+        motor,
         operatingMode,
         oscillationSettings,
         ftswMode
@@ -54,8 +54,8 @@ export function StatusBar() {
 
                 {/* Orta Taraf: Anlık Cihaz Bilgileri */}
                 <Group gap="xs">
-                    <Badge color={motorStatus.isActive ? 'green' : 'gray'} leftSection={<IconPower size={14} />}>
-                        {motorStatus.isActive ? `${pwmToRpm(motorStatus.pwm)} RPM` : 'DURUYOR'}
+                    <Badge color={motor.isActive ? 'green' : 'gray'} leftSection={<IconPower size={14} />}>
+                        {motor.isActive ? `${pwmToRpm(motor.pwm)} RPM` : 'DURUYOR'}
                     </Badge>
 
                     <Badge

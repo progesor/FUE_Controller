@@ -1,7 +1,9 @@
+// packages/backend/src/services/arduinoService.ts
+
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import type { MotorDirection, MotorStatus, ClientToServerEvents, ServerToClientEvents, OperatingMode, OscillationSettings } from '../../../shared-types';
+import type { MotorDirection, ClientToServerEvents, ServerToClientEvents, OperatingMode, OscillationSettings, DeviceStatus } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration } from './calibrationService';
 
@@ -14,24 +16,20 @@ let oscillationInterval: NodeJS.Timeout | null = null;
 let oscillationDirection: MotorDirection = 0;
 
 // Backend'in Tek Doğruluk Kaynağı
-let deviceStatus = {
+let deviceStatus: DeviceStatus = {
     motor: {
         isActive: false,
         pwm: 100,
-        direction: 0 as MotorDirection, // Varsayılan yön: Saat yönü (CW)
+        direction: 0,
     },
-    operatingMode: 'continuous' as OperatingMode,
+    operatingMode: 'continuous',
     oscillationSettings: {
         angle: 180,
-    } as OscillationSettings,
+    },
 };
 
-/**
- * Bu servis modülünü ana Socket.IO sunucusu ile başlatır.
- * @param socketIoServer server.ts'de oluşturulan io nesnesi.
- */
 export const initializeArduinoService = (socketIoServer: Server<ClientToServerEvents, ServerToClientEvents>) => { io = socketIoServer; };
-const broadcastMotorStatus = () => { io?.emit('motor_status_update', deviceStatus.motor); };
+const broadcastDeviceStatus = () => { io?.emit('device_status_update', deviceStatus); };
 
 const findArduinoPort = async (): Promise<string | null> => {
     try {
@@ -53,8 +51,7 @@ const handleData = (data: string) => {
     if (data.startsWith('PONG') && !config.arduino.logPings) return;
     console.log(`[Arduino -> RPi]: ${data}`);
 
-    if (data.startsWith('EVT:PEDAL:1')) { // Pedal basıldı
-        // O anki seçili moda göre doğru işlemi başlat
+    if (data.startsWith('EVT:PEDAL:1')) {
         if (deviceStatus.operatingMode === 'continuous') {
             startMotor();
         } else {
@@ -62,7 +59,7 @@ const handleData = (data: string) => {
             startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm });
         }
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
-    } else if (data.startsWith('EVT:PEDAL:0')) { // Pedal bırakıldı
+    } else if (data.startsWith('EVT:PEDAL:0')) {
         stopMotor();
         io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
     } else if (data.startsWith('EVT:FTSW:')) {
@@ -92,7 +89,7 @@ export const connectToArduino = async () => {
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(pingArduino, config.arduino.pingInterval);
         io?.emit('arduino_connected');
-        broadcastMotorStatus(); // Bağlanır bağlanmaz mevcut durumu arayüze gönder
+        broadcastDeviceStatus(); // Bağlanır bağlanmaz mevcut durumu arayüze gönder
     });
 
     parser.on('data', handleData);
@@ -128,42 +125,41 @@ const sendCommand = (command: string) => {
 export const setMotorPwm = (value: number) => {
     const pwm = Math.max(0, Math.min(255, value));
     deviceStatus.motor.pwm = pwm;
-    // Eğer motor zaten çalışıyorsa, değişikliği anında uygula
     if (deviceStatus.motor.isActive) {
         if (deviceStatus.operatingMode === 'continuous') {
             sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
         } else {
-            // Osilasyon çalışırken hız değişirse, durdur ve yeni hızla yeniden başlat
             const rpm = Math.round((pwm / 255) * 18000);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm });
         }
     }
-    broadcastMotorStatus();
+    broadcastDeviceStatus();
 };
+
 
 export const setMotorDirection = (direction: MotorDirection) => {
     deviceStatus.motor.direction = direction;
-    // Yön değişikliği her zaman anında gönderilir
     sendCommand(`DEV.MOTOR.SET_DIR:${direction}`);
-    broadcastMotorStatus();
+    broadcastDeviceStatus();
 };
 
 export const setOperatingMode = (mode: OperatingMode) => {
     deviceStatus.operatingMode = mode;
-    // Eğer motor çalışıyorsa, durdur. Kullanıcı yeni modda tekrar başlatmalı.
     if (deviceStatus.motor.isActive) {
         stopMotor();
     }
+    broadcastDeviceStatus(); // Değişikliği arayüze bildir
 };
 
 export const setOscillationSettings = (settings: OscillationSettings) => {
     deviceStatus.oscillationSettings = settings;
-    // Eğer osilasyon modunda çalışıyorsa, durdur ve yeni ayarlarla yeniden başlat
     if (deviceStatus.motor.isActive && deviceStatus.operatingMode === 'oscillation') {
         const rpm = Math.round((deviceStatus.motor.pwm / 255) * 18000);
         startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm });
     }
+    broadcastDeviceStatus(); // Değişikliği arayüze bildir
 };
+
 
 export const stopMotor = () => {
     if (oscillationInterval) {
@@ -172,23 +168,23 @@ export const stopMotor = () => {
     }
     deviceStatus.motor.isActive = false;
     sendCommand('DEV.MOTOR.STOP');
-    broadcastMotorStatus();
+    broadcastDeviceStatus();
 };
 
 
 export const startMotor = () => {
-    if (deviceStatus.motor.isActive) return; // Zaten çalışıyorsa tekrar başlatma
+    if (deviceStatus.motor.isActive) return;
     deviceStatus.motor.isActive = true;
     if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100;
     sendCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
-    broadcastMotorStatus();
+    broadcastDeviceStatus();
 };
 
 export const startOscillation = (options: { pwm: number; angle: number; rpm: number }) => {
-    stopMotor(); // Her zaman önce durdurarak temiz bir başlangıç yap
+    stopMotor();
     deviceStatus.motor.isActive = true;
     deviceStatus.motor.pwm = options.pwm;
-    broadcastMotorStatus();
+    broadcastDeviceStatus();
 
     const ms = getMsFromCalibration(options.rpm, options.angle);
     if (ms === 0) {
@@ -206,6 +202,7 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
     performStep();
     oscillationInterval = setInterval(performStep, ms * 2 + 50);
 };
+
 
 export const pingArduino = () => {
     if (isConnected) {
