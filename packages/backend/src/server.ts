@@ -14,7 +14,7 @@ import {
     startMotor,
     startOscillation,
     setOscillationSettings,
-    setOperatingMode
+    setOperatingMode, getIsArduinoConnected
 } from './services/arduinoService';
 
 // ===================================================================
@@ -62,6 +62,12 @@ app.get('/', (req, res) => {
 // 'connection' olayı, yeni bir frontend istemcisi bağlandığında tetiklenir.
 io.on('connection', (socket) => {
     console.log(`Bir istemci bağlandı: ${socket.id}`);
+
+    if (getIsArduinoConnected()) {
+        socket.emit('arduino_connected');
+    } else {
+        socket.emit('arduino_disconnected');
+    }
 
     // --- Frontend'den Gelen Olayları Dinleme ---
     // Her bir 'socket.on' dinleyicisi, frontend'deki bir kullanıcı

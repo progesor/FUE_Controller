@@ -41,14 +41,17 @@ let oscillationInterval: NodeJS.Timeout | null = null;
 /** Osilasyonun bir sonraki adımda hangi yöne döneceğini tutar. */
 let oscillationDirection: MotorDirection = 0; // 0: CW, 1: CCW
 
+/** Bağlantı durumunu takip etmek için */
+let isArduinoConnected = false;
+
 /**
  * Cihazın anlık durumunu tutan tek gerçek kaynak (Single Source of Truth).
  * Tüm değişiklikler bu nesne üzerinden yapılır ve istemcilere yayınlanır.
  */
-let deviceStatus: DeviceStatus = {
+let deviceStatus: DeviceStatus & { } = {
     motor: { isActive: false, pwm: 100, direction: 0 },
     operatingMode: 'continuous',
-    oscillationSettings: { angle: 180 },
+    oscillationSettings: { angle: 180 }
 };
 
 
@@ -178,6 +181,7 @@ export const connectToArduino = async () => {
     // --- Seri Port Olay Dinleyicileri ---
     port.on('open', () => {
         console.log(`Arduino'ya başarıyla bağlanıldı: ${portPath}`);
+        isArduinoConnected = true;
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(() => sendCommand('SYS.PING'), config.arduino.pingInterval);
         io?.emit('arduino_connected');
@@ -188,6 +192,7 @@ export const connectToArduino = async () => {
 
     port.on('close', () => {
         console.warn("Arduino bağlantısı kesildi. Yeniden bağlanmaya çalışılıyor...");
+        isArduinoConnected = false;
         if (pingInterval) clearInterval(pingInterval);
         io?.emit('arduino_disconnected');
         setTimeout(connectToArduino, config.arduino.reconnectTimeout);
@@ -357,4 +362,12 @@ export const setOscillationSettings = (settings: OscillationSettings) => {
     } else {
         broadcastDeviceStatus();
     }
+};
+
+/**
+ * Arduino'nun mevcut bağlantı durumunu döndürür.
+ * @returns {boolean} Arduino bağlı ise true, değilse false.
+ */
+export const getIsArduinoConnected = () => {
+    return isArduinoConnected;
 };
