@@ -1,6 +1,16 @@
 // packages/backend/src/services/calibrationService.ts
 
-// Orijinal Arduino kodundaki E...Hiz ve ...Hiz dizilerini birleştiriyoruz.
+// Orijinal Arduino kodumuzdaki `EOscHiz` ve `OscHiz` dizilerinin birleşimi.
+const RPM_CALIBRATION_MARKS = [
+    { rpm: 500, pwm: 8 }, { rpm: 750, pwm: 16 }, { rpm: 1000, pwm: 22 },
+    { rpm: 1090, pwm: 23 }, { rpm: 1280, pwm: 25 }, { rpm: 1380, pwm: 26 },
+    { rpm: 1470, pwm: 27 }, { rpm: 1660, pwm: 38 }, { rpm: 1750, pwm: 42 },
+    { rpm: 1850, pwm: 45 }, { rpm: 1940, pwm: 53 }, { rpm: 2040, pwm: 60 },
+    { rpm: 2130, pwm: 70 }, { rpm: 2230, pwm: 82 }, { rpm: 2320, pwm: 90 },
+    { rpm: 2410, pwm: 120 }, { rpm: 2510, pwm: 160 }, { rpm: 2600, pwm: 230 },
+    { rpm: 2700, pwm: 255 },
+];
+
 // Bu harita, arayüzde gösterilen RPM değerini, bizim kullanacağımız PWM indeksine çevirir.
 const rpmToPwmIndexMap = new Map<number, number>([
     [500, 0], [1090, 1], [750, 2], [1280, 3], [1000, 4], [1470, 5],
@@ -57,4 +67,17 @@ export const getMsFromCalibration = (targetRpm: number, targetAngle: number): nu
     }
 
     return calibrationTable[speedIndex][angleIndex];
+};
+
+/**
+ * Verilen bir PWM değerine en yakın kalibre edilmiş RPM değerini bulur.
+ * @param pwm Motorun anlık PWM değeri
+ * @returns {number} Kalibrasyon tablosundaki en yakın RPM değeri
+ */
+export const pwmToCalibratedRpm = (pwm: number): number => {
+    if (pwm === 0) return 0;
+    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
+        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
+    );
+    return closestMark.rpm;
 };

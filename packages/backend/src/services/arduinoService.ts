@@ -5,7 +5,7 @@ import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
 import type { MotorDirection, ClientToServerEvents, ServerToClientEvents, OperatingMode, OscillationSettings, DeviceStatus } from '../../../shared-types';
 import config from '../config';
-import { getMsFromCalibration } from './calibrationService';
+import {getMsFromCalibration, pwmToCalibratedRpm} from './calibrationService';
 
 let io: Server<ClientToServerEvents, ServerToClientEvents> | null = null;
 let port: SerialPort | null = null;
@@ -55,7 +55,7 @@ const handleData = (data: string) => {
         if (deviceStatus.operatingMode === 'continuous') {
             startMotor();
         } else {
-            const rpm = Math.round((deviceStatus.motor.pwm / 255) * 18000);
+            const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm });
         }
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
@@ -129,7 +129,7 @@ export const setMotorPwm = (value: number) => {
         if (deviceStatus.operatingMode === 'continuous') {
             sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
         } else {
-            const rpm = Math.round((pwm / 255) * 18000);
+            const rpm = pwmToCalibratedRpm(pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm });
         }
     }
@@ -154,7 +154,7 @@ export const setOperatingMode = (mode: OperatingMode) => {
 export const setOscillationSettings = (settings: OscillationSettings) => {
     deviceStatus.oscillationSettings = settings;
     if (deviceStatus.motor.isActive && deviceStatus.operatingMode === 'oscillation') {
-        const rpm = Math.round((deviceStatus.motor.pwm / 255) * 18000);
+        const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
         startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm });
     }
     broadcastDeviceStatus(); // Değişikliği arayüze bildir
