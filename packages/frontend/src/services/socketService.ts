@@ -18,7 +18,7 @@ export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(SER
  * Bu fonksiyon App.tsx'de sadece bir kez çağrılacak.
  */
 export const listenToEvents = () => {
-    const { setConnectionStatus, setMotorStatus, startSession, stopSession,incrementGraftCount,  } = useControllerStore.getState();
+    const { setConnectionStatus, setArduinoStatus, setMotorStatus, startSession, stopSession,incrementGraftCount,  } = useControllerStore.getState();
 
     socket.on('connect', () => {
         setConnectionStatus('connected');
@@ -32,12 +32,13 @@ export const listenToEvents = () => {
 
     // Arduino bağlantı olaylarını dinliyoruz
     socket.on('arduino_connected', () => {
-        // Bu olayı daha detaylı bir durum için kullanabiliriz.
         console.log('Arduino donanımı bağlandı!');
+        setArduinoStatus('connected');
     });
 
     socket.on('arduino_disconnected', () => {
         console.warn('Arduino donanım bağlantısı kesildi!');
+        setArduinoStatus('disconnected');
     });
 
     // Arduino'dan gelen pedal, switch gibi olayları dinliyoruz

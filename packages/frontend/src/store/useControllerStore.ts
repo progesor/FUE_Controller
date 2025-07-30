@@ -13,6 +13,7 @@ export interface OscillationSettings {
 // Store'umuzun tutacağı verilerin yapısı
 interface ControllerState {
     connectionStatus: 'connected' | 'disconnected' | 'connecting';
+    arduinoStatus: 'connected' | 'disconnected';
     motorStatus: MotorStatus;
     graftCount: number;
     sessionTime: number; // saniye cinsinden
@@ -24,6 +25,7 @@ interface ControllerState {
 // Store'daki verileri değiştirecek fonksiyonların yapısı
 interface ControllerActions {
     setConnectionStatus: (status: ControllerState['connectionStatus']) => void;
+    setArduinoStatus: (status: ControllerState['arduinoStatus']) => void;
     setMotorStatus: (status: Partial<MotorStatus>) => void;
     incrementGraftCount: () => void;
     resetSession: () => void;
@@ -37,6 +39,7 @@ interface ControllerActions {
 export const useControllerStore = create<ControllerState & ControllerActions>((set) => ({
     // Başlangıç değerleri
     connectionStatus: 'connecting',
+    arduinoStatus: 'disconnected',
     motorStatus: { isActive: false, pwm: 100, direction: 0 }, // Başlangıç PWM'i belirleyelim
     graftCount: 0,
     sessionTime: 0,
@@ -48,6 +51,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
 
     // Aksiyonlar (Fonksiyonlar)
     setConnectionStatus: (status) => set({ connectionStatus: status }),
+    setArduinoStatus: (status) => set({ arduinoStatus: status }),
     setMotorStatus: (newStatus) => set((state) => ({
         motorStatus: { ...state.motorStatus, ...newStatus }
     })),
