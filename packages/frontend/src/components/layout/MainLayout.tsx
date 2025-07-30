@@ -1,6 +1,6 @@
 // packages/frontend/src/components/layout/MainLayout.tsx
 
-import { Grid, Paper, Title } from '@mantine/core';
+import { Grid } from '@mantine/core';
 import { ControlPanel } from '../panels/ControlPanel';
 import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';

@@ -64,7 +64,7 @@ export const sendStopMotor = () => {
     socket.emit('stop_motor');
 }
 
-export const sendStartOscillation = (options: { pwm: number, angle: number }) => {
+export const sendStartOscillation = (options: { pwm: number, angle: number, rpm: number  }) => {
     socket.emit('start_oscillation', options);
 }
 

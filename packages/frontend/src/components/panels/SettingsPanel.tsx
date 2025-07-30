@@ -2,7 +2,6 @@ import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
 import { sendOscillationSettings } from '../../services/socketService';
-import React from 'react';
 
 export function SettingsPanel() {
     const { operatingMode, oscillationSettings, setOscillationSettings: setGlobalOscillationSettings } = useControllerStore();
