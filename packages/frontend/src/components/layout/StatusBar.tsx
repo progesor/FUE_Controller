@@ -1,18 +1,31 @@
 // packages/frontend/src/components/layout/StatusBar.tsx
 
+import { useEffect, useState } from 'react';
 import { Paper, Group, Text, Divider, Badge } from '@mantine/core';
-import { useControllerStore } from '../../store/useControllerStore';
 import {
     IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX,
     IconPower, IconInfinity, IconRepeat, IconHandGrab
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useControllerStore } from '../../store/useControllerStore';
 import { socket } from '../../services/socketService';
 
+/**
+ * PWM değerini (0-255) yaklaşık RPM değerine çeviren yardımcı fonksiyon.
+ * @param pwm - 0 ile 255 arasında bir PWM değeri.
+ * @returns {number} Yaklaşık RPM değeri.
+ */
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
+/**
+ * Uygulamanın en altında yer alan ve anlık durum bilgilerini gösteren bileşen.
+ * Sunucu ve cihaz bağlantısı, motor durumu, çalışma modu ve pedal durumu gibi
+ * kritik bilgileri tek bir bakışta kullanıcıya sunar.
+ * @returns {JSX.Element} Durum çubuğu JSX'i.
+ */
 export function StatusBar() {
-    // Store'dan gerekli tüm durumları çekiyoruz
+    // Gerekli tüm anlık durumları `useControllerStore` hook'u ile store'dan çekiyoruz.
+    // Bu hook sayesinde, store'daki bu değerler her değiştiğinde bileşen otomatik
+    // olarak yeniden render edilir.
     const {
         connectionStatus,
         arduinoStatus,
@@ -22,33 +35,43 @@ export function StatusBar() {
         ftswMode
     } = useControllerStore();
 
+    // Pedal basılma durumu, anlık bir olay olduğu için store'da tutmak yerine
+    // bu bileşenin kendi içinde bir state olarak yönetilir.
     const [isPedalPressed, setIsPedalPressed] = useState(false);
 
+    // Bu useEffect, bileşen ilk render edildiğinde çalışır ve 'arduino_event'
+    // olayını dinlemeye başlar.
     useEffect(() => {
+        // Arduino'dan PEDAL olayı geldiğinde çalışacak olan fonksiyon.
         const onArduinoEvent = (data: { type: 'PEDAL' | 'FTSW', state: 0 | 1 }) => {
             if (data.type === 'PEDAL') {
+                // Gelen state 1 ise (basıldı) true, 0 ise (bırakıldı) false yap.
                 setIsPedalPressed(data.state === 1);
             }
         };
+
         socket.on('arduino_event', onArduinoEvent);
+
+        // Cleanup fonksiyonu: Bileşen ekrandan kaldırıldığında (unmount)
+        // bu olay dinleyicisini kaldırır. Bu, hafıza sızıntılarını önler.
         return () => {
             socket.off('arduino_event', onArduinoEvent);
         };
-    }, []);
+    }, []); // Boş bağımlılık dizisi, bu etkinin sadece bir kez çalışmasını sağlar.
 
     return (
         <Paper withBorder p="xs" radius="md">
             <Group justify="space-between" wrap="nowrap">
                 {/* Sol Taraf: Bağlantı Durumları */}
                 <Group gap="xs">
-                    <Group gap={5}>
+                    <Group gap={5} align="center">
                         {connectionStatus === 'connected' ? <IconWifi size={20} color="green" /> : <IconWifiOff size={20} color="red" />}
-                        <Text size="xs">Sunucu</Text>
+                        <Text size="sm">Sunucu</Text>
                     </Group>
                     <Divider orientation="vertical" />
-                    <Group gap={5}>
+                    <Group gap={5} align="center">
                         {arduinoStatus === 'connected' ? <IconUsb size={20} color="green" /> : <IconPlugConnectedX size={20} color="red" />}
-                        <Text size="xs">Cihaz</Text>
+                        <Text size="sm">Cihaz</Text>
                     </Group>
                 </Group>
 
@@ -63,7 +86,7 @@ export function StatusBar() {
                         color="cyan"
                         leftSection={operatingMode === 'continuous' ? <IconInfinity size={14} /> : <IconRepeat size={14} />}
                     >
-                        {operatingMode === 'continuous' ? 'Sürekli' : `Osilasyon: ${oscillationSettings.angle}°`}
+                        {operatingMode === 'continuous' ? 'Sürekli Mod' : `Osilasyon: ${oscillationSettings.angle}°`}
                     </Badge>
                 </Group>
 
@@ -76,11 +99,9 @@ export function StatusBar() {
                     >
                         {ftswMode === 'foot' ? 'Ayak Kontrol' : 'El Kontrol'}
                     </Badge>
+                    {/* `isPedalPressed` true ise, "Pedal Aktif" rozetini göster */}
                     {isPedalPressed && (
-                        <Badge
-                            variant="filled"
-                            color="blue"
-                        >
+                        <Badge variant="filled" color="blue">
                             Pedal Aktif
                         </Badge>
                     )}

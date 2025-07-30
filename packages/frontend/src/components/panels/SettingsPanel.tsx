@@ -1,47 +1,70 @@
+// packages/frontend/src/components/panels/SettingsPanel.tsx
+
 import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
 import { sendOscillationSettings } from '../../services/socketService';
 
+/**
+ * Osilasyon modu gibi belirli durumlara özel ayarların yapıldığı panel.
+ * Yalnızca ilgili çalışma modu seçildiğinde görünür hale gelerek
+ * arayüzün sade kalmasını sağlar.
+ * @returns {JSX.Element} Ayar paneli JSX'i.
+ */
 export function SettingsPanel() {
+    // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
     const { operatingMode, oscillationSettings, setOscillationSettings: setGlobalOscillationSettings } = useControllerStore();
 
-    // Slider'dan gelen DEĞER, artık Açı değil, 0'dan başlayan bir İNDEKSTİR.
+    /**
+     * Osilasyon açısı slider'ı hareket ettirildiğinde tetiklenir.
+     * @param markIndex - Slider üzerindeki seçilen geçerli açının indeksi.
+     */
     const handleSliderChange = (markIndex: number) => {
+        // İndekse karşılık gelen açı değerini kalibrasyon dizisinden al.
         const selectedAngle = VALID_ANGLES[markIndex];
-        if (selectedAngle === undefined) return;
+        if (selectedAngle === undefined) return; // Geçersiz bir indeks ise işlemi durdur.
 
-        // Hem arayüzü (iyimser güncelleme) hem de backend'i bu kesin değerle güncelle
+        // 1. İyimser Güncelleme (Optimistic Update): Arayüzün anında tepki vermesi için
+        //    store'daki osilasyon ayarlarını hemen güncelle.
         setGlobalOscillationSettings({ angle: selectedAngle });
+
+        // 2. Backend'e Bildirim: Yeni açı ayarını `socketService` aracılığıyla
+        //    sunucuya ve dolayısıyla Arduino'ya gönder.
         sendOscillationSettings({ angle: selectedAngle });
     };
 
-    // Mevcut Açı değerine karşılık gelen slider indeksini bul
+    // Mevcut osilasyon açısının `VALID_ANGLES` dizisindeki indeksini bul.
+    // Bu, slider'ın doğru konumda başlaması ve güncellenmesi için gereklidir.
     const currentMarkIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
 
     return (
         <Paper withBorder p="md" h="100%">
             <Stack>
                 <Title order={3} mb="md">Ayar Paneli</Title>
+
+                {/*
+                 * Collapse bileşeni, `in` prop'u `true` olduğunda içeriğini gösterir.
+                 * Bu sayede, osilasyon ayarları sadece `operatingMode` 'oscillation'
+                 * olduğunda görünür olur.
+                 */}
                 <Collapse in={operatingMode === 'oscillation'}>
                     <Stack gap="xl">
                         <Stack gap="xs">
                             <Text fw={500}>Osilasyon Açısı</Text>
                             <Text fz={32} fw={700}>{oscillationSettings.angle}°</Text>
                             <Slider
-                                // Değer olarak 0'dan başlayan indeksi kullanıyoruz
+                                // Slider'ın değeri, 0'dan başlayan `markIndex`'tir.
                                 value={currentMarkIndex !== -1 ? currentMarkIndex : 0}
-                                // Değişim anında hem arayüzü hem backend'i güncelliyoruz
                                 onChange={handleSliderChange}
                                 min={0}
                                 max={VALID_ANGLES.length - 1}
-                                step={1} // Her adımda bir sonraki kalibrasyon noktasına atla
-                                label={null} // Değer etiketini gizle
-                                // İşaretleri Açı değerleri olarak göster
+                                step={1} // Her adımda bir sonraki geçerli açıya atla
+                                label={null} // Etiketler (marks) zaten yeterli olduğu için ek etiketi gizle
                                 marks={VALID_ANGLES.map((angle, index) => ({ value: index, label: `${angle}°` }))}
-                                mb={40} // Etiketlerin (marks) rahat sığması için alttan boşluk
+                                mb={40} // `marks` etiketlerinin rahat sığması için boşluk
                             />
                         </Stack>
+                        {/* Buraya gelecekte başka osilasyon ayarları eklenebilir. */}
                     </Stack>
                 </Collapse>
             </Stack>

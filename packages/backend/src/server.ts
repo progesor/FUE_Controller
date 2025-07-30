@@ -1,3 +1,5 @@
+// packages/backend/src/server.ts
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -10,37 +12,65 @@ import {
     setMotorDirection,
     stopMotor,
     startMotor,
-    startOscillation, setOscillationSettings, setOperatingMode
+    startOscillation,
+    setOscillationSettings,
+    setOperatingMode
 } from './services/arduinoService';
 
-// Sunucu kurulumu
+// ===================================================================
+//
+//                        FUE CONTROLLER BACKEND SUNUCUSU
+//
+// -------------------------------------------------------------------
+// Açıklama:
+// Bu dosya, projenin backend sunucusunu başlatır. Express.js ile temel
+// bir HTTP sunucusu kurar ve bu sunucu üzerine Socket.IO'yu entegre
+// ederek frontend ile gerçek zamanlı çift yönlü iletişim sağlar.
+// Gelen tüm komutları `arduinoService`'e yönlendirir.
+//
+// ===================================================================
+
+
+// --- Sunucu ve Socket.IO Kurulumu ---
+
 const app = express();
 const httpServer = createServer(app);
 
-// Socket.IO sunucusunu tip-güvenli olarak oluşturma
+// Socket.IO sunucusunu, paylaşılan tipleri (shared-types) kullanarak
+// tip-güvenli (type-safe) bir şekilde oluştur. Bu sayede, gönderilen ve
+// alınan olayların veri yapıları TypeScript tarafından kontrol edilir.
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-    cors: config.socket.cors
+    cors: config.socket.cors // Frontend'den gelen isteklere izin vermek için CORS ayarları
 });
 
 const PORT = config.server.port;
 
-// Temel bir HTTP endpoint'i (test için)
+
+// --- Temel HTTP Endpoint ---
+
+// Sunucunun çalışıp çalışmadığını kontrol etmek için basit bir test endpoint'i.
+// Tarayıcıdan http://localhost:3000 adresine gidildiğinde bu mesaj görünür.
 app.get('/', (req, res) => {
     res.send('FUE Controller Backend çalışıyor!');
 });
 
-// Socket.IO bağlantı mantığı
+
+// ===================================================================
+//                        Socket.IO Olay Yönetimi
+// ===================================================================
+
+// 'connection' olayı, yeni bir frontend istemcisi bağlandığında tetiklenir.
 io.on('connection', (socket) => {
     console.log(`Bir istemci bağlandı: ${socket.id}`);
 
-    // --- DEĞİŞİKLİK: Frontend'den gelen olayları dinliyoruz ---
+    // --- Frontend'den Gelen Olayları Dinleme ---
+    // Her bir 'socket.on' dinleyicisi, frontend'deki bir kullanıcı
+    // etkileşimine karşılık gelir ve ilgili arduinoService fonksiyonunu çağırır.
+
     socket.on('set_motor_pwm', (value) => {
         console.log(`[Client -> Server]: set_motor_pwm isteği: ${value}`);
         setMotorPwm(value);
     });
-
-    socket.on('set_operating_mode', (mode) => {setOperatingMode(mode)});
-    socket.on('set_oscillation_settings', (settings) => setOscillationSettings(settings));
 
     socket.on('set_motor_direction', (direction) => {
         console.log(`[Client -> Server]: set_motor_direction isteği: ${direction}`);
@@ -57,29 +87,39 @@ io.on('connection', (socket) => {
         stopMotor();
     });
 
-    // Osilasyon için daha karmaşık bir olay (şimdilik iskeleti)
     socket.on('start_oscillation', (options) => {
         console.log(`[Client -> Server]: start_oscillation isteği:`, options);
-        // --- DEĞİŞİKLİK BURADA ---
         startOscillation(options);
     });
 
+    socket.on('set_operating_mode', (mode) => {
+        console.log(`[Client -> Server]: set_operating_mode isteği: ${mode}`);
+        setOperatingMode(mode);
+    });
 
+    socket.on('set_oscillation_settings', (settings) => {
+        console.log(`[Client -> Server]: set_oscillation_settings isteği:`, settings);
+        setOscillationSettings(settings);
+    });
+
+    // 'disconnect' olayı, bir istemcinin bağlantısı koptuğunda tetiklenir.
     socket.on('disconnect', () => {
         console.log(`İstemcinin bağlantısı kesildi: ${socket.id}`);
     });
 });
 
-// Sunucuyu başlatma
+
+// ===================================================================
+//                        Sunucuyu Başlatma
+// ===================================================================
+
 httpServer.listen(PORT, () => {
     console.log(`Backend sunucusu http://localhost:${PORT} adresinde başlatıldı.`);
 
-    // --- DEĞİŞİKLİK: Servisi io nesnesi ile başlatıyoruz ---
+    // Arduino servisini, tüm istemcilere yayın yapabilmesi için
+    // oluşturduğumuz 'io' nesnesi ile başlat.
     initializeArduinoService(io);
 
-    // Arduino'ya bağlanmayı başlat
+    // Arduino'ya bağlanma sürecini başlat.
     connectToArduino();
 });
-
-// TODO: Arduino servisinden gelen olayları (handleData içinde) alıp
-// io.emit(...) ile tüm istemcilere gönderecek olan bir mekanizma kurulacak.
