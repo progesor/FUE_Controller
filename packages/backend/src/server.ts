@@ -14,7 +14,7 @@ import {
     startMotor,
     startOscillation,
     setOscillationSettings,
-    setOperatingMode, getIsArduinoConnected
+    setOperatingMode, getIsArduinoConnected, sendRawArduinoCommand
 } from './services/arduinoService';
 
 // ===================================================================
@@ -111,6 +111,12 @@ io.on('connection', (socket) => {
     // 'disconnect' olayı, bir istemcinin bağlantısı koptuğunda tetiklenir.
     socket.on('disconnect', () => {
         console.log(`İstemcinin bağlantısı kesildi: ${socket.id}`);
+    });
+
+    // YENİ DİNLEYİCİ: Ar-Ge panelinden gelen ham komutları dinle
+    socket.on('send_raw_command', (command) => {
+        console.log(`[Ar-Ge Client -> Server]: Ham komut isteği: ${command}`);
+        sendRawArduinoCommand(command); // Doğrudan arduinoService'e pasla
     });
 });
 

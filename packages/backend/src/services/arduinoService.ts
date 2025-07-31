@@ -85,7 +85,7 @@ const broadcastDeviceStatus = () => {
  * Arduino'ya belirli bir formatta komut gönderir.
  * @param command - Arduino'ya gönderilecek 'GRUP.KOMUT:PARAMETRE' formatındaki dize.
  */
-const sendCommand = (command: string) => {
+export const sendRawArduinoCommand = (command: string) => {
     if (port && port.isOpen) {
         port.write(`${command}\n`, (err) => {
             if (err) {
@@ -183,7 +183,7 @@ export const connectToArduino = async () => {
         console.log(`Arduino'ya başarıyla bağlanıldı: ${portPath}`);
         isArduinoConnected = true;
         if (pingInterval) clearInterval(pingInterval);
-        pingInterval = setInterval(() => sendCommand('SYS.PING'), config.arduino.pingInterval);
+        pingInterval = setInterval(() => sendRawArduinoCommand('SYS.PING'), config.arduino.pingInterval);
         io?.emit('arduino_connected');
         broadcastDeviceStatus(); // Bağlanır bağlanmaz mevcut durumu arayüze gönder
     });
@@ -219,7 +219,7 @@ const internalStopMotor = () => {
         clearInterval(oscillationInterval);
         oscillationInterval = null;
     }
-    sendCommand('DEV.MOTOR.STOP');
+    sendRawArduinoCommand('DEV.MOTOR.STOP');
 };
 
 /**
@@ -245,8 +245,8 @@ export const startMotor = (isContinuation = false) => {
     deviceStatus.motor.isActive = true;
     if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100; // Eğer hız 0 ise varsayılan bir değere çek
 
-    sendCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
-    sendCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
+    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+    sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
     broadcastDeviceStatus();
 };
 
@@ -274,8 +274,8 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
 
     // Osilasyon adımını gerçekleştiren fonksiyon
     const performStep = () => {
-        sendCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
-        sendCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${ms}`);
+        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
+        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${ms}`);
         // Her adımdan sonra yönü tersine çevir
         oscillationDirection = oscillationDirection === 0 ? 1 : 0;
     };
@@ -300,7 +300,7 @@ export const setMotorPwm = (value: number) => {
 
     if (wasActive) {
         if (deviceStatus.operatingMode === 'continuous') {
-            sendCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+            sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
         } else {
             // Osilasyon modundaysa, yeni hıza göre osilasyonu yeniden başlat
             const rpm = pwmToCalibratedRpm(pwm);
@@ -316,7 +316,7 @@ export const setMotorPwm = (value: number) => {
  */
 export const setMotorDirection = (direction: MotorDirection) => {
     deviceStatus.motor.direction = direction;
-    sendCommand(`DEV.MOTOR.SET_DIR:${direction}`);
+    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${direction}`);
     broadcastDeviceStatus();
 };
 

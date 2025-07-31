@@ -1,12 +1,13 @@
 // packages/frontend/src/components/layout/MainLayout.tsx
 
 import { Tabs, Box } from '@mantine/core';
-import { IconSettings, IconTerminal2 } from '@tabler/icons-react';
+import {IconFlask, IconSettings, IconTerminal2} from '@tabler/icons-react';
 import { ControlPanel } from '../panels/ControlPanel';
 import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';
 import { DevConsolePanel } from '../panels/DevConsolePanel';
 import { StatusBar } from './StatusBar.tsx';
+import {RndPanel} from "../panels/RndPanel.tsx";
 
 export function MainLayout() {
     return (
@@ -36,6 +37,9 @@ export function MainLayout() {
                             <Tabs.Tab value="console" leftSection={<IconTerminal2 size={16} />}>
                                 Konsol
                             </Tabs.Tab>
+                            <Tabs.Tab value="rnd" leftSection={<IconFlask size={16} />}>
+                                Ar-Ge
+                            </Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="settings" pt="xs" style={{ flex: 1, overflow: 'auto' }}>
@@ -43,6 +47,9 @@ export function MainLayout() {
                         </Tabs.Panel>
                         <Tabs.Panel value="console" pt="xs" style={{ flex: 1, overflow: 'hidden' }}>
                             <DevConsolePanel />
+                        </Tabs.Panel>
+                        <Tabs.Panel value="rnd" pt="xs" style={{ flex: 1, overflow: 'auto' }}>
+                            <RndPanel />
                         </Tabs.Panel>
                     </Tabs>
                 </Box>

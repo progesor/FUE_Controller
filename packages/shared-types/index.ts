@@ -96,4 +96,6 @@ export interface ClientToServerEvents {
     'set_operating_mode': (mode: OperatingMode) => void;
     /** Osilasyon ayarlarını (örn: açı) güncellemek için gönderilir. */
     'set_oscillation_settings': (settings: OscillationSettings) => void;
+    /** Ar-Ge panelinden ham Arduino komutu göndermek için kullanılır. */
+    'send_raw_command': (command: string) => void;
 }
