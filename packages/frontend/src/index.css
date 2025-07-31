@@ -5,9 +5,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #1A1B26; /* AppShell ile uyumlu arkaplan rengi */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,16 +17,12 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  /* Flexbox stillerini kaldırıyoruz çünkü AppShell zaten tüm ekranı yönetiyor */
 }
 
+/* #root için de ortalama stillerini kaldırabiliriz */
 #root {
   width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100vh; /* Kök elemanın tüm ekranı kapladığından emin olalım */
 }

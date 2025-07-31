@@ -17,8 +17,8 @@ const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
     return (
         <Box mb="sm">
             <Group justify="space-between">
-                <Text size="xs" c="dimmed">
-                    <Badge
+                <Text size="xs" c="dimmed" component="div">
+                <Badge
                         size="xs"
                         variant="light"
                         color={entry.source === 'backend' ? 'grape' : 'blue'}

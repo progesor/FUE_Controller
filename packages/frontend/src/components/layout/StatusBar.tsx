@@ -1,13 +1,15 @@
 // packages/frontend/src/components/layout/StatusBar.tsx
 
 import { useEffect, useState } from 'react';
-import { Paper, Group, Text, Divider, Badge } from '@mantine/core';
+import {Paper, Group, Text, Divider, Badge, ActionIcon} from '@mantine/core';
 import {
     IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX,
-    IconPower, IconInfinity, IconRepeat, IconHandGrab
+    IconPower, IconInfinity, IconRepeat, IconHandGrab, IconFlask
 } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
 import { socket } from '../../services/socketService';
+import {useDisclosure} from "@mantine/hooks";
+import {RndModal} from "../modals/RndModal.tsx";
 
 /**
  * PWM değerini (0-255) yaklaşık RPM değerine çeviren yardımcı fonksiyon.
@@ -39,6 +41,9 @@ export function StatusBar() {
     // bu bileşenin kendi içinde bir state olarak yönetilir.
     const [isPedalPressed, setIsPedalPressed] = useState(false);
 
+    const [rndModalOpened, { open: openRndModal, close: closeRndModal }] = useDisclosure(false);
+
+
     // Bu useEffect, bileşen ilk render edildiğinde çalışır ve 'arduino_event'
     // olayını dinlemeye başlar.
     useEffect(() => {
@@ -59,54 +64,68 @@ export function StatusBar() {
         };
     }, []); // Boş bağımlılık dizisi, bu etkinin sadece bir kez çalışmasını sağlar.
 
+
+
+
+
     return (
-        <Paper withBorder p="xs" radius="md">
-            <Group justify="space-between" wrap="nowrap">
-                {/* Sol Taraf: Bağlantı Durumları */}
-                <Group gap="xs">
-                    <Group gap={5} align="center">
-                        {connectionStatus === 'connected' ? <IconWifi size={20} color="green" /> : <IconWifiOff size={20} color="red" />}
-                        <Text size="sm">Sunucu</Text>
+        <>
+            <RndModal opened={rndModalOpened} onClose={closeRndModal} />
+
+            <Paper withBorder p="xs" radius="md">
+                <Group justify="space-between" wrap="nowrap">
+                    {/* Sol Taraf: Bağlantı Durumları */}
+                    <Group gap="xs">
+                        <Group gap={5} align="center">
+                            {connectionStatus === 'connected' ? <IconWifi size={20} color="green" /> : <IconWifiOff size={20} color="red" />}
+                            <Text size="sm">Sunucu</Text>
+                        </Group>
+                        <Divider orientation="vertical" />
+                        <Group gap={5} align="center">
+                            {arduinoStatus === 'connected' ? <IconUsb size={20} color="green" /> : <IconPlugConnectedX size={20} color="red" />}
+                            <Text size="sm">Cihaz</Text>
+                        </Group>
                     </Group>
-                    <Divider orientation="vertical" />
-                    <Group gap={5} align="center">
-                        {arduinoStatus === 'connected' ? <IconUsb size={20} color="green" /> : <IconPlugConnectedX size={20} color="red" />}
-                        <Text size="sm">Cihaz</Text>
-                    </Group>
-                </Group>
 
-                {/* Orta Taraf: Anlık Cihaz Bilgileri */}
-                <Group gap="xs">
-                    <Badge color={motor.isActive ? 'green' : 'gray'} leftSection={<IconPower size={14} />}>
-                        {motor.isActive ? `${pwmToRpm(motor.pwm)} RPM` : 'DURUYOR'}
-                    </Badge>
-
-                    <Badge
-                        variant="light"
-                        color="cyan"
-                        leftSection={operatingMode === 'continuous' ? <IconInfinity size={14} /> : <IconRepeat size={14} />}
-                    >
-                        {operatingMode === 'continuous' ? 'Sürekli Mod' : `Osilasyon: ${oscillationSettings.angle}°`}
-                    </Badge>
-                </Group>
-
-                {/* Sağ Taraf: Kontrol Modu ve Pedal Durumu */}
-                <Group gap="xs">
-                    <Badge
-                        variant="outline"
-                        color="gray"
-                        leftSection={ftswMode === 'foot' ? <IconShoe size={14} /> : <IconHandGrab size={14} />}
-                    >
-                        {ftswMode === 'foot' ? 'Ayak Kontrol' : 'El Kontrol'}
-                    </Badge>
-                    {/* `isPedalPressed` true ise, "Pedal Aktif" rozetini göster */}
-                    {isPedalPressed && (
-                        <Badge variant="filled" color="blue">
-                            Pedal Aktif
+                    {/* Orta Taraf: Anlık Cihaz Bilgileri */}
+                    <Group gap="xs">
+                        <Badge color={motor.isActive ? 'green' : 'gray'} leftSection={<IconPower size={14} />}>
+                            {motor.isActive ? `${pwmToRpm(motor.pwm)} RPM` : 'DURUYOR'}
                         </Badge>
-                    )}
+
+                        <Badge
+                            variant="light"
+                            color="cyan"
+                            leftSection={operatingMode === 'continuous' ? <IconInfinity size={14} /> : <IconRepeat size={14} />}
+                        >
+                            {operatingMode === 'continuous' ? 'Sürekli Mod' : `Osilasyon: ${oscillationSettings.angle}°`}
+                        </Badge>
+                    </Group>
+
+                    {/* Sağ Taraf: Kontrol Modu ve Pedal Durumu */}
+                    <Group gap="xs">
+
+                        {/* YENİ: Ar-Ge Modal'ını açacak buton */}
+                        <ActionIcon variant="outline" onClick={openRndModal} title="Ar-Ge Test Paneli">
+                            <IconFlask size={18} />
+                        </ActionIcon>
+                        <Divider orientation="vertical" />
+                        <Badge
+                            variant="outline"
+                            color="gray"
+                            leftSection={ftswMode === 'foot' ? <IconShoe size={14} /> : <IconHandGrab size={14} />}
+                        >
+                            {ftswMode === 'foot' ? 'Ayak Kontrol' : 'El Kontrol'}
+                        </Badge>
+                        {/* `isPedalPressed` true ise, "Pedal Aktif" rozetini göster */}
+                        {isPedalPressed && (
+                            <Badge variant="filled" color="blue">
+                                Pedal Aktif
+                            </Badge>
+                        )}
+                    </Group>
                 </Group>
-            </Group>
-        </Paper>
+            </Paper>
+        </>
     );
 }
