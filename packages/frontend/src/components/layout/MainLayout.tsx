@@ -1,62 +1,58 @@
 // packages/frontend/src/components/layout/MainLayout.tsx
 
-import { Grid, Tabs } from '@mantine/core';
+import { Tabs, Box } from '@mantine/core';
+import { IconSettings, IconTerminal2 } from '@tabler/icons-react';
 import { ControlPanel } from '../panels/ControlPanel';
 import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';
-import { StatusBar } from "./StatusBar.tsx";
-import {IconSettings, IconTerminal2} from "@tabler/icons-react";
-import {DevConsolePanel} from "../panels/DevConsolePanel.tsx";
+import { DevConsolePanel } from '../panels/DevConsolePanel';
+import { StatusBar } from './StatusBar.tsx';
 
-/**
- * Uygulamanın ana sayfa düzenini (layout) oluşturan bileşen.
- * Tüm ana panelleri bir Grid (ızgara) sistemi içerisinde konumlandırır.
- * Bu yapı, ekran boyutuna göre esnek ve düzenli bir görünüm sağlar.
- * @returns {JSX.Element} Ana sayfa düzenini içeren JSX.
- */
 export function MainLayout() {
     return (
-        // Mantine Grid bileşeni, 12 birimlik bir ızgara sistemi kullanır.
-        // Grid.Col bileşenlerinin 'span' değerlerinin toplamı idealde 12 olmalıdır.
-        // Bizim düzenimizde: 3 (Kontrol) + 6 (Gösterge) + 3 (Ayarlar) = 12.
-        <Grid gutter="xl">
-            {/* Sol Sütun: Kontrol Paneli */}
-            <Grid.Col span={3}>
-                <ControlPanel />
-            </Grid.Col>
+        // Ana Konteyner: Tüm ekranı kapla (padding'leri hesaba katarak) ve dikey flex yapısı kur.
+        <Box style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)' }}>
 
-            {/* Orta Sütun: Ana Gösterge Paneli */}
-            <Grid.Col span={5}>
-                <DisplayPanel />
-            </Grid.Col>
+            {/* Paneller Alanı: Kalan tüm alanı dolduran YATAY bir flex container. */}
+            <Box style={{ display: 'flex', flex: 1, gap: 'var(--mantine-spacing-xl)', overflow: 'hidden' }}>
 
-            {/* Sağ Sütun: Ayarlar Paneli */}
-            <Grid.Col span={4}>
-                {/* YENİ: Tabs bileşeni ile panelleri gruplayalım */}
-                <Tabs defaultValue="settings" h="100%">
-                    <Tabs.List grow>
-                        <Tabs.Tab value="settings" leftSection={<IconSettings size={16} />}>
-                            Ayar Paneli
-                        </Tabs.Tab>
-                        <Tabs.Tab value="console" leftSection={<IconTerminal2 size={16} />}>
-                            Konsol
-                        </Tabs.Tab>
-                    </Tabs.List>
+                {/* 1. Sütun: Kontrol Paneli (Genişlik ~ span={3}) */}
+                <Box style={{ flexBasis: '25%', height: '100%' }}>
+                    <ControlPanel />
+                </Box>
 
-                    <Tabs.Panel value="settings" pt="xs" h="calc(100% - 38px)">
-                        <SettingsPanel />
-                    </Tabs.Panel>
+                {/* 2. Sütun: Gösterge Paneli (Genişlik ~ span={5}) */}
+                <Box style={{ flexBasis: '41.66%', height: '100%' }}>
+                    <DisplayPanel />
+                </Box>
 
-                    <Tabs.Panel value="console" pt="xs" h="calc(100% - 38px)">
-                        <DevConsolePanel />
-                    </Tabs.Panel>
-                </Tabs>
-            </Grid.Col>
+                {/* 3. Sütun: Ayarlar ve Konsol (Genişlik ~ span={4}) */}
+                <Box style={{ flexBasis: '33.33%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Tabs defaultValue="settings" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Tabs.List grow>
+                            <Tabs.Tab value="settings" leftSection={<IconSettings size={16} />}>
+                                Ayar Paneli
+                            </Tabs.Tab>
+                            <Tabs.Tab value="console" leftSection={<IconTerminal2 size={16} />}>
+                                Konsol
+                            </Tabs.Tab>
+                        </Tabs.List>
 
-            {/* Tam Genişlik Sütun: Durum Çubuğu */}
-            <Grid.Col span={12} mt="md">
+                        <Tabs.Panel value="settings" pt="xs" style={{ flex: 1, overflow: 'auto' }}>
+                            <SettingsPanel />
+                        </Tabs.Panel>
+                        <Tabs.Panel value="console" pt="xs" style={{ flex: 1, overflow: 'hidden' }}>
+                            <DevConsolePanel />
+                        </Tabs.Panel>
+                    </Tabs>
+                </Box>
+
+            </Box>
+
+            {/* Durum Çubuğu Alanı: Sabit bir şekilde en altta durur. */}
+            <Box mt="md">
                 <StatusBar />
-            </Grid.Col>
-        </Grid>
+            </Box>
+        </Box>
     );
 }
