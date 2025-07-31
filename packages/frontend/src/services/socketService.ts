@@ -61,10 +61,20 @@ export const listenToEvents = () => {
         incrementGraftCount,
         setFtswMode,
         updateDeviceStatus,
+        addConsoleEntry,
         // setIsSessionActive, // Seansı başlatmak/durdurmak için
     } = useControllerStore.getState();
 
     // --- Bağlantı Durum Olayları ---
+    // --- Tüm olayları dinlemek için bir "catch-all" dinleyicisi ekleyelim ---
+    socket.onAny((eventName, ...args) => {
+        addConsoleEntry({
+            type: 'event',
+            source: 'backend',
+            message: `Etkinlik alındı: ${eventName}`,
+            data: args,
+        });
+    });
     socket.on('connect', () => setConnectionStatus('connected'));
     socket.on('disconnect', () => {
         setConnectionStatus('disconnected');
@@ -116,35 +126,77 @@ export const listenToEvents = () => {
 
 /** Motorun PWM hızını backend'e gönderir. */
 export const sendMotorPwm = (value: number) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_motor_pwm`,
+        data:{value},
+    })
     socket.emit('set_motor_pwm', value);
 }
 
 /** Motorun dönüş yönünü backend'e gönderir. */
 export const sendMotorDirection = (direction: MotorDirection) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_motor_direction`,
+        data:{direction},
+    })
     socket.emit('set_motor_direction', direction);
 }
 
 /** Moturu (mevcut modda) başlatma komutu gönderir. */
 export const sendStartMotor = () => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: start_motor`,
+        data:{},
+    })
     socket.emit('start_motor');
 }
 
 /** Motoru durdurma komutu gönderir. */
 export const sendStopMotor = () => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: stop_motor`,
+        data:{},
+    })
     socket.emit('stop_motor');
 }
 
 /** Motoru osilasyon modunda başlatma komutu gönderir. */
 export const sendStartOscillation = (options: { pwm: number, angle: number, rpm: number }) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: start_oscillation`,
+        data: options,
+    })
     socket.emit('start_oscillation', options);
 }
 
 /** Çalışma modunu (sürekli/osilasyon) değiştirme komutu gönderir. */
 export const sendOperatingMode = (mode: OperatingMode) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_operating_mode`,
+        data:{mode},
+    })
     socket.emit('set_operating_mode', mode);
 }
 
 /** Osilasyon ayarlarını (açı gibi) değiştirme komutu gönderir. */
 export const sendOscillationSettings = (settings: OscillationSettings) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_oscillation_settings`,
+        data: settings,
+    })
     socket.emit('set_oscillation_settings', settings);
 }

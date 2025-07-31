@@ -31,6 +31,16 @@ export interface OscillationSettings {
     angle: number; // Derece cinsinden osilasyon açısı (örn: 180, 270)
 }
 
+/** Konsolda gösterilecek her bir log satırının yapısı */
+export interface ConsoleEntry {
+    id: number;
+    timestamp: string;
+    type: 'event' | 'command' | 'status';
+    source: 'frontend' | 'backend';
+    message: string;
+    data?: any;
+}
+
 /**
  * Store'da tutulacak tüm verilerin yapısını tanımlar.
  * Bu yapı, backend'den gelen `DeviceStatus` tipini genişletir.
@@ -51,6 +61,8 @@ interface ControllerState extends DeviceStatus {
      * Seansın aktif olup olmadığını ve zamanlayıcının çalışıp çalışmayacağını belirtir.
      */
     isSessionActive: boolean;
+    /** Geliştirici konsolu için log kayıtlarını tutar */
+    consoleEntries: ConsoleEntry[];
 }
 
 /**
@@ -80,6 +92,8 @@ interface ControllerActions {
     updateDeviceStatus: (status: DeviceStatus) => void;
     /** Seans zamanlayıcısını aktif veya pasif hale getirir. */
     setIsSessionActive: (isActive: boolean) => void;
+    /** Geliştirici konsoluna yeni bir log kaydı ekler */
+    addConsoleEntry: (entry: Omit<ConsoleEntry, 'id' | 'timestamp'>) => void;
 }
 
 
@@ -98,6 +112,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     sessionTime: 0,
     ftswMode: 'foot',
     isSessionActive: false,
+    consoleEntries: [],
 
     // --- Eylemler (Actions) ---
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -124,6 +139,17 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     })),
 
     setIsSessionActive: (isActive) => set({ isSessionActive: isActive }),
+
+    addConsoleEntry: (newEntry) => set((state) => ({
+        consoleEntries: [
+            ...state.consoleEntries,
+            {
+                ...newEntry,
+                id: state.consoleEntries.length,
+                timestamp: new Date().toLocaleTimeString('tr-TR', { hour12: false }),
+            }
+        ]
+    })),
 
     /**
      * Backend'den 'device_status_update' olayı ile gelen tüm cihaz durumunu günceller.
