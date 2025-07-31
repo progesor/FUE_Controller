@@ -94,7 +94,7 @@ const sendCommand = (command: string) => {
             }
             // Ping komutları çok sık gönderildiği için log'ları kirletmemesi adına opsiyonel olarak gizlenir.
             if (!command.startsWith('SYS.PING') || config.arduino.logPings) {
-                console.log(`[RPi -> Arduino]: ${command}`);
+                console.log(`[Server -> Device]: ${command}`);
             }
         });
     } else {
@@ -111,7 +111,7 @@ const handleData = (data: string) => {
     // Ping cevaplarını (PONG) opsiyonel olarak gizle
     if (data.startsWith('PONG') && !config.arduino.logPings) return;
 
-    console.log(`[Arduino -> RPi]: ${data}`);
+    console.log(`[Device -> Server]: ${data}`);
 
     // Gelen veriyi olay (event) veya bilgi olarak işle ve istemcilere bildir.
     if (data.startsWith('EVT:PEDAL:1')) { // Pedal basıldı
