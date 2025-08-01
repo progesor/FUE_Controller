@@ -9,7 +9,7 @@ import type {
     MotorDirection,
     OperatingMode,
     OscillationSettings,
-    PulseSettings
+    PulseSettings, VibrationSettings
 } from '../../../shared-types';
 import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";
@@ -221,4 +221,15 @@ export const sendPulseSettings = (settings: PulseSettings) => {
         data: [settings],
     });
     socket.emit('set_pulse_settings', settings);
+}
+
+/** Titreşim modu ayarlarını (yoğunluk, frekans) backend'e gönderir. */
+export const sendVibrationSettings = (settings: VibrationSettings) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_vibration_settings`,
+        data: [settings],
+    });
+    socket.emit('set_vibration_settings', settings);
 }

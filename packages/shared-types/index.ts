@@ -20,7 +20,7 @@
 export type MotorDirection = 0 | 1;
 
 /** Cihazın ana çalışma modları. */
-export type OperatingMode = 'continuous' | 'oscillation' | 'pulse';
+export type OperatingMode = 'continuous' | 'oscillation' | 'pulse' | 'vibration';
 
 /** Kontrolün el (sürekli) veya ayak (pedal) modunda olup olmadığını belirtir. */
 export type FtswMode = 'foot' | 'hand';
@@ -40,6 +40,14 @@ export interface PulseSettings {
     pulseDuration: number;
     /** İki darbe arasındaki bekleme süresi (milisaniye). */
     pulseDelay: number;
+}
+
+// Titreşim modu için ayarları içerir.
+export interface VibrationSettings {
+    /** Titreşimin gücünü belirleyen PWM değeri. */
+    intensity: number; // Aslında bu doğrudan motorun PWM'i olacak
+    /** Titreşimin ne kadar seri olacağını belirler (örn: 1-10 arası bir seviye). */
+    frequency: number;
 }
 
 /** Motorun anlık fiziksel durumunu temsil eder. */
@@ -65,6 +73,8 @@ export interface DeviceStatus {
     oscillationSettings: OscillationSettings;
     /** Darbe modu için geçerli ayarlar. */
     pulseSettings: PulseSettings;
+    /** Titreşim modu için geçerli ayarlar. */
+    vibrationSettings: VibrationSettings;
 }
 
 
@@ -114,5 +124,7 @@ export interface ClientToServerEvents {
     'get_calibration_data': (data: { rpm: number; angle: number }) => void;
     /** Darbe modu ayarlarını (darbe süresi, bekleme süresi) güncellemek için gönderilir. */
     'set_pulse_settings': (settings: PulseSettings) => void;
+    /** Titreşim modu ayarlarını (yoğunluk, frekans) güncellemek için gönderilir. */
+    'set_vibration_settings': (settings: VibrationSettings) => void;
 
 }

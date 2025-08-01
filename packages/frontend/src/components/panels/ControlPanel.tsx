@@ -165,6 +165,7 @@ export function ControlPanel() {
                                 { label: 'Sürekli', value: 'continuous' },
                                 { label: 'Osilasyon', value: 'oscillation' },
                                 { label: 'Darbe', value: 'pulse' },
+                                { label: 'Titreşim', value: 'vibration' },
                             ]}
                         />
                     </Stack>

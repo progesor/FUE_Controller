@@ -10,7 +10,7 @@ import type {
     OperatingMode,
     OscillationSettings,
     DeviceStatus,
-    PulseSettings
+    PulseSettings, VibrationSettings
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
@@ -46,8 +46,14 @@ let pingInterval: NodeJS.Timeout | null = null;
 /** Darbe modunda motoru periyodik olarak çalıştıran interval. */
 let pulseInterval: NodeJS.Timeout | null = null;
 
+/** Titreşim modunda motoru periyodik olarak çalıştıran interval. */
+let vibrationInterval: NodeJS.Timeout | null = null;
+
 /** Osilasyon modunda motoru periyodik olarak çalıştıran interval. */
 let oscillationInterval: NodeJS.Timeout | null = null;
+
+/** Titreşim modunun bir sonraki adımda hangi yöne döneceğini tutar. */
+let vibrationDirection: MotorDirection = 0;
 
 /** Osilasyonun bir sonraki adımda hangi yöne döneceğini tutar. */
 let oscillationDirection: MotorDirection = 0; // 0: CW, 1: CCW
@@ -63,7 +69,8 @@ let deviceStatus: DeviceStatus & { } = {
     motor: { isActive: false, pwm: 100, direction: 0 },
     operatingMode: 'continuous',
     oscillationSettings: { angle: 180 },
-    pulseSettings: { pulseDuration: 1000, pulseDelay: 500 }
+    pulseSettings: { pulseDuration: 1000, pulseDelay: 500 },
+    vibrationSettings: { intensity: 100, frequency: 5 },
 };
 
 
@@ -235,6 +242,10 @@ const internalStopMotor = () => {
         clearInterval(pulseInterval);
         pulseInterval = null;
     }
+    if (vibrationInterval) {
+        clearInterval(vibrationInterval);
+        vibrationInterval = null;
+    }
     sendRawArduinoCommand('DEV.MOTOR.STOP');
 };
 
@@ -341,6 +352,37 @@ export const startPulseMode = (isContinuation = false) => {
 };
 
 /**
+ * Motoru titreşim (vibration) modunda çalıştırır.
+ * @param isContinuation - Mod değişikliği sonrası devam ediyorsa true.
+ */
+export const startVibrationMode = (isContinuation = false) => {
+    if (!isContinuation && deviceStatus.motor.isActive) return;
+    internalStopMotor(); // Önceki modu temizle
+
+    deviceStatus.motor.isActive = true;
+
+    const { intensity, frequency } = deviceStatus.vibrationSettings;
+    deviceStatus.motor.pwm = intensity; // Motor PWM'ini doğrudan yoğunluk ayarına eşitle
+
+    // Frekansı (1-10) daha kısa ms değerlerine çevirelim.
+    // Yüksek frekans = daha kısa süre ve daha az bekleme.
+    const stepDuration = Math.max(15, 40 - (frequency * 2)); // örn: frekans 10 -> 20ms, frekans 1 -> 38ms
+    const stepDelay = Math.max(10, 30 - frequency);      // örn: frekans 10 -> 20ms, frekans 1 -> 29ms
+    const totalIntervalTime = stepDuration + stepDelay;
+
+    const performStep = () => {
+        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${vibrationDirection}`);
+        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${stepDuration}`);
+        vibrationDirection = vibrationDirection === 0 ? 1 : 0; // Her adımda yönü değiştir
+    };
+
+    performStep(); // İlk adımı hemen at
+    vibrationInterval = setInterval(performStep, totalIntervalTime);
+
+    broadcastDeviceStatus();
+};
+
+/**
  * Motorun PWM (hız) değerini günceller.
  * Eğer motor zaten çalışıyorsa, mevcut modu yeni hız değeriyle yeniden başlatır.
  * @param value - Yeni PWM değeri (0-255).
@@ -407,6 +449,8 @@ export const setOperatingMode = (mode: OperatingMode) => {
         broadcastDeviceStatus(); // Motor aktif değilse, sadece mod değişikliğini yayınla
     } else if (mode === 'pulse') {
         startPulseMode(true);
+    } else if (mode === 'vibration') {
+        startVibrationMode(true);
     }
 };
 
@@ -452,6 +496,21 @@ export const setPulseSettings = (settings: PulseSettings) => {
     }
 };
 
+/**
+ * Titreşim modu ayarlarını günceller.
+ * Eğer motor titreşim modunda çalışıyorsa, yeni ayarlarla yeniden başlatır.
+ * @param settings - Yeni titreşim ayarları.
+ */
+export const setVibrationSettings = (settings: VibrationSettings) => {
+    const wasActive = deviceStatus.motor.isActive;
+    deviceStatus.vibrationSettings = settings;
+
+    if (wasActive && deviceStatus.operatingMode === 'vibration') {
+        startVibrationMode(true); // Yeni ayarlarla yeniden başlat
+    } else {
+        broadcastDeviceStatus();
+    }
+};
 
 /**
  * Arduino'nun mevcut bağlantı durumunu döndürür.

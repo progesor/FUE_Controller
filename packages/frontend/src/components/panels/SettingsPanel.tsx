@@ -3,7 +3,7 @@
 import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
-import {sendOscillationSettings, sendPulseSettings} from '../../services/socketService';
+import {sendOscillationSettings, sendPulseSettings, sendVibrationSettings} from '../../services/socketService';
 
 /**
  * Osilasyon modu gibi belirli durumlara özel ayarların yapıldığı panel.
@@ -13,7 +13,16 @@ import {sendOscillationSettings, sendPulseSettings} from '../../services/socketS
  */
 export function SettingsPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
-    const { operatingMode, oscillationSettings, pulseSettings, setOscillationSettings: setGlobalOscillationSettings, setPulseSettings, startIgnoringStatusUpdates  } = useControllerStore();
+    const {
+        operatingMode,
+        oscillationSettings,
+        pulseSettings,
+        vibrationSettings,
+        setOscillationSettings: setGlobalOscillationSettings,
+        setPulseSettings,
+        setVibrationSettings,
+        startIgnoringStatusUpdates
+    } = useControllerStore();
 
     /**
      * Osilasyon açısı slider'ı hareket ettirildiğinde tetiklenir.
@@ -45,6 +54,20 @@ export function SettingsPanel() {
         setPulseSettings(newSettings);         // 1. İyimser Güncelleme
         startIgnoringStatusUpdates();          // 2. "Yok Sayma" modunu başlat
         sendPulseSettings(newSettings);        // 3. Backend'e komutu gönder
+    };
+
+    const handleVibrationIntensityChange = (value: number) => {
+        const newSettings = { ...vibrationSettings, intensity: value };
+        setVibrationSettings(newSettings);
+        startIgnoringStatusUpdates();
+        sendVibrationSettings(newSettings);
+    };
+
+    const handleVibrationFrequencyChange = (value: number) => {
+        const newSettings = { ...vibrationSettings, frequency: value };
+        setVibrationSettings(newSettings);
+        startIgnoringStatusUpdates();
+        sendVibrationSettings(newSettings);
     };
 
     // Mevcut osilasyon açısının `VALID_ANGLES` dizisindeki indeksini bul.
@@ -107,6 +130,36 @@ export function SettingsPanel() {
                                 max={2000}
                                 step={50}
                                 label={(value) => `${value} ms`}
+                            />
+                        </Stack>
+                    </Stack>
+                </Collapse>
+                <Collapse in={operatingMode === 'vibration'}>
+                    <Stack gap="xl">
+                        {/* Yoğunluk Slider'ı */}
+                        <Stack gap="xs">
+                            <Text fw={500}>Titreşim Yoğunluğu (PWM)</Text>
+                            <Text fz={32} fw={700}>{vibrationSettings.intensity}</Text>
+                            <Slider
+                                value={vibrationSettings.intensity}
+                                onChange={handleVibrationIntensityChange}
+                                min={50}
+                                max={255}
+                                step={5}
+                                label={(value) => value}
+                            />
+                        </Stack>
+                        {/* Frekans Slider'ı */}
+                        <Stack gap="xs">
+                            <Text fw={500}>Titreşim Frekansı</Text>
+                            <Text fz={32} fw={700}>Seviye {vibrationSettings.frequency}</Text>
+                            <Slider
+                                value={vibrationSettings.frequency}
+                                onChange={handleVibrationFrequencyChange}
+                                min={1}
+                                max={10}
+                                step={1}
+                                label={(value) => `Seviye ${value}`}
                             />
                         </Stack>
                     </Stack>
