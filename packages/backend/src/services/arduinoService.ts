@@ -49,8 +49,8 @@ let pulseInterval: NodeJS.Timeout | null = null;
 /** Titreşim modunda motoru periyodik olarak çalıştıran interval. */
 let vibrationInterval: NodeJS.Timeout | null = null;
 
-/** Ramp modunda motoru periyodik olarak çalıştıran interval. */
-let rampInterval: NodeJS.Timeout | null = null;
+let rampArduinoInterval: NodeJS.Timeout | null = null;
+let rampUiInterval: NodeJS.Timeout | null = null;
 
 /** Osilasyon modunda motoru periyodik olarak çalıştıran interval. */
 let oscillationInterval: NodeJS.Timeout | null = null;
@@ -250,9 +250,13 @@ const internalStopMotor = () => {
         clearInterval(vibrationInterval);
         vibrationInterval = null;
     }
-    if (rampInterval) {
-        clearInterval(rampInterval);
-        rampInterval = null;
+    if (rampArduinoInterval) {
+        clearInterval(rampArduinoInterval);
+        rampArduinoInterval = null;
+    }
+    if (rampUiInterval) {
+        clearInterval(rampUiInterval);
+        rampUiInterval = null;
     }
     sendRawArduinoCommand('DEV.MOTOR.STOP');
 };
@@ -290,22 +294,32 @@ const _performRamp = (startPwm: number, targetPwm: number) => {
     const pwmDifference = targetPwm - startPwm;
     const pwmIncrement = pwmDifference / stepCount;
 
-    // Önceki rampa interval'ini temizlediğimizden emin olalım
-    if (rampInterval) clearInterval(rampInterval);
+    if (rampArduinoInterval) clearInterval(rampArduinoInterval);
+    if (rampUiInterval) clearInterval(rampUiInterval);
 
-    rampInterval = setInterval(() => {
+    // 1. GÖREV: ARDUINO'YA YÜKSEK FREKANSTA KOMUT GÖNDER
+    rampArduinoInterval = setInterval(() => {
         currentPwm += pwmIncrement;
 
         if ((pwmIncrement > 0 && currentPwm >= targetPwm) || (pwmIncrement < 0 && currentPwm <= targetPwm)) {
             currentPwm = targetPwm;
-            if (rampInterval) clearInterval(rampInterval);
+            if (rampArduinoInterval) clearInterval(rampArduinoInterval);
         }
 
         sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${Math.round(currentPwm)}`);
+    }, stepInterval);
+
+    // 2. GÖREV: ARAYÜZÜ DAHA YAVAŞ VE MAKUL BİR HIZDA GÜNCELLE
+    rampUiInterval = setInterval(() => {
+        // Anlık PWM değerini store'a işle ve yayınla
         deviceStatus.motor.pwm = Math.round(currentPwm);
         broadcastDeviceStatus();
 
-    }, stepInterval);
+        // Hedefe ulaşıldıysa bu interval'i de durdur
+        if (currentPwm === targetPwm) {
+            if (rampUiInterval) clearInterval(rampUiInterval);
+        }
+    }, 50); // Arayüzü saniyede 20 kez (her 50ms'de bir) güncelle, bu pürüzsüzlük için yeterlidir.
 };
 
 /**
