@@ -38,7 +38,7 @@ const pwmToClosestRpm = (pwm: number): number => {
 export function ControlPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
     // Bu hook sayesinde store'daki veriler değiştikçe bu bileşen güncellenir.
-    const { motor, operatingMode, oscillationSettings, setMotorStatus, setOperatingMode } = useControllerStore();
+    const { motor, operatingMode, oscillationSettings, setOperatingMode } = useControllerStore();
 
     /**
      * RPM slider'ı hareket ettirildiğinde tetiklenir.
@@ -48,12 +48,9 @@ export function ControlPanel() {
         const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
         if (!selectedMark) return;
 
-        // 1. İyimser Güncelleme (Optimistic Update): Arayüzün anında tepki vermesi
-        //    için yerel state'i hemen güncelliyoruz.
-        setMotorStatus({ pwm: selectedMark.pwm });
+        // KALDIRILDI: setMotorStatus({ pwm: selectedMark.pwm });
 
-        // 2. Backend'e Bildirim: Değişikliği `socketService` aracılığıyla
-        //    backend'e gönderiyoruz.
+        // Sadece backend'e komutu gönderiyoruz.
         sendMotorPwm(selectedMark.pwm);
     };
 
@@ -128,7 +125,7 @@ export function ControlPanel() {
                         <Text fz={32} fw={700}>{pwmToClosestRpm(motor.pwm)} RPM</Text>
                         <Slider
                             value={currentMarkIndex}
-                            onChange={handleSliderChange}
+                            onChangeEnd={handleSliderChange}
                             min={0}
                             max={RPM_CALIBRATION_MARKS.length - 1}
                             step={1}

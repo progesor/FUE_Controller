@@ -2,19 +2,32 @@
 
 import { Paper, Text, Stack, Group, Button } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
+import {RPM_CALIBRATION_MARKS} from "../../config/calibration.ts";
+
+// /**
+//  * PWM değerini (0-255) daha anlamlı olan RPM (devir/dakika) değerine çevirir.
+//  * Bu, kullanıcıya teknik bir değer yerine tanıdık bir birim göstermek içindir.
+//  * @param pwm - 0 ile 255 arasında motorun anlık PWM değeri.
+//  * @returns {number} Yaklaşık RPM karşılığı.
+//  */
+// const pwmToRpm = (pwm: number) => {
+//     if (pwm === 0) return 0;
+//     // Bu formül, maksimum PWM (255) değerinin yaklaşık 18000 RPM'e
+//     // karşılık geldiği varsayımına dayanır. Gerçek değerler kalibrasyona
+//     // göre değişebilir ancak bu, gösterge için yeterlidir.
+//     return Math.round((pwm / 255) * 18000);
+// };
 
 /**
- * PWM değerini (0-255) daha anlamlı olan RPM (devir/dakika) değerine çevirir.
- * Bu, kullanıcıya teknik bir değer yerine tanıdık bir birim göstermek içindir.
- * @param pwm - 0 ile 255 arasında motorun anlık PWM değeri.
- * @returns {number} Yaklaşık RPM karşılığı.
+ * Verilen anlık PWM değerine en yakın kalibre edilmiş RPM değerini bulur.
+ * Bu fonksiyon artık ControlPanel ile aynı mantığı kullanıyor.
  */
-const pwmToRpm = (pwm: number) => {
+const pwmToClosestRpm = (pwm: number): number => {
     if (pwm === 0) return 0;
-    // Bu formül, maksimum PWM (255) değerinin yaklaşık 18000 RPM'e
-    // karşılık geldiği varsayımına dayanır. Gerçek değerler kalibrasyona
-    // göre değişebilir ancak bu, gösterge için yeterlidir.
-    return Math.round((pwm / 255) * 18000);
+    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
+        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
+    );
+    return closestMark.rpm;
 };
 
 /**
@@ -48,7 +61,7 @@ export function DisplayPanel() {
                     <Text size="xl" c="dimmed">MOTOR HIZI</Text>
                     {/* Motorun aktif olup olmamasına göre rengi değiştir (aktif ise yeşil, pasif ise soluk) */}
                     <Text fz={80} fw={700} c={motor.isActive ? 'teal.4' : 'dimmed'}>
-                        {pwmToRpm(motor.pwm)}
+                        {pwmToClosestRpm(motor.pwm)}
                     </Text>
                     <Text size="xl" c="dimmed">RPM</Text>
                 </Stack>
