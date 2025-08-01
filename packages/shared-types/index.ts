@@ -75,6 +75,8 @@ export interface ServerToClientEvents {
     'arduino_disconnected': () => void;
     /** Arduino ile seri port bağlantısı başarıyla kurulduğunda tetiklenir. */
     'arduino_connected': () => void;
+    /** Ar-Ge panelindeki kalibrasyon verisi isteğine cevaben gönderilir. */
+    'calibration_data_response': (data: { pwm: number; duration: number }) => void;
 }
 
 /**
@@ -98,4 +100,7 @@ export interface ClientToServerEvents {
     'set_oscillation_settings': (settings: OscillationSettings) => void;
     /** Ar-Ge panelinden ham Arduino komutu göndermek için kullanılır. */
     'send_raw_command': (command: string) => void;
+    /** Ar-Ge panelinden belirli bir RPM ve Açı için kalibrasyon verilerini ister. */
+    'get_calibration_data': (data: { rpm: number; angle: number }) => void;
+
 }

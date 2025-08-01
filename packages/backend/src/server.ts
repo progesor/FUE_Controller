@@ -16,6 +16,7 @@ import {
     setOscillationSettings,
     setOperatingMode, getIsArduinoConnected, sendRawArduinoCommand
 } from './services/arduinoService';
+import {getCalibrationData} from "./services/calibrationService";
 
 // ===================================================================
 //
@@ -113,7 +114,22 @@ io.on('connection', (socket) => {
         console.log(`İstemcinin bağlantısı kesildi: ${socket.id}`);
     });
 
-    // YENİ DİNLEYİCİ: Ar-Ge panelinden gelen ham komutları dinle
+    // Ar-Ge panelinden gelen kalibrasyon verisi isteğini dinle
+    socket.on('get_calibration_data', (data) => {
+        console.log(`[Client -> Server]: get_calibration_data isteği:`, data);
+
+        const calibrationData = getCalibrationData(data.rpm, data.angle);
+
+        if (calibrationData) {
+            socket.emit('calibration_data_response', calibrationData);
+        } else {
+            // İsteğe bağlı: Arayüze bir hata durumu da gönderebiliriz.
+            // Şimdilik sadece sunucu konsoluna log basmak yeterli.
+            console.error(`İstenen RPM (${data.rpm}) ve Açı (${data.angle}) için kalibrasyon verisi bulunamadı.`);
+        }
+    });
+
+    // Ar-Ge panelinden gelen ham komutları dinle
     socket.on('send_raw_command', (command) => {
         console.log(`[Ar-Ge Client -> Server]: Ham komut isteği: ${command}`);
         sendRawArduinoCommand(command); // Doğrudan arduinoService'e pasla

@@ -133,3 +133,33 @@ export const pwmToCalibratedRpm = (pwm: number): number => {
 
     return closestMark.rpm;
 };
+
+/**
+ * Verilen RPM ve Açı değerlerine karşılık gelen tam kalibrasyon
+ * verisini (PWM ve Süre) döndürür.
+ * @param targetRpm - Arayüzden gelen hedef RPM değeri.
+ * @param targetAngle - Arayüzden gelen hedef Açı değeri.
+ * @returns {{pwm: number, duration: number} | null} İlgili PWM ve süre (ms)
+ * değerlerini içeren bir nesne veya bulunamazsa null.
+ */
+export const getCalibrationData = (targetRpm: number, targetAngle: number): { pwm: number; duration: number } | null => {
+    // 1. RPM'e karşılık gelen PWM değerini bul
+    const calibrationMark = RPM_CALIBRATION_MARKS.find(mark => mark.rpm === targetRpm);
+    if (!calibrationMark) {
+        console.error(`Kalibrasyon hatası: RPM (${targetRpm}) için bir PWM değeri bulunamadı.`);
+        return null;
+    }
+
+    // 2. RPM ve Açı'ya karşılık gelen Süre (ms) değerini bul
+    const duration = getMsFromCalibration(targetRpm, targetAngle);
+    if (duration === 0) {
+        // getMsFromCalibration zaten kendi hata mesajını basıyor.
+        return null;
+    }
+
+    // 3. Bulunan değerleri bir nesne olarak döndür
+    return {
+        pwm: calibrationMark.pwm,
+        duration: duration,
+    };
+};

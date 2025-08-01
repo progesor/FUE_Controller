@@ -1,10 +1,11 @@
 // packages/frontend/src/components/modals/RndModal.tsx
 
 import {useState, useRef, useEffect} from 'react';
-import { Modal, Title, Stack, Text, Slider, Button, Group, NumberInput, Divider, Box } from '@mantine/core';
+import {Modal, Title, Stack, Text, Slider, Button, Group, NumberInput, Divider, Box, Select} from '@mantine/core';
 import { socket } from '../../services/socketService';
 import { useControllerStore } from '../../store/useControllerStore';
 import type { MotorDirection } from '../../../../shared-types';
+import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
 
 interface RndModalProps {
     opened: boolean;
@@ -29,25 +30,43 @@ export function RndModal({ opened, onClose }: RndModalProps) {
     const [liveOscDuration, setLiveOscDuration] = useState<number>(90);
     const [liveOscDelay, setLiveOscDelay] = useState<number>(50);
     const [isLiveOscRunning, setIsLiveOscRunning] = useState<boolean>(false);
+    const [selectedRpm, setSelectedRpm] = useState<string | null>(null);
+    const [selectedAngle, setSelectedAngle] = useState<string | null>(null);
 
 
     // Fonksiyonlar
 
-    // // Canlı osilasyon parametrelerinin en güncel değerlerini tutmak için ref'ler.
-    // const liveParamsRef = useRef({
-    //     pwm: liveOscPwm,
-    //     duration: liveOscDuration,
-    //     delay: liveOscDelay,
-    // });
+    useEffect(() => {
+        // Backend'den gelen kalibrasyon verisi cevabını dinle
+        const onCalibrationData = (data: { pwm: number; duration: number }) => {
+            addConsoleEntry({
+                type: 'event',
+                source: 'backend',
+                message: 'Kalibrasyon verisi alındı',
+                data: [data],
+            });
+            // Input'ları gelen veriyle doldur
+            setStepPwm(data.pwm);
+            setStepDuration(data.duration);
+        };
 
-    // // State her değiştiğinde, ref'i de senkronize et.
-    // useEffect(() => {
-    //     liveParamsRef.current = {
-    //         pwm: liveOscPwm,
-    //         duration: liveOscDuration,
-    //         delay: liveOscDelay,
-    //     };
-    // }, [liveOscPwm, liveOscDuration, liveOscDelay]);
+        socket.on('calibration_data_response', onCalibrationData);
+
+        // Bileşen kaldırıldığında dinleyiciyi temizle
+        return () => {
+            socket.off('calibration_data_response', onCalibrationData);
+        };
+    }, [addConsoleEntry]);
+
+    // Seçim menülerinden biri değiştiğinde backend'e istek gönder
+    useEffect(() => {
+        if (selectedRpm && selectedAngle) {
+            socket.emit('get_calibration_data', {
+                rpm: Number(selectedRpm),
+                angle: Number(selectedAngle),
+            });
+        }
+    }, [selectedRpm, selectedAngle]);
 
     const sendRawCommand = (command: string) => {
         addConsoleEntry({
@@ -131,6 +150,24 @@ export function RndModal({ opened, onClose }: RndModalProps) {
                     <Box>
                         <Title order={5}>Osilasyon Adım Simülatörü</Title>
                         <Text size="xs" c="dimmed">Kalibrasyon için tek bir osilasyon adımını test edin.</Text>
+                        <Group grow mt="sm">
+                            <Select
+                                label="Kalibrasyon Kısayolu (RPM)"
+                                placeholder="Bir RPM değeri seçin"
+                                data={RPM_CALIBRATION_MARKS.map(mark => ({ value: mark.rpm.toString(), label: `${mark.rpm} RPM` }))}
+                                value={selectedRpm}
+                                onChange={setSelectedRpm}
+                                clearable
+                            />
+                            <Select
+                                label="Kalibrasyon Kısayolu (Açı)"
+                                placeholder="Bir açı değeri seçin"
+                                data={VALID_ANGLES.map(angle => ({ value: angle.toString(), label: `${angle}°` }))}
+                                value={selectedAngle}
+                                onChange={setSelectedAngle}
+                                clearable
+                            />
+                        </Group>
                         <Group grow mt="sm">
                             <NumberInput label="PWM Değeri" value={stepPwm} onChange={(v) => setStepPwm(Number(v) || 0)} min={0} max={255}/>
                             <NumberInput label="Süre (ms)" value={stepDuration} onChange={(v) => setStepDuration(Number(v) || 0)} min={10} max={5000}/>
