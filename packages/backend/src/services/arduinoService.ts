@@ -310,21 +310,31 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
  */
 export const startPulseMode = (isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
-    internalStopMotor(); // Önceki modu temizle
+    internalStopMotor();
 
     deviceStatus.motor.isActive = true;
     if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100;
 
     const { pulseDuration, pulseDelay } = deviceStatus.pulseSettings;
+    // Toplam döngü süresi artık frenlemeyi de hesaba katmalı, ancak
+    // backend'in bekleme süresini etkilemez.
     const totalIntervalTime = pulseDuration + pulseDelay;
 
     const performStep = () => {
-        // Her adımda yönü tekrar göndererek tutarlılığı sağlıyoruz
+        // 1. Motor yönünü ayarla
         sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+        // 2. Belirlenen süre kadar motoru çalıştır
         sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${pulseDuration}`);
+
+        // 3. YENİ ADIM: Darbe biter bitmez fren komutunu gönder
+        // Arduino'daki delay nedeniyle bu komutun tamamlanmasını beklemeyeceğiz,
+        // backend kendi döngüsüne devam edecek.
+        setTimeout(() => {
+            sendRawArduinoCommand('DEV.MOTOR.BRAKE');
+        }, pulseDuration); // Darbe bittiği anda fren yap
     };
 
-    performStep(); // İlk darbeyi hemen at
+    performStep();
     pulseInterval = setInterval(performStep, totalIntervalTime);
 
     broadcastDeviceStatus();

@@ -186,6 +186,21 @@ void processCommand(String& cmd) {
     analogWrite(MOTOR_PWM_PIN, pwm); // Motoru belirtilen hızda çalıştır
     Serial.println(F("ACK:DEV.MOTOR.EXEC_TIMED_RUN"));
   }
+  else if (fullCommand == "DEV.MOTOR.BRAKE") {
+      // Motoru kısa bir süre frenlemek için her iki yön pinini de HIGH yap.
+      digitalWrite(MOTOR_DIR1_PIN, HIGH);
+      digitalWrite(MOTOR_DIR2_PIN, HIGH);
+      
+      // Kısa bir bekleme (bu, frenlemenin ne kadar süreceğini belirler).
+      // Bu komut anlık olduğu için burada küçük bir delay kullanmak kabul edilebilir.
+      delay(25); 
+      
+      // Frenlemeyi bırakmak için pinleri tekrar LOW yap (boşa alma).
+      digitalWrite(MOTOR_DIR1_PIN, LOW);
+      digitalWrite(MOTOR_DIR2_PIN, LOW);
+      
+      Serial.println(F("ACK:DEV.MOTOR.BRAKE"));
+    }
   else if (fullCommand == "DEV.BUZZER.BEEP") {
     // "SÜRE|FREKANS" formatındaki parametreyi ayrıştır (örn: "100|1000")
     int separatorIndex = params.indexOf('|');
