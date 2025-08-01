@@ -5,6 +5,23 @@ import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
 import {sendOscillationSettings, sendPulseSettings, sendVibrationSettings} from '../../services/socketService';
 
+const MIN_PWM = 0;
+const MAX_PWM = 255;
+
+/**
+ * PWM değerini (50-255) 0-100 arası bir yüzdeye çevirir.
+ */
+const pwmToPercentage = (pwm: number) => {
+    return Math.round(((pwm - MIN_PWM) / (MAX_PWM - MIN_PWM)) * 100);
+};
+
+/**
+ * Yüzde değerini (0-100) 50-255 arası bir PWM değerine çevirir.
+ */
+const percentageToPwm = (percentage: number) => {
+    return Math.round((percentage / 100) * (MAX_PWM - MIN_PWM) + MIN_PWM);
+};
+
 /**
  * Osilasyon modu gibi belirli durumlara özel ayarların yapıldığı panel.
  * Yalnızca ilgili çalışma modu seçildiğinde görünür hale gelerek
@@ -56,8 +73,11 @@ export function SettingsPanel() {
         sendPulseSettings(newSettings);        // 3. Backend'e komutu gönder
     };
 
-    const handleVibrationIntensityChange = (value: number) => {
-        const newSettings = { ...vibrationSettings, intensity: value };
+    const handleVibrationIntensityChange = (percentage: number) => {
+        // Arayüzden gelen yüzdeyi, backend'in anlayacağı PWM'e çevir
+        const newPwmValue = percentageToPwm(percentage);
+
+        const newSettings = { ...vibrationSettings, intensity: newPwmValue };
         setVibrationSettings(newSettings);
         startIgnoringStatusUpdates();
         sendVibrationSettings(newSettings);
@@ -136,20 +156,24 @@ export function SettingsPanel() {
                 </Collapse>
                 <Collapse in={operatingMode === 'vibration'}>
                     <Stack gap="xl">
-                        {/* Yoğunluk Slider'ı */}
+                        {/* Yoğunluk Slider'ı - YÜZDE GÖSTERECEK ŞEKİLDE GÜNCELLENDİ */}
                         <Stack gap="xs">
-                            <Text fw={500}>Titreşim Yoğunluğu (PWM)</Text>
-                            <Text fz={32} fw={700}>{vibrationSettings.intensity}</Text>
+                            <Text fw={500}>Titreşim Yoğunluğu</Text>
+                            {/* Gösterilen değeri yeni fonksiyonla yüzdeye çeviriyoruz */}
+                            <Text fz={32} fw={700}>% {pwmToPercentage(vibrationSettings.intensity)}</Text>
                             <Slider
-                                value={vibrationSettings.intensity}
+                                // Slider'ın değeri de yüzde olmalı
+                                value={pwmToPercentage(vibrationSettings.intensity)}
+                                // onChange artık yüzde değeriyle çalışıyor
                                 onChange={handleVibrationIntensityChange}
-                                min={50}
-                                max={255}
-                                step={5}
-                                label={(value) => value}
+                                min={0}
+                                max={100}
+                                step={1}
+                                label={(value) => `% ${value}`}
                             />
                         </Stack>
-                        {/* Frekans Slider'ı */}
+
+                        {/* Frekans Slider'ı (Aynı kalıyor) */}
                         <Stack gap="xs">
                             <Text fw={500}>Titreşim Frekansı</Text>
                             <Text fz={32} fw={700}>Seviye {vibrationSettings.frequency}</Text>
