@@ -268,60 +268,68 @@ export const stopMotor = () => {
 };
 
 /**
- * Motoru sürekli modda çalıştırır.
- * Rampa ayarı varsa, motoru yavaş yavaş hedeflenen hıza çıkarır ve bu süreci arayüze anlık olarak bildirir.
+ * Motoru mevcut bir PWM değerinden hedef bir PWM değerine pürüzsüzce rampalar.
+ * Bu fonksiyon, hem hızlanma hem de yavaşlama senaryolarını yönetir.
+ * @param startPwm - Rampanın başlayacağı PWM değeri.
+ * @param targetPwm - Rampanın ulaşacağı hedef PWM değeri.
  */
-export const startMotor = (isContinuation = false) => {
-    if (!isContinuation && deviceStatus.motor.isActive) return;
-    internalStopMotor(); // Önceki tüm görevleri temizle
-
-    const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
-
-    // Yönü hemen gönder
-    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
-
+const _performRamp = (startPwm: number, targetPwm: number) => {
     const { rampDuration } = deviceStatus.continuousSettings;
 
-    // Eğer rampa istenmiyorsa, motoru anında tam hızda başlat ve durumu bildir.
+    // Eğer rampa istenmiyorsa, anında hedef hıza geç ve bitir.
     if (rampDuration < 100) {
-        deviceStatus.motor.isActive = true;
         deviceStatus.motor.pwm = targetPwm;
         sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${targetPwm}`);
         broadcastDeviceStatus();
         return;
     }
 
-    // --- YENİ VE DÜRÜST RAMPA MANTIĞI ---
-    deviceStatus.motor.isActive = true;
-    let currentPwm = 0;
-
-    // Motorun anlık PWM'ini 0 olarak ayarla ve bu "başlangıç" durumunu yayınla
-    deviceStatus.motor.pwm = 0;
-    broadcastDeviceStatus();
-
+    let currentPwm = startPwm;
     const stepCount = 20; // Rampayı 20 pürüzsüz adımda tamamla
     const stepInterval = rampDuration / stepCount;
-    const pwmIncrement = targetPwm / stepCount;
+    const pwmDifference = targetPwm - startPwm;
+    const pwmIncrement = pwmDifference / stepCount;
+
+    // Önceki rampa interval'ini temizlediğimizden emin olalım
+    if (rampInterval) clearInterval(rampInterval);
 
     rampInterval = setInterval(() => {
         currentPwm += pwmIncrement;
 
-        // Hedef hıza ulaşıldığında interval'i temizle
-        if (currentPwm >= targetPwm) {
+        if ((pwmIncrement > 0 && currentPwm >= targetPwm) || (pwmIncrement < 0 && currentPwm <= targetPwm)) {
             currentPwm = targetPwm;
             if (rampInterval) clearInterval(rampInterval);
         }
 
-        // Arduino'ya anlık PWM komutunu gönder
         sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${Math.round(currentPwm)}`);
-
-        // Store'daki anlık PWM'i güncelle VE BU DURUMU ARAYÜZE BİLDİR
         deviceStatus.motor.pwm = Math.round(currentPwm);
         broadcastDeviceStatus();
 
     }, stepInterval);
 };
 
+/**
+ * Motoru sürekli modda çalıştırır.
+ * Rampa ayarı varsa, motoru mevcut hızından hedeflenen hıza pürüzsüz bir şekilde rampalar (hızlandırır veya yavaşlatır).
+ */
+/**
+ * Motoru sürekli modda SIFIRDAN başlatır.
+ */
+export const startMotor = (isContinuation = false) => {
+    if (!isContinuation && deviceStatus.motor.isActive) return;
+    internalStopMotor();
+
+    const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
+
+    deviceStatus.motor.isActive = true;
+    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+
+    // Rampalama işini yeni özel fonksiyonumuza devrediyoruz (başlangıç hızı 0)
+    _performRamp(0, targetPwm);
+
+    // Motorun "aktif" olduğunu hemen yayınla
+    broadcastDeviceStatus();
+};
 /**
  * Motoru osilasyon (salınım) modunda çalıştırır.
  * @param options - Osilasyon için gerekli PWM, açı ve RPM değerleri.
@@ -429,39 +437,37 @@ export const startVibrationMode = (isContinuation = false) => {
 
 /**
  * Motorun PWM (hız) değerini günceller.
- * Eğer motor zaten çalışıyorsa, mevcut modu yeni hız değeriyle ve rampa mantığıyla yeniden başlatır.
- * @param value - Yeni PWM değeri (0-255).
+ * Eğer motor zaten çalışıyorsa, mevcut hızından yeni hedefe pürüzsüzce rampalar.
  */
 export const setMotorPwm = (value: number) => {
     const wasActive = deviceStatus.motor.isActive;
-    const pwm = Math.max(0, Math.min(255, value));
+    const newTargetPwm = Math.max(0, Math.min(255, value));
 
-    // 1. Yeni hedef PWM değerini ayarla.
-    deviceStatus.motor.pwm = pwm;
+    // Mevcut (eski) hızı, rampa fonksiyonuna başlangıç noktası olarak vermek için sakla
+    const previousPwm = deviceStatus.motor.pwm;
 
-    // 2. Sadece motor zaten çalışıyorsa modları yeniden başlatmamız gerekir.
+    // Yeni hedef hızı ayarla
+    deviceStatus.motor.pwm = newTargetPwm;
+
     if (wasActive) {
-        // 3. Eğer sürekli moddaysak, rampa mantığını yeniden tetiklemek için startMotor'u çağır.
         if (deviceStatus.operatingMode === 'continuous') {
-            startMotor(true); // 'true' parametresi, bunun bir devam eylemi olduğunu belirtir.
+            // Rampalama işini yeni özel fonksiyonumuza devrediyoruz
+            _performRamp(previousPwm, newTargetPwm);
         }
-        // 4. Osilasyon modundaysa, osilasyonu yeni PWM ile yeniden başlat.
         else if (deviceStatus.operatingMode === 'oscillation') {
-            const rpm = pwmToCalibratedRpm(pwm);
-            startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm }, true);
+            const rpm = pwmToCalibratedRpm(newTargetPwm);
+            startOscillation({ ...deviceStatus.oscillationSettings, pwm: newTargetPwm, rpm }, true);
         }
-        // 5. Darbe modundaysa, darbe modunu yeni PWM ile yeniden başlat.
         else if (deviceStatus.operatingMode === 'pulse') {
             startPulseMode(true);
         }
     }
-
-        // 6. Motor çalışmıyorsa, sadece güncellenmiş durumu arayüze bildir.
-    // Bu, motor dururken slider'ı ayarlamamızı sağlar.
     else {
+        // Motor çalışmıyorsa, sadece güncellenmiş durumu (yeni hedef hızı) arayüze bildir.
         broadcastDeviceStatus();
     }
 };
+
 
 /**
  * Motorun dönüş yönünü ayarlar.
