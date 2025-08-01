@@ -34,7 +34,7 @@ export interface OscillationSettings {
     angle: number;
 }
 
-// Darbe modu için ayarları içerir.
+/** Darbe modu için gerekli ayarları içerir. */
 export interface PulseSettings {
     /** Motorun her bir darbede ne kadar süre döneceği (milisaniye). */
     pulseDuration: number;
@@ -42,12 +42,18 @@ export interface PulseSettings {
     pulseDelay: number;
 }
 
-// Titreşim modu için ayarları içerir.
+/** Titreşim modu için gerekli ayarları içerir. */
 export interface VibrationSettings {
     /** Titreşimin gücünü belirleyen PWM değeri. */
     intensity: number; // Aslında bu doğrudan motorun PWM'i olacak
     /** Titreşimin ne kadar seri olacağını belirler (örn: 1-10 arası bir seviye). */
     frequency: number;
+}
+
+/** Sürekli mod için gerekli ayarları içerir. */
+export interface ContinuousSettings {
+    /** Motorun 0'dan hedeflenen hıza ulaşma süresi (milisaniye). 0 ise rampa yok demektir. */
+    rampDuration: number;
 }
 
 /** Motorun anlık fiziksel durumunu temsil eder. */
@@ -75,6 +81,8 @@ export interface DeviceStatus {
     pulseSettings: PulseSettings;
     /** Titreşim modu için geçerli ayarlar. */
     vibrationSettings: VibrationSettings;
+    /** Sürekli mod için geçerli ayarlar. */
+    continuousSettings: ContinuousSettings;
 }
 
 
@@ -126,5 +134,7 @@ export interface ClientToServerEvents {
     'set_pulse_settings': (settings: PulseSettings) => void;
     /** Titreşim modu ayarlarını (yoğunluk, frekans) güncellemek için gönderilir. */
     'set_vibration_settings': (settings: VibrationSettings) => void;
+    /** Sürekli mod ayarlarını (rampa süresi gibi) güncellemek için gönderilir. */
+    'set_continuous_settings': (settings: ContinuousSettings) => void;
 
 }

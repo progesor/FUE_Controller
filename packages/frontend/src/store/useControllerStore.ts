@@ -1,7 +1,13 @@
 // packages/frontend/src/store/useControllerStore.ts
 
 import { create } from 'zustand';
-import type {DeviceStatus, MotorStatus, PulseSettings, VibrationSettings} from '../../../shared-types';
+import type {
+    ContinuousSettings,
+    DeviceStatus,
+    MotorStatus,
+    PulseSettings,
+    VibrationSettings
+} from '../../../shared-types';
 
 // ===================================================================
 //
@@ -122,6 +128,11 @@ interface ControllerActions {
      * Bu, konsolun sürekli olarak güncellenmesini engeller.
      */
     startIgnoringStatusUpdates: () => void;
+    /**
+     * Sürekli mod için ayarları günceller.
+     * Bu, sürekli modun özel ayarlarını (örn: hız) içerir.
+     */
+    setContinuousSettings: (settings: Partial<ContinuousSettings>) => void;
 }
 
 
@@ -139,6 +150,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     oscillationSettings: { angle: 180 },
     pulseSettings: { pulseDuration: 100, pulseDelay: 500 },
     vibrationSettings: { intensity: 100, frequency: 5 },
+    continuousSettings: { rampDuration: 0 },
     graftCount: 0,
     sessionTime: 0,
     ftswMode: 'foot',
@@ -178,6 +190,10 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
 
     setVibrationSettings: (settings) => set((state) => ({
         vibrationSettings: { ...state.vibrationSettings, ...settings }
+    })),
+
+    setContinuousSettings: (settings) => set((state) => ({
+        continuousSettings: { ...state.continuousSettings, ...settings }
     })),
 
     setIsSessionActive: (isActive) => set({ isSessionActive: isActive }),

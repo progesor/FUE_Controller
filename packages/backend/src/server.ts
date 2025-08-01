@@ -4,7 +4,13 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import config from './config';
-import {ClientToServerEvents, PulseSettings, ServerToClientEvents, VibrationSettings} from '../../shared-types';
+import {
+    ClientToServerEvents,
+    ContinuousSettings,
+    PulseSettings,
+    ServerToClientEvents,
+    VibrationSettings
+} from '../../shared-types';
 import {
     connectToArduino,
     initializeArduinoService,
@@ -14,7 +20,12 @@ import {
     startMotor,
     startOscillation,
     setOscillationSettings,
-    setOperatingMode, getIsArduinoConnected, sendRawArduinoCommand, setPulseSettings, setVibrationSettings
+    setOperatingMode,
+    getIsArduinoConnected,
+    sendRawArduinoCommand,
+    setPulseSettings,
+    setVibrationSettings,
+    setContinuousSettings
 } from './services/arduinoService';
 import {getCalibrationData} from "./services/calibrationService";
 
@@ -117,6 +128,11 @@ io.on('connection', (socket) => {
     socket.on('set_vibration_settings', (settings: VibrationSettings) => {
         console.log(`[Client -> Server]: set_vibration_settings isteği:`, settings);
         setVibrationSettings(settings);
+    });
+
+    socket.on('set_continuous_settings', (settings: ContinuousSettings) => {
+        console.log(`[Client -> Server]: set_continuous_settings isteği:`, settings);
+        setContinuousSettings(settings);
     });
 
     // 'disconnect' olayı, bir istemcinin bağlantısı koptuğunda tetiklenir.

@@ -3,7 +3,12 @@
 import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
-import {sendOscillationSettings, sendPulseSettings, sendVibrationSettings} from '../../services/socketService';
+import {
+    sendContinuousSettings,
+    sendOscillationSettings,
+    sendPulseSettings,
+    sendVibrationSettings
+} from '../../services/socketService';
 
 const MIN_PWM = 0;
 const MAX_PWM = 255;
@@ -32,12 +37,14 @@ export function SettingsPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
     const {
         operatingMode,
+        continuousSettings,
         oscillationSettings,
         pulseSettings,
         vibrationSettings,
         setOscillationSettings: setGlobalOscillationSettings,
         setPulseSettings,
         setVibrationSettings,
+        setContinuousSettings,
         startIgnoringStatusUpdates
     } = useControllerStore();
 
@@ -90,6 +97,13 @@ export function SettingsPanel() {
         sendVibrationSettings(newSettings);
     };
 
+    const handleRampDurationChange = (value: number) => {
+        const newSettings = { ...continuousSettings, rampDuration: value };
+        setContinuousSettings(newSettings);
+        startIgnoringStatusUpdates();
+        sendContinuousSettings(newSettings);
+    };
+
     // Mevcut osilasyon açısının `VALID_ANGLES` dizisindeki indeksini bul.
     // Bu, slider'ın doğru konumda başlaması ve güncellenmesi için gereklidir.
     const currentMarkIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
@@ -104,6 +118,27 @@ export function SettingsPanel() {
                  * Bu sayede, osilasyon ayarları sadece `operatingMode` 'oscillation'
                  * olduğunda görünür olur.
                  */}
+                <Collapse in={operatingMode === 'continuous'}>
+                    <Stack gap="xl">
+                        <Stack gap="xs">
+                            <Text fw={500}>Rampa Süresi (Yavaş Başlatma)</Text>
+                            <Text fz={32} fw={700}>{continuousSettings.rampDuration} ms</Text>
+                            <Slider
+                                value={continuousSettings.rampDuration}
+                                onChange={handleRampDurationChange}
+                                min={0}
+                                max={2000} // 2 saniye
+                                step={100}
+                                label={(value) => value === 0 ? 'Kapalı' : `${value} ms`}
+                                marks={[
+                                    { value: 0, label: 'Kapalı' },
+                                    { value: 1000, label: '1sn' },
+                                    { value: 2000, label: '2sn' },
+                                ]}
+                            />
+                        </Stack>
+                    </Stack>
+                </Collapse>
                 <Collapse in={operatingMode === 'oscillation'}>
                     <Stack gap="xl">
                         <Stack gap="xs">

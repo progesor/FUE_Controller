@@ -10,7 +10,7 @@ import type {
     OperatingMode,
     OscillationSettings,
     DeviceStatus,
-    PulseSettings, VibrationSettings
+    PulseSettings, VibrationSettings, ContinuousSettings
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
@@ -49,6 +49,9 @@ let pulseInterval: NodeJS.Timeout | null = null;
 /** Titreşim modunda motoru periyodik olarak çalıştıran interval. */
 let vibrationInterval: NodeJS.Timeout | null = null;
 
+/** Ramp modunda motoru periyodik olarak çalıştıran interval. */
+let rampInterval: NodeJS.Timeout | null = null;
+
 /** Osilasyon modunda motoru periyodik olarak çalıştıran interval. */
 let oscillationInterval: NodeJS.Timeout | null = null;
 
@@ -71,6 +74,7 @@ let deviceStatus: DeviceStatus & { } = {
     oscillationSettings: { angle: 180 },
     pulseSettings: { pulseDuration: 1000, pulseDelay: 500 },
     vibrationSettings: { intensity: 100, frequency: 5 },
+    continuousSettings: { rampDuration: 0 },
 };
 
 
@@ -246,6 +250,10 @@ const internalStopMotor = () => {
         clearInterval(vibrationInterval);
         vibrationInterval = null;
     }
+    if (rampInterval) {
+        clearInterval(rampInterval);
+        rampInterval = null;
+    }
     sendRawArduinoCommand('DEV.MOTOR.STOP');
 };
 
@@ -267,14 +275,47 @@ export const stopMotor = () => {
  */
 export const startMotor = (isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
-    internalStopMotor(); // Önceki modu (örn: osilasyon) temizle
+    internalStopMotor(); // Önceki tüm görevleri temizle
 
     deviceStatus.motor.isActive = true;
-    if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100; // Eğer hız 0 ise varsayılan bir değere çek
+    const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
+    deviceStatus.motor.pwm = targetPwm;
 
     sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
-    sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${deviceStatus.motor.pwm}`);
-    broadcastDeviceStatus();
+
+    const { rampDuration } = deviceStatus.continuousSettings;
+
+    // Eğer rampa süresi 0 ise veya çok kısaysa, motoru anında tam hızda başlat.
+    if (rampDuration < 100) {
+        sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${targetPwm}`);
+        broadcastDeviceStatus();
+        return;
+    }
+
+    // Rampa Mantığı
+    let currentPwm = 0;
+    const stepCount = 20; // Rampayı 20 adımda tamamla
+    const stepInterval = rampDuration / stepCount;
+    const pwmIncrement = targetPwm / stepCount;
+
+    rampInterval = setInterval(() => {
+        currentPwm += pwmIncrement;
+
+        if (currentPwm >= targetPwm) {
+            currentPwm = targetPwm;
+            if (rampInterval) clearInterval(rampInterval);
+        }
+
+        sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${Math.round(currentPwm)}`);
+        // Not: Rampa sırasında anlık durumu yayınlamıyoruz ki arayüzdeki slider zıplamasın.
+        // Sadece son durumda yayın yapacağız.
+        if(currentPwm === targetPwm) {
+            broadcastDeviceStatus();
+        }
+
+    }, stepInterval);
+
+    broadcastDeviceStatus(); // Motorun başladığını bildirmek için ilk durumu yayınla
 };
 
 /**
@@ -452,6 +493,17 @@ export const setOperatingMode = (mode: OperatingMode) => {
     } else if (mode === 'vibration') {
         startVibrationMode(true);
     }
+};
+
+/**
+ * Sürekli mod ayarlarını günceller.
+ * @param settings - Yeni sürekli mod ayarları.
+ */
+export const setContinuousSettings = (settings: ContinuousSettings) => {
+    deviceStatus.continuousSettings = settings;
+    // Sürekli mod çalışırken ayar değişirse anlık etki etmesi istenirse
+    // buraya bir yeniden başlatma mantığı eklenebilir. Şimdilik sadece durumu güncelliyoruz.
+    broadcastDeviceStatus();
 };
 
 /**

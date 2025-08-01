@@ -233,3 +233,14 @@ export const sendVibrationSettings = (settings: VibrationSettings) => {
     });
     socket.emit('set_vibration_settings', settings);
 }
+
+/** Sürekli mod ayarlarını (rampa süresi gibi) backend'e gönderir. */
+export const sendContinuousSettings = (settings: ContinuousSettings) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_continuous_settings`,
+        data: [settings],
+    });
+    socket.emit('set_continuous_settings', settings);
+}
