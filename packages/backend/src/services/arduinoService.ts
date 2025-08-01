@@ -332,7 +332,7 @@ export const startPulseMode = (isContinuation = false) => {
 
 /**
  * Motorun PWM (hız) değerini günceller.
- * Eğer motor zaten çalışıyorsa, yeni hız değerini anında uygular.
+ * Eğer motor zaten çalışıyorsa, mevcut modu yeni hız değeriyle yeniden başlatır.
  * @param value - Yeni PWM değeri (0-255).
  */
 export const setMotorPwm = (value: number) => {
@@ -340,15 +340,24 @@ export const setMotorPwm = (value: number) => {
     const pwm = Math.max(0, Math.min(255, value)); // Değeri 0-255 aralığına sıkıştır
     deviceStatus.motor.pwm = pwm;
 
+    // Sadece motor zaten çalışıyorsa modları yeniden başlatmamız gerekir.
     if (wasActive) {
+        // 1. Sürekli moddaysa, sadece PWM komutunu gönder.
         if (deviceStatus.operatingMode === 'continuous') {
             sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
-        } else {
-            // Osilasyon modundaysa, yeni hıza göre osilasyonu yeniden başlat
+        }
+        // 2. Osilasyon modundaysa, osilasyonu yeni PWM ile yeniden başlat.
+        else if (deviceStatus.operatingMode === 'oscillation') {
             const rpm = pwmToCalibratedRpm(pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm }, true);
         }
+        // 3. (YENİ EKLENEN KONTROL) Darbe modundaysa, darbe modunu yeni PWM ile yeniden başlat.
+        else if (deviceStatus.operatingMode === 'pulse') {
+            startPulseMode(true);
+        }
     }
+
+    // Her durumda, arayüzün en güncel durumu bilmesi için yayın yap.
     broadcastDeviceStatus();
 };
 
