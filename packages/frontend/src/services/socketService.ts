@@ -9,7 +9,7 @@ import type {
     MotorDirection,
     OperatingMode,
     OscillationSettings,
-    PulseSettings, VibrationSettings
+    PulseSettings, VibrationSettings, ContinuousSettings
 } from '../../../shared-types';
 import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";

@@ -127,13 +127,14 @@ export function SettingsPanel() {
                                 value={continuousSettings.rampDuration}
                                 onChange={handleRampDurationChange}
                                 min={0}
-                                max={2000} // 2 saniye
+                                max={20000} // 2 saniye
                                 step={100}
                                 label={(value) => value === 0 ? 'Kapalı' : `${value} ms`}
                                 marks={[
                                     { value: 0, label: 'Kapalı' },
                                     { value: 1000, label: '1sn' },
                                     { value: 2000, label: '2sn' },
+                                    { value: 20000, label: '20sn' },
                                 ]}
                             />
                         </Stack>

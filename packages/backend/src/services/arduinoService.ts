@@ -269,53 +269,57 @@ export const stopMotor = () => {
 
 /**
  * Motoru sürekli modda çalıştırır.
- * @param isContinuation - Eğer bir mod değişikliği sonrası devam ediyorsa true.
- * Bu, motorun zaten aktif olduğu bir durumda tekrar 'start'
- * isteği gelmesini engeller.
+ * Rampa ayarı varsa, motoru yavaş yavaş hedeflenen hıza çıkarır ve bu süreci arayüze anlık olarak bildirir.
  */
 export const startMotor = (isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
     internalStopMotor(); // Önceki tüm görevleri temizle
 
-    deviceStatus.motor.isActive = true;
     const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
-    deviceStatus.motor.pwm = targetPwm;
 
+    // Yönü hemen gönder
     sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
 
     const { rampDuration } = deviceStatus.continuousSettings;
 
-    // Eğer rampa süresi 0 ise veya çok kısaysa, motoru anında tam hızda başlat.
+    // Eğer rampa istenmiyorsa, motoru anında tam hızda başlat ve durumu bildir.
     if (rampDuration < 100) {
+        deviceStatus.motor.isActive = true;
+        deviceStatus.motor.pwm = targetPwm;
         sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${targetPwm}`);
         broadcastDeviceStatus();
         return;
     }
 
-    // Rampa Mantığı
+    // --- YENİ VE DÜRÜST RAMPA MANTIĞI ---
+    deviceStatus.motor.isActive = true;
     let currentPwm = 0;
-    const stepCount = 20; // Rampayı 20 adımda tamamla
+
+    // Motorun anlık PWM'ini 0 olarak ayarla ve bu "başlangıç" durumunu yayınla
+    deviceStatus.motor.pwm = 0;
+    broadcastDeviceStatus();
+
+    const stepCount = 20; // Rampayı 20 pürüzsüz adımda tamamla
     const stepInterval = rampDuration / stepCount;
     const pwmIncrement = targetPwm / stepCount;
 
     rampInterval = setInterval(() => {
         currentPwm += pwmIncrement;
 
+        // Hedef hıza ulaşıldığında interval'i temizle
         if (currentPwm >= targetPwm) {
             currentPwm = targetPwm;
             if (rampInterval) clearInterval(rampInterval);
         }
 
+        // Arduino'ya anlık PWM komutunu gönder
         sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${Math.round(currentPwm)}`);
-        // Not: Rampa sırasında anlık durumu yayınlamıyoruz ki arayüzdeki slider zıplamasın.
-        // Sadece son durumda yayın yapacağız.
-        if(currentPwm === targetPwm) {
-            broadcastDeviceStatus();
-        }
+
+        // Store'daki anlık PWM'i güncelle VE BU DURUMU ARAYÜZE BİLDİR
+        deviceStatus.motor.pwm = Math.round(currentPwm);
+        broadcastDeviceStatus();
 
     }, stepInterval);
-
-    broadcastDeviceStatus(); // Motorun başladığını bildirmek için ilk durumu yayınla
 };
 
 /**
@@ -425,33 +429,38 @@ export const startVibrationMode = (isContinuation = false) => {
 
 /**
  * Motorun PWM (hız) değerini günceller.
- * Eğer motor zaten çalışıyorsa, mevcut modu yeni hız değeriyle yeniden başlatır.
+ * Eğer motor zaten çalışıyorsa, mevcut modu yeni hız değeriyle ve rampa mantığıyla yeniden başlatır.
  * @param value - Yeni PWM değeri (0-255).
  */
 export const setMotorPwm = (value: number) => {
     const wasActive = deviceStatus.motor.isActive;
-    const pwm = Math.max(0, Math.min(255, value)); // Değeri 0-255 aralığına sıkıştır
+    const pwm = Math.max(0, Math.min(255, value));
+
+    // 1. Yeni hedef PWM değerini ayarla.
     deviceStatus.motor.pwm = pwm;
 
-    // Sadece motor zaten çalışıyorsa modları yeniden başlatmamız gerekir.
+    // 2. Sadece motor zaten çalışıyorsa modları yeniden başlatmamız gerekir.
     if (wasActive) {
-        // 1. Sürekli moddaysa, sadece PWM komutunu gönder.
+        // 3. Eğer sürekli moddaysak, rampa mantığını yeniden tetiklemek için startMotor'u çağır.
         if (deviceStatus.operatingMode === 'continuous') {
-            sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${pwm}`);
+            startMotor(true); // 'true' parametresi, bunun bir devam eylemi olduğunu belirtir.
         }
-        // 2. Osilasyon modundaysa, osilasyonu yeni PWM ile yeniden başlat.
+        // 4. Osilasyon modundaysa, osilasyonu yeni PWM ile yeniden başlat.
         else if (deviceStatus.operatingMode === 'oscillation') {
             const rpm = pwmToCalibratedRpm(pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm, rpm }, true);
         }
-        // 3. (YENİ EKLENEN KONTROL) Darbe modundaysa, darbe modunu yeni PWM ile yeniden başlat.
+        // 5. Darbe modundaysa, darbe modunu yeni PWM ile yeniden başlat.
         else if (deviceStatus.operatingMode === 'pulse') {
             startPulseMode(true);
         }
     }
 
-    // Her durumda, arayüzün en güncel durumu bilmesi için yayın yap.
-    broadcastDeviceStatus();
+        // 6. Motor çalışmıyorsa, sadece güncellenmiş durumu arayüze bildir.
+    // Bu, motor dururken slider'ı ayarlamamızı sağlar.
+    else {
+        broadcastDeviceStatus();
+    }
 };
 
 /**
