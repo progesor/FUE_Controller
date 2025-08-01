@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import type {
     ContinuousSettings,
     DeviceStatus,
-    MotorStatus,
+    MotorStatus, OperatingMode,
     PulseSettings,
     VibrationSettings
 } from '../../../shared-types';
@@ -26,8 +26,8 @@ import type {
 
 // --- Tip Tanımlamaları ---
 
-/** Cihazın ana çalışma modları. `shared-types` ile senkronize. */
-export type OperatingMode = 'continuous' | 'oscillation';
+// /** Cihazın ana çalışma modları. `shared-types` ile senkronize. */
+// export type OperatingMode = 'continuous' | 'oscillation';
 
 /** Kontrolün el (sürekli) veya ayak (pedal) modunda olup olmadığını belirtir. */
 export type FtswMode = 'foot' | 'hand';
