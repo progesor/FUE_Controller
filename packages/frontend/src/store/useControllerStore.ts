@@ -1,7 +1,7 @@
 // packages/frontend/src/store/useControllerStore.ts
 
 import { create } from 'zustand';
-import type { DeviceStatus, MotorStatus } from '../../../shared-types';
+import type {DeviceStatus, MotorStatus, PulseSettings} from '../../../shared-types';
 
 // ===================================================================
 //
@@ -105,6 +105,8 @@ interface ControllerActions {
     clearConsoleEntries: () => void;
     /** Konsol filtre ayarlarını günceller */
     setConsoleFilter: (filter: keyof ConsoleFilters, value: boolean) => void;
+    /** Osilasyon modu için darbe ayarlarını günceller. */
+    setPulseSettings: (settings: Partial<PulseSettings>) => void;
 }
 
 
@@ -119,6 +121,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     motor: { isActive: false, pwm: 100, direction: 0 },
     operatingMode: 'continuous',
     oscillationSettings: { angle: 180 },
+    pulseSettings: { pulseDuration: 100, pulseDelay: 500 },
     graftCount: 0,
     sessionTime: 0,
     ftswMode: 'foot',
@@ -150,6 +153,10 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
 
     setOscillationSettings: (settings) => set((state) => ({
         oscillationSettings: { ...state.oscillationSettings, ...settings }
+    })),
+
+    setPulseSettings: (settings) => set((state) => ({
+        pulseSettings: { ...state.pulseSettings, ...settings }
     })),
 
     setIsSessionActive: (isActive) => set({ isSessionActive: isActive }),

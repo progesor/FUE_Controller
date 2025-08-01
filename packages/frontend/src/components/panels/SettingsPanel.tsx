@@ -3,7 +3,7 @@
 import { Paper, Title, Stack, Text, Collapse, Slider } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { VALID_ANGLES } from '../../config/calibration';
-import { sendOscillationSettings } from '../../services/socketService';
+import {sendOscillationSettings, sendPulseSettings} from '../../services/socketService';
 
 /**
  * Osilasyon modu gibi belirli durumlara özel ayarların yapıldığı panel.
@@ -13,7 +13,7 @@ import { sendOscillationSettings } from '../../services/socketService';
  */
 export function SettingsPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
-    const { operatingMode, oscillationSettings, setOscillationSettings: setGlobalOscillationSettings } = useControllerStore();
+    const { operatingMode, oscillationSettings, pulseSettings, setOscillationSettings: setGlobalOscillationSettings, setPulseSettings  } = useControllerStore();
 
     /**
      * Osilasyon açısı slider'ı hareket ettirildiğinde tetiklenir.
@@ -31,6 +31,18 @@ export function SettingsPanel() {
         // 2. Backend'e Bildirim: Yeni açı ayarını `socketService` aracılığıyla
         //    sunucuya ve dolayısıyla Arduino'ya gönder.
         sendOscillationSettings({ angle: selectedAngle });
+    };
+
+    const handlePulseDurationChange = (value: number) => {
+        const newSettings = { ...pulseSettings, pulseDuration: value };
+        setPulseSettings(newSettings); // İyimser güncelleme
+        sendPulseSettings(newSettings); // Backend'e gönder
+    };
+
+    const handlePulseDelayChange = (value: number) => {
+        const newSettings = { ...pulseSettings, pulseDelay: value };
+        setPulseSettings(newSettings); // İyimser güncelleme
+        sendPulseSettings(newSettings); // Backend'e gönder
     };
 
     // Mevcut osilasyon açısının `VALID_ANGLES` dizisindeki indeksini bul.
@@ -65,6 +77,36 @@ export function SettingsPanel() {
                             />
                         </Stack>
                         {/* Buraya gelecekte başka osilasyon ayarları eklenebilir. */}
+                    </Stack>
+                </Collapse>
+                <Collapse in={operatingMode === 'pulse'}>
+                    <Stack gap="xl">
+                        {/* Darbe Süresi Slider'ı */}
+                        <Stack gap="xs">
+                            <Text fw={500}>Darbe Süresi</Text>
+                            <Text fz={32} fw={700}>{pulseSettings.pulseDuration} ms</Text>
+                            <Slider
+                                value={pulseSettings.pulseDuration}
+                                onChange={handlePulseDurationChange}
+                                min={20}
+                                max={500}
+                                step={10}
+                                label={(value) => `${value} ms`}
+                            />
+                        </Stack>
+                        {/* Bekleme Süresi Slider'ı */}
+                        <Stack gap="xs">
+                            <Text fw={500}>Darbeler Arası Bekleme</Text>
+                            <Text fz={32} fw={700}>{pulseSettings.pulseDelay} ms</Text>
+                            <Slider
+                                value={pulseSettings.pulseDelay}
+                                onChange={handlePulseDelayChange}
+                                min={50}
+                                max={2000}
+                                step={50}
+                                label={(value) => `${value} ms`}
+                            />
+                        </Stack>
                     </Stack>
                 </Collapse>
             </Stack>

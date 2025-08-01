@@ -3,7 +3,15 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import type { MotorDirection, ClientToServerEvents, ServerToClientEvents, OperatingMode, OscillationSettings, DeviceStatus } from '../../../shared-types';
+import type {
+    MotorDirection,
+    ClientToServerEvents,
+    ServerToClientEvents,
+    OperatingMode,
+    OscillationSettings,
+    DeviceStatus,
+    PulseSettings
+} from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
 
@@ -35,6 +43,9 @@ let parser: ReadlineParser | null = null;
 /** Arduino'ya PING gönderip bağlantıyı kontrol eden interval. */
 let pingInterval: NodeJS.Timeout | null = null;
 
+/** Darbe modunda motoru periyodik olarak çalıştıran interval. */
+let pulseInterval: NodeJS.Timeout | null = null;
+
 /** Osilasyon modunda motoru periyodik olarak çalıştıran interval. */
 let oscillationInterval: NodeJS.Timeout | null = null;
 
@@ -51,7 +62,8 @@ let isArduinoConnected = false;
 let deviceStatus: DeviceStatus & { } = {
     motor: { isActive: false, pwm: 100, direction: 0 },
     operatingMode: 'continuous',
-    oscillationSettings: { angle: 180 }
+    oscillationSettings: { angle: 180 },
+    pulseSettings: { pulseDuration: 1000, pulseDelay: 500 }
 };
 
 
@@ -219,6 +231,10 @@ const internalStopMotor = () => {
         clearInterval(oscillationInterval);
         oscillationInterval = null;
     }
+    if (pulseInterval) {
+        clearInterval(pulseInterval);
+        pulseInterval = null;
+    }
     sendRawArduinoCommand('DEV.MOTOR.STOP');
 };
 
@@ -289,6 +305,32 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
 };
 
 /**
+ * Motoru darbe (pulse) modunda çalıştırır.
+ * @param isContinuation - Mod değişikliği sonrası devam ediyorsa true.
+ */
+export const startPulseMode = (isContinuation = false) => {
+    if (!isContinuation && deviceStatus.motor.isActive) return;
+    internalStopMotor(); // Önceki modu temizle
+
+    deviceStatus.motor.isActive = true;
+    if (deviceStatus.motor.pwm === 0) deviceStatus.motor.pwm = 100;
+
+    const { pulseDuration, pulseDelay } = deviceStatus.pulseSettings;
+    const totalIntervalTime = pulseDuration + pulseDelay;
+
+    const performStep = () => {
+        // Her adımda yönü tekrar göndererek tutarlılığı sağlıyoruz
+        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${pulseDuration}`);
+    };
+
+    performStep(); // İlk darbeyi hemen at
+    pulseInterval = setInterval(performStep, totalIntervalTime);
+
+    broadcastDeviceStatus();
+};
+
+/**
  * Motorun PWM (hız) değerini günceller.
  * Eğer motor zaten çalışıyorsa, yeni hız değerini anında uygular.
  * @param value - Yeni PWM değeri (0-255).
@@ -342,8 +384,10 @@ export const setOperatingMode = (mode: OperatingMode) => {
             const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm }, true);
         }
-    } else {
+    } else if (mode === 'oscillation') {
         broadcastDeviceStatus(); // Motor aktif değilse, sadece mod değişikliğini yayınla
+    } else if (mode === 'pulse') {
+        startPulseMode(true);
     }
 };
 
@@ -359,6 +403,22 @@ export const setOscillationSettings = (settings: OscillationSettings) => {
     if (wasActive && deviceStatus.operatingMode === 'oscillation') {
         const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
         startOscillation({ ...settings, pwm: deviceStatus.motor.pwm, rpm }, true);
+    } else {
+        broadcastDeviceStatus();
+    }
+};
+
+/**
+ * Darbe modu ayarlarını (darbe süresi, bekleme süresi) günceller.
+ * Eğer motor darbe modunda çalışıyorsa, yeni ayarlarla yeniden başlatır.
+ * @param settings - Yeni darbe ayarları.
+ */
+export const setPulseSettings = (settings: PulseSettings) => {
+    const wasActive = deviceStatus.motor.isActive;
+    deviceStatus.pulseSettings = settings;
+
+    if (wasActive && deviceStatus.operatingMode === 'pulse') {
+        startPulseMode(true); // Yeni ayarlarla yeniden başlat
     } else {
         broadcastDeviceStatus();
     }

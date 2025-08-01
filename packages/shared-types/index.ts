@@ -20,7 +20,7 @@
 export type MotorDirection = 0 | 1;
 
 /** Cihazın ana çalışma modları. */
-export type OperatingMode = 'continuous' | 'oscillation';
+export type OperatingMode = 'continuous' | 'oscillation' | 'pulse';
 
 /** Kontrolün el (sürekli) veya ayak (pedal) modunda olup olmadığını belirtir. */
 export type FtswMode = 'foot' | 'hand';
@@ -32,6 +32,14 @@ export type FtswMode = 'foot' | 'hand';
 export interface OscillationSettings {
     /** Osilasyonun gerçekleşeceği açı (derece cinsinden). */
     angle: number;
+}
+
+// Darbe modu için ayarları içerir.
+export interface PulseSettings {
+    /** Motorun her bir darbede ne kadar süre döneceği (milisaniye). */
+    pulseDuration: number;
+    /** İki darbe arasındaki bekleme süresi (milisaniye). */
+    pulseDelay: number;
 }
 
 /** Motorun anlık fiziksel durumunu temsil eder. */
@@ -55,6 +63,8 @@ export interface DeviceStatus {
     operatingMode: OperatingMode;
     /** Osilasyon modu için geçerli ayarlar. */
     oscillationSettings: OscillationSettings;
+    /** Darbe modu için geçerli ayarlar. */
+    pulseSettings: PulseSettings;
 }
 
 
@@ -102,5 +112,7 @@ export interface ClientToServerEvents {
     'send_raw_command': (command: string) => void;
     /** Ar-Ge panelinden belirli bir RPM ve Açı için kalibrasyon verilerini ister. */
     'get_calibration_data': (data: { rpm: number; angle: number }) => void;
+    /** Darbe modu ayarlarını (darbe süresi, bekleme süresi) güncellemek için gönderilir. */
+    'set_pulse_settings': (settings: PulseSettings) => void;
 
 }

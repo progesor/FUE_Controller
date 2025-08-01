@@ -164,6 +164,7 @@ export function ControlPanel() {
                             data={[
                                 { label: 'Sürekli', value: 'continuous' },
                                 { label: 'Osilasyon', value: 'oscillation' },
+                                { label: 'Darbe', value: 'pulse' },
                             ]}
                         />
                     </Stack>

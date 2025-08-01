@@ -2,7 +2,15 @@
 
 import { io, Socket } from 'socket.io-client';
 import { useControllerStore } from '../store/useControllerStore';
-import type { ServerToClientEvents, ClientToServerEvents, DeviceStatus, MotorDirection, OperatingMode, OscillationSettings } from '../../../shared-types';
+import type {
+    ServerToClientEvents,
+    ClientToServerEvents,
+    DeviceStatus,
+    MotorDirection,
+    OperatingMode,
+    OscillationSettings,
+    PulseSettings
+} from '../../../shared-types';
 import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";
 
@@ -199,4 +207,15 @@ export const sendOscillationSettings = (settings: OscillationSettings) => {
         data: settings,
     })
     socket.emit('set_oscillation_settings', settings);
+}
+
+/** Darbe modu ayarlarını (darbe süresi, bekleme süresi) backend'e gönderir. */
+export const sendPulseSettings = (settings: PulseSettings) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: set_pulse_settings`,
+        data: [settings],
+    });
+    socket.emit('set_pulse_settings', settings);
 }
