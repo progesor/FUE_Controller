@@ -46,6 +46,9 @@ export interface ConsoleEntry {
     data?: any;
 }
 
+// Store'daki zamanlayıcıyı tutmak için
+let updateTimeout: NodeJS.Timeout | null = null;
+
 /**
  * Store'da tutulacak tüm verilerin yapısını tanımlar.
  * Bu yapı, backend'den gelen `DeviceStatus` tipini genişletir.
@@ -70,6 +73,8 @@ interface ControllerState extends DeviceStatus {
     consoleEntries: ConsoleEntry[];
     /** Geliştirici konsolu için filtre ayarlarını tutar */
     consoleFilters: ConsoleFilters;
+    /** Konsolun durum güncellemelerini görmezden gelip görmeyeceğini belirtir. */
+    isIgnoringStatusUpdates: boolean;
 }
 
 /**
@@ -107,6 +112,11 @@ interface ControllerActions {
     setConsoleFilter: (filter: keyof ConsoleFilters, value: boolean) => void;
     /** Osilasyon modu için darbe ayarlarını günceller. */
     setPulseSettings: (settings: Partial<PulseSettings>) => void;
+    /**
+     * Konsolun durum güncellemelerini görmezden gelmeye başlar.
+     * Bu, konsolun sürekli olarak güncellenmesini engeller.
+     */
+    startIgnoringStatusUpdates: () => void;
 }
 
 
@@ -116,6 +126,7 @@ interface ControllerActions {
  */
 export const useControllerStore = create<ControllerState & ControllerActions>((set, get) => ({
     // --- Başlangıç Durumu (Initial State) ---
+    isIgnoringStatusUpdates: false,
     connectionStatus: 'connecting',
     arduinoStatus: 'disconnected',
     motor: { isActive: false, pwm: 100, direction: 0 },
@@ -180,6 +191,19 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
             [filter]: value,
         }
     })),
+
+    startIgnoringStatusUpdates: () => {
+        // Önceki zamanlayıcı varsa temizle
+        if (updateTimeout) clearTimeout(updateTimeout);
+
+        // Yok sayma durumunu başlat
+        set({ isIgnoringStatusUpdates: true });
+
+        // 400 milisaniye sonra yok sayma durumunu bitir
+        updateTimeout = setTimeout(() => {
+            set({ isIgnoringStatusUpdates: false });
+        }, 400);
+    },
 
     /**
      * Backend'den 'device_status_update' olayı ile gelen tüm cihaz durumunu günceller.

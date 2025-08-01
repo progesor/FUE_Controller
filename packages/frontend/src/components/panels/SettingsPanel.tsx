@@ -13,7 +13,7 @@ import {sendOscillationSettings, sendPulseSettings} from '../../services/socketS
  */
 export function SettingsPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
-    const { operatingMode, oscillationSettings, pulseSettings, setOscillationSettings: setGlobalOscillationSettings, setPulseSettings  } = useControllerStore();
+    const { operatingMode, oscillationSettings, pulseSettings, setOscillationSettings: setGlobalOscillationSettings, setPulseSettings, startIgnoringStatusUpdates  } = useControllerStore();
 
     /**
      * Osilasyon açısı slider'ı hareket ettirildiğinde tetiklenir.
@@ -35,14 +35,16 @@ export function SettingsPanel() {
 
     const handlePulseDurationChange = (value: number) => {
         const newSettings = { ...pulseSettings, pulseDuration: value };
-        setPulseSettings(newSettings); // İyimser güncelleme
-        sendPulseSettings(newSettings); // Backend'e gönder
+        setPulseSettings(newSettings);         // 1. İyimser Güncelleme
+        startIgnoringStatusUpdates();          // 2. "Yok Sayma" modunu başlat
+        sendPulseSettings(newSettings);        // 3. Backend'e komutu gönder
     };
 
     const handlePulseDelayChange = (value: number) => {
         const newSettings = { ...pulseSettings, pulseDelay: value };
-        setPulseSettings(newSettings); // İyimser güncelleme
-        sendPulseSettings(newSettings); // Backend'e gönder
+        setPulseSettings(newSettings);         // 1. İyimser Güncelleme
+        startIgnoringStatusUpdates();          // 2. "Yok Sayma" modunu başlat
+        sendPulseSettings(newSettings);        // 3. Backend'e komutu gönder
     };
 
     // Mevcut osilasyon açısının `VALID_ANGLES` dizisindeki indeksini bul.
@@ -81,12 +83,12 @@ export function SettingsPanel() {
                 </Collapse>
                 <Collapse in={operatingMode === 'pulse'}>
                     <Stack gap="xl">
-                        {/* Darbe Süresi Slider'ı */}
                         <Stack gap="xs">
                             <Text fw={500}>Darbe Süresi</Text>
                             <Text fz={32} fw={700}>{pulseSettings.pulseDuration} ms</Text>
                             <Slider
                                 value={pulseSettings.pulseDuration}
+                                // onChange kullanıyoruz, anında tepki için
                                 onChange={handlePulseDurationChange}
                                 min={20}
                                 max={500}
@@ -94,12 +96,12 @@ export function SettingsPanel() {
                                 label={(value) => `${value} ms`}
                             />
                         </Stack>
-                        {/* Bekleme Süresi Slider'ı */}
                         <Stack gap="xs">
                             <Text fw={500}>Darbeler Arası Bekleme</Text>
                             <Text fz={32} fw={700}>{pulseSettings.pulseDelay} ms</Text>
                             <Slider
                                 value={pulseSettings.pulseDelay}
+                                // onChange kullanıyoruz
                                 onChange={handlePulseDelayChange}
                                 min={50}
                                 max={2000}

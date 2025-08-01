@@ -410,19 +410,29 @@ export const setOscillationSettings = (settings: OscillationSettings) => {
 
 /**
  * Darbe modu ayarlarını (darbe süresi, bekleme süresi) günceller.
- * Eğer motor darbe modunda çalışıyorsa, yeni ayarlarla yeniden başlatır.
+ * Eğer motor darbe modunda çalışıyorsa, yeni ayarlarla döngüyü yeniden başlatır.
  * @param settings - Yeni darbe ayarları.
  */
 export const setPulseSettings = (settings: PulseSettings) => {
-    const wasActive = deviceStatus.motor.isActive;
+    // 1. Yeni ayarları hemen deviceStatus'a işle.
     deviceStatus.pulseSettings = settings;
 
-    if (wasActive && deviceStatus.operatingMode === 'pulse') {
-        startPulseMode(true); // Yeni ayarlarla yeniden başlat
-    } else {
+    // 2. Motorun zaten darbe modunda çalışıp çalışmadığını kontrol et.
+    const isMotorActiveInPulseMode =
+        deviceStatus.motor.isActive && deviceStatus.operatingMode === 'pulse';
+
+    // 3. Eğer motor zaten darbe modunda çalışıyorsa, döngüyü yeni ayarlarla yeniden başlat.
+    // Bu, çalışan setInterval'i temizleyip yenisini kurar.
+    if (isMotorActiveInPulseMode) {
+        console.log("Darbe modu çalışırken ayarlar değişti. Döngü yeniden başlatılıyor...");
+        startPulseMode(true);
+    }
+    // 4. Motor çalışmıyorsa, sadece güncellenmiş durumu arayüze bildir.
+    else {
         broadcastDeviceStatus();
     }
 };
+
 
 /**
  * Arduino'nun mevcut bağlantı durumunu döndürür.

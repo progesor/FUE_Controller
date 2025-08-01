@@ -101,6 +101,9 @@ export const listenToEvents = () => {
     // Backend'den cihazın tam durumu geldiğinde, bu olay tetiklenir ve
     // store'daki tüm ilgili verileri günceller.
     socket.on('device_status_update', (status: DeviceStatus) => {
+        if (useControllerStore.getState().isIgnoringStatusUpdates) {
+            return;
+        }
         updateDeviceStatus(status);
     });
 
