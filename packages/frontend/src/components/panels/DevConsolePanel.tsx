@@ -1,11 +1,11 @@
 // packages/frontend/src/components/panels/DevConsolePanel.tsx
 
 import {useEffect, useRef, useState} from 'react';
-import {Paper, Title, ScrollArea, Text, Badge, Box, UnstyledButton, Group} from '@mantine/core';
+import {Paper, Title, ScrollArea, Text, Badge, Box, UnstyledButton, Group, Checkbox, Button} from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import type { ConsoleEntry } from '../../store/useControllerStore';
 import {JsonViewer} from "../common/JsonViewer.tsx";
-import {IconCode, IconInfoCircle} from "@tabler/icons-react";
+import {IconCode, IconInfoCircle, IconTrash} from "@tabler/icons-react";
 import {LogSummary} from "../common/LogSummary.tsx";
 
 const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
@@ -53,7 +53,7 @@ const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
 };
 
 export function DevConsolePanel() {
-    const consoleEntries = useControllerStore((state) => state.consoleEntries);
+    const { consoleEntries, consoleFilters, setConsoleFilter, clearConsoleEntries } = useControllerStore();
     const viewport = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -62,11 +62,38 @@ export function DevConsolePanel() {
         }
     }, [consoleEntries]);
 
+    const filteredEntries = consoleEntries.filter(entry => {
+        if (consoleFilters.hideStatusUpdates && entry.message.includes('device_status_update')) {
+            return false;
+        }
+        return true;
+    });
+
     return (
         <Paper withBorder p="md" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
-            <Title order={3}>Geliştirici Konsolu</Title>
+            <Group justify="space-between">
+                <Title order={3}>Geliştirici Konsolu</Title>
+                <Group>
+                    <Checkbox
+                        label="Status Güncellemelerini Gizle"
+                        checked={consoleFilters.hideStatusUpdates}
+                        onChange={(event) => setConsoleFilter('hideStatusUpdates', event.currentTarget.checked)}
+                    />
+                    <Button
+                        leftSection={<IconTrash size={16} />}
+                        variant="light"
+                        color="red"
+                        size="xs"
+                        onClick={clearConsoleEntries}
+                    >
+                        Temizle
+                    </Button>
+                </Group>
+            </Group>
+
             <ScrollArea viewportRef={viewport} mt="md" style={{ flex: 1 }}>
-                {consoleEntries.map((entry) => (
+                {/* FİLTRELENMİŞ LİSTEYİ MAP'LİYORUZ */}
+                {filteredEntries.map((entry) => (
                     <LogEntry key={entry.id} entry={entry} />
                 ))}
             </ScrollArea>

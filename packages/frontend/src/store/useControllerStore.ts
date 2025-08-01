@@ -31,6 +31,11 @@ export interface OscillationSettings {
     angle: number; // Derece cinsinden osilasyon açısı (örn: 180, 270)
 }
 
+/** Konsol filtreleme ayarlarının yapısı */
+export interface ConsoleFilters {
+    hideStatusUpdates: boolean;
+}
+
 /** Konsolda gösterilecek her bir log satırının yapısı */
 export interface ConsoleEntry {
     id: number;
@@ -63,6 +68,8 @@ interface ControllerState extends DeviceStatus {
     isSessionActive: boolean;
     /** Geliştirici konsolu için log kayıtlarını tutar */
     consoleEntries: ConsoleEntry[];
+    /** Geliştirici konsolu için filtre ayarlarını tutar */
+    consoleFilters: ConsoleFilters;
 }
 
 /**
@@ -94,6 +101,10 @@ interface ControllerActions {
     setIsSessionActive: (isActive: boolean) => void;
     /** Geliştirici konsoluna yeni bir log kaydı ekler */
     addConsoleEntry: (entry: Omit<ConsoleEntry, 'id' | 'timestamp'>) => void;
+    /** Geliştirici konsolundaki tüm log kayıtlarını temizler */
+    clearConsoleEntries: () => void;
+    /** Konsol filtre ayarlarını günceller */
+    setConsoleFilter: (filter: keyof ConsoleFilters, value: boolean) => void;
 }
 
 
@@ -113,6 +124,9 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     ftswMode: 'foot',
     isSessionActive: false,
     consoleEntries: [],
+    consoleFilters: {
+        hideStatusUpdates: false,
+    },
 
     // --- Eylemler (Actions) ---
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -149,6 +163,15 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
                 timestamp: new Date().toLocaleTimeString('tr-TR', { hour12: false }),
             }
         ]
+    })),
+
+    clearConsoleEntries: () => set({ consoleEntries: [] }),
+
+    setConsoleFilter: (filter, value) => set((state) => ({
+        consoleFilters: {
+            ...state.consoleFilters,
+            [filter]: value,
+        }
     })),
 
     /**
