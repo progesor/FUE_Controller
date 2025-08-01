@@ -1,6 +1,6 @@
 // packages/frontend/src/components/modals/RndModal.tsx
 
-import { useState, useRef } from 'react';
+import {useState, useRef, useEffect} from 'react';
 import { Modal, Title, Stack, Text, Slider, Button, Group, NumberInput, Divider, Box } from '@mantine/core';
 import { socket } from '../../services/socketService';
 import { useControllerStore } from '../../store/useControllerStore';
@@ -14,6 +14,8 @@ interface RndModalProps {
 export function RndModal({ opened, onClose }: RndModalProps) {
     const { addConsoleEntry } = useControllerStore.getState();
     const oscillationInterval = useRef<NodeJS.Timeout | null>(null);
+    let oscillationDirection: MotorDirection = 0;
+
 
     // State'ler
     const [rawPwm, setRawPwm] = useState<number>(0);
@@ -28,7 +30,25 @@ export function RndModal({ opened, onClose }: RndModalProps) {
     const [liveOscDelay, setLiveOscDelay] = useState<number>(50);
     const [isLiveOscRunning, setIsLiveOscRunning] = useState<boolean>(false);
 
+
     // Fonksiyonlar
+
+    // // Canlı osilasyon parametrelerinin en güncel değerlerini tutmak için ref'ler.
+    // const liveParamsRef = useRef({
+    //     pwm: liveOscPwm,
+    //     duration: liveOscDuration,
+    //     delay: liveOscDelay,
+    // });
+
+    // // State her değiştiğinde, ref'i de senkronize et.
+    // useEffect(() => {
+    //     liveParamsRef.current = {
+    //         pwm: liveOscPwm,
+    //         duration: liveOscDuration,
+    //         delay: liveOscDelay,
+    //     };
+    // }, [liveOscPwm, liveOscDuration, liveOscDelay]);
+
     const sendRawCommand = (command: string) => {
         addConsoleEntry({
             type: 'command',
@@ -43,30 +63,53 @@ export function RndModal({ opened, onClose }: RndModalProps) {
         sendRawCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${stepPwm}|${stepDuration}`);
     };
 
-    const toggleLiveOscillation = () => {
+    const startLiveOscillation = () => {
+        if (oscillationInterval.current) {
+            clearInterval(oscillationInterval.current);
+        }
+
+        const performStep = () => {
+            sendRawCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
+            sendRawCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${liveOscPwm}|${liveOscDuration}`);
+            oscillationDirection = oscillationDirection === 0 ? 1 : 0;
+        };
+
+        performStep(); // İlk adımı hemen at
+        oscillationInterval.current = setInterval(performStep, liveOscDuration + liveOscDelay);
+    };
+
+    const stopLiveOscillation = () => {
+        if (oscillationInterval.current) {
+            clearInterval(oscillationInterval.current);
+            oscillationInterval.current = null;
+        }
+        sendRawCommand('DEV.MOTOR.STOP');
+    };
+
+    // Canlı test çalışırken parametreler değişirse, interval'i yeniden başlat
+    useEffect(() => {
         if (isLiveOscRunning) {
+            startLiveOscillation();
+        }
+        // Bu effect'in cleanup'ı, bileşen unmount olduğunda interval'i temizler
+        return () => {
             if (oscillationInterval.current) {
                 clearInterval(oscillationInterval.current);
-                oscillationInterval.current = null;
             }
-            sendRawCommand('DEV.MOTOR.STOP');
-            setIsLiveOscRunning(false);
-        } else {
-            setIsLiveOscRunning(true);
-            let direction: MotorDirection = 0;
-            const performStep = () => {
-                sendRawCommand(`DEV.MOTOR.SET_DIR:${direction}`);
-                sendRawCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${liveOscPwm}|${liveOscDuration}`);
-                direction = direction === 0 ? 1 : 0;
-            };
-            performStep();
-            oscillationInterval.current = setInterval(performStep, liveOscDuration + liveOscDelay);
+        };
+    }, [isLiveOscRunning, liveOscPwm, liveOscDuration, liveOscDelay]);
+
+    const handleToggleLiveOscillation = () => {
+        const nextState = !isLiveOscRunning;
+        setIsLiveOscRunning(nextState);
+        if (!nextState) {
+            stopLiveOscillation();
         }
     };
 
     const handleClose = () => {
         if (isLiveOscRunning) {
-            toggleLiveOscillation();
+            handleToggleLiveOscillation();
         }
         onClose();
     };
@@ -78,7 +121,7 @@ export function RndModal({ opened, onClose }: RndModalProps) {
             title="Ar-Ge Test Paneli"
             size="xl" // Modal boyutunu artırdık
             centered
-            scrollAreaProps={{ type: 'auto' }}
+            // scrollAreaProps={{ type: 'auto' }}
         >
             <Box px="md"> {/* Yatayda padding ekledik */}
                 <Text size="xs" c="dimmed" mt={-10} mb="md">
@@ -106,7 +149,7 @@ export function RndModal({ opened, onClose }: RndModalProps) {
                             <NumberInput label="Adım Süresi (ms)" value={liveOscDuration} onChange={(v) => setLiveOscDuration(Number(v) || 0)} min={10} max={5000}/>
                             <NumberInput label="Bekleme (ms)" value={liveOscDelay} onChange={(v) => setLiveOscDelay(Number(v) || 0)} min={0} max={1000}/>
                         </Group>
-                        <Button mt="md" fullWidth onClick={toggleLiveOscillation} color={isLiveOscRunning ? 'red' : 'blue'}>
+                        <Button mt="md" fullWidth onClick={handleToggleLiveOscillation} color={isLiveOscRunning ? 'red' : 'blue'}>
                             {isLiveOscRunning ? 'CANLI OSİLASYONU DURDUR' : 'CANLI OSİLASYONU BAŞLAT'}
                         </Button>
                     </Box>
