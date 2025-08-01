@@ -499,28 +499,36 @@ export const setMotorDirection = (direction: MotorDirection) => {
  * @param mode - Yeni çalışma modu.
  */
 export const setOperatingMode = (mode: OperatingMode) => {
-    if (deviceStatus.operatingMode === mode) return; // Zaten bu moddaysa bir şey yapma
+    // Eğer zaten aynı moddaysak, hiçbir şey yapma
+    if (deviceStatus.operatingMode === mode) return;
 
+    // 1. Motorun mevcut durumunu kaydet (çalışıyor muydu?)
     const wasActive = deviceStatus.motor.isActive;
+
+    // 2. Eğer motor çalışıyorsa, yeni moda geçmeden önce mevcut görevi durdur.
     if (wasActive) {
-        internalStopMotor(); // Mod değiştirmeden önce motoru durdur
+        internalStopMotor();
     }
 
+    // 3. Yeni çalışma modunu ayarla.
     deviceStatus.operatingMode = mode;
 
-    if (wasActive) { // Eğer motor daha önce aktifse, yeni modda tekrar çalıştır
+    // 4. SADECE VE SADECE motor daha önce de çalışıyorsa, yeni modda tekrar başlat.
+    if (wasActive) {
         if (mode === 'continuous') {
             startMotor(true);
-        } else {
+        } else if (mode === 'oscillation') {
             const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
             startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm }, true);
+        } else if (mode === 'pulse') {
+            startPulseMode(true);
+        } else if (mode === 'vibration') {
+            startVibrationMode(true);
         }
-    } else if (mode === 'oscillation') {
-        broadcastDeviceStatus(); // Motor aktif değilse, sadece mod değişikliğini yayınla
-    } else if (mode === 'pulse') {
-        startPulseMode(true);
-    } else if (mode === 'vibration') {
-        startVibrationMode(true);
+    }
+    // 5. Eğer motor duruyorsa, motoru çalıştırma, sadece güncellenmiş durumu arayüze bildir.
+    else {
+        broadcastDeviceStatus();
     }
 };
 
