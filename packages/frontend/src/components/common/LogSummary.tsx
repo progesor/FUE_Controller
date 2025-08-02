@@ -37,7 +37,7 @@ const getModeTheme = (mode: OperatingMode) => {
  * Cihazın anlık çalışma modu ve temel ayarlarını gösteren detaylı bir bölüm render eder.
  */
 const ModeDetails = ({ data }: { data: DeviceStatus }) => {
-    const { operatingMode, oscillationSettings, pulseSettings, vibrationSettings } = data;
+    const { operatingMode, oscillationSettings, pulseSettings, vibrationSettings, continuousSettings } = data;
 
     const renderDetail = (label: string, value: string | number) => (
         <Group justify="space-between" mt={4}>
@@ -57,6 +57,7 @@ const ModeDetails = ({ data }: { data: DeviceStatus }) => {
                 <Text fz="xs" fw={700} tt="capitalize">{operatingMode}</Text>
             </Group>
             <Divider />
+            { operatingMode === 'continuous' && renderDetail('Rampa Süresi:', `${continuousSettings.rampDuration}ms`) }
             { operatingMode === 'oscillation' && renderDetail('Açı:', `${oscillationSettings.angle}°`) }
             { operatingMode === 'pulse' && renderDetail('Darbe/Bekleme:', `${pulseSettings.pulseDuration}ms / ${pulseSettings.pulseDelay}ms`) }
             { operatingMode === 'vibration' && renderDetail('Yoğunluk/Frekans:', `%${pwmToPercentage(vibrationSettings.intensity)} / Sviye ${vibrationSettings.frequency}`) }
