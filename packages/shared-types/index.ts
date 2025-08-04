@@ -20,7 +20,7 @@
 export type MotorDirection = 0 | 1;
 
 /** Cihazın ana çalışma modları. */
-export type OperatingMode = 'continuous' | 'oscillation' | 'pulse' | 'vibration';
+export type OperatingMode = 'continuous' | 'oscillation' | 'pulse' | 'vibration' | 'recipe';
 
 /** Kontrolün el (sürekli) veya ayak (pedal) modunda olup olmadığını belirtir. */
 export type FtswMode = 'foot' | 'hand';
@@ -56,6 +56,8 @@ export interface ContinuousSettings {
     rampDuration: number;
 }
 
+export type AllModeSettings = ContinuousSettings | OscillationSettings | PulseSettings | VibrationSettings;
+
 /** Motorun anlık fiziksel durumunu temsil eder. */
 export interface MotorStatus {
     /** Motor gücü (0-255). */
@@ -85,6 +87,29 @@ export interface DeviceStatus {
     continuousSettings: ContinuousSettings;
 }
 
+/** Bir reçetenin tek bir adımını tanımlar. */
+export interface RecipeStep {
+    id: string; // Adımı ayırt etmek için benzersiz kimlik (örn: UUID)
+    mode: OperatingMode; // Bu adımda kullanılacak mod
+    duration: number; // Bu adımın ne kadar süreceği (milisaniye)
+    settings: Partial<AllModeSettings>; // O moda ait ayarlar (Partial, çünkü sürekli modun kendi ayarı yok)
+}
+
+/** Bir dizi adımdan oluşan tam bir reçeteyi tanımlar. */
+export interface Recipe {
+    id: string; // Reçeteyi ayırt etmek için benzersiz kimlik
+    name: string; // Kullanıcının verdiği isim (örn: "Yumuşak Doku Başlangıcı")
+    steps: RecipeStep[]; // Reçete adımları dizisi
+}
+
+/** Backend'in, reçetenin anlık durumu hakkında arayüzü bilgilendirdiği veri yapısı. */
+export interface RecipeStatus {
+    isRunning: boolean;
+    currentStepIndex: number | null;
+    totalSteps: number;
+    remainingTimeInStep: number; // Mevcut adımda kalan süre (ms)
+}
+
 
 // ===================================================================
 //                 Socket.IO Olay (Event) Arayüzleri
@@ -105,6 +130,8 @@ export interface ServerToClientEvents {
     'arduino_connected': () => void;
     /** Ar-Ge panelindeki kalibrasyon verisi isteğine cevaben gönderilir. */
     'calibration_data_response': (data: { pwm: number; duration: number }) => void;
+    /** Reçetenin anlık çalışma durumu değiştiğinde backend tarafından gönderilir. */
+    'recipe_status_update': (status: RecipeStatus) => void;
 }
 
 /**
@@ -136,5 +163,9 @@ export interface ClientToServerEvents {
     'set_vibration_settings': (settings: VibrationSettings) => void;
     /** Sürekli mod ayarlarını (rampa süresi gibi) güncellemek için gönderilir. */
     'set_continuous_settings': (settings: ContinuousSettings) => void;
+    /** Belirli bir reçeteyi çalıştırmak için arayüz tarafından gönderilir. */
+    'recipe_start': (recipe: Recipe) => void;
+    /** Çalışan bir reçeteyi durdurmak için gönderilir. */
+    'recipe_stop': () => void;
 
 }

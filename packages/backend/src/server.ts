@@ -28,6 +28,7 @@ import {
     setContinuousSettings
 } from './services/arduinoService';
 import {getCalibrationData} from "./services/calibrationService";
+import {startRecipe, stopRecipe} from "./services/recipeService";
 
 // ===================================================================
 //
@@ -133,6 +134,16 @@ io.on('connection', (socket) => {
     socket.on('set_continuous_settings', (settings: ContinuousSettings) => {
         console.log(`[Client -> Server]: set_continuous_settings isteği:`, settings);
         setContinuousSettings(settings);
+    });
+
+    socket.on('recipe_start', (recipe) => {
+        console.log(`[Client -> Server]: recipe_start isteği: ${recipe.name}`);
+        startRecipe(recipe);
+    });
+
+    socket.on('recipe_stop', () => {
+        console.log(`[Client -> Server]: recipe_stop isteği`);
+        stopRecipe();
     });
 
     // 'disconnect' olayı, bir istemcinin bağlantısı koptuğunda tetiklenir.

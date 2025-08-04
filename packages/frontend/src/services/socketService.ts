@@ -9,7 +9,7 @@ import type {
     MotorDirection,
     OperatingMode,
     OscillationSettings,
-    PulseSettings, VibrationSettings, ContinuousSettings
+    PulseSettings, VibrationSettings, ContinuousSettings, Recipe
 } from '../../../shared-types';
 import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";
@@ -244,3 +244,25 @@ export const sendContinuousSettings = (settings: ContinuousSettings) => {
     });
     socket.emit('set_continuous_settings', settings);
 }
+
+/** Belirtilen reçeteyi çalıştırması için backend'e komut gönderir. */
+export const sendRecipeStart = (recipe: Recipe) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: recipe_start`,
+        data: [recipe],
+    });
+    socket.emit('recipe_start', recipe);
+};
+
+/** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
+export const sendRecipeStop = () => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: recipe_stop`,
+        data: [],
+    });
+    socket.emit('recipe_stop');
+};

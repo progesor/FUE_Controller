@@ -9,10 +9,11 @@ import {
     sendMotorDirection,
     sendStartMotor,
     sendStartOscillation,
-    sendOperatingMode
+    sendOperatingMode, sendRecipeStop, sendRecipeStart
 } from '../../services/socketService';
 import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
 import type { MotorDirection, OperatingMode } from "../../../../shared-types";
+import {NotificationService} from "../../services/notificationService.tsx";
 
 /**
  * Verilen anlık PWM değerine en yakın kalibre edilmiş RPM değerini bulur.
@@ -38,7 +39,7 @@ const pwmToClosestRpm = (pwm: number): number => {
 export function ControlPanel() {
     // Gerekli durumları ve eylemleri merkezi store'dan alıyoruz.
     // Bu hook sayesinde store'daki veriler değiştikçe bu bileşen güncellenir.
-    const { motor, operatingMode, oscillationSettings, setOperatingMode } = useControllerStore();
+    const { motor, operatingMode, oscillationSettings, activeRecipe, setOperatingMode } = useControllerStore();
 
     /**
      * RPM slider'ı hareket ettirildiğinde tetiklenir.
@@ -68,11 +69,11 @@ export function ControlPanel() {
      * Çalışma modu (Sürekli/Osilasyon) değiştirildiğinde tetiklenir.
      * @param mode - Yeni çalışma modu.
      */
-    const handleModeChange = (mode: OperatingMode) => {
-        // 1. İyimser Güncelleme: Arayüz modunu anında değiştir.
-        setOperatingMode(mode);
-        // 2. Backend'e Bildirim: Mod değişikliğini sunucuya ilet.
-        sendOperatingMode(mode);
+    const handleModeChange = (mode: OperatingMode | 'recipe') => { // <-- 'recipe' tipini ekle
+        // Reçete modu seçildiğinde, motorun manuel kontrolü (hız, açı)
+        // arayüzde devre dışı kalmalı. Bu mantığı daha sonra ekleyebiliriz.
+        setOperatingMode(mode as OperatingMode); // Şimdilik state'i güncelliyoruz
+        sendOperatingMode(mode as OperatingMode);
     };
 
     /**
@@ -80,15 +81,25 @@ export function ControlPanel() {
      */
     const toggleMotorActive = () => {
         if (motor.isActive) {
-            // Eğer motor çalışıyorsa, durdurma komutu gönder.
+            // Motor hangi modda çalışırsa çalışsın, durdurma komutu aynıdır.
+            // Reçete çalışıyorsa, backend bunu algılayıp reçeteyi de durduracak.
             sendStopMotor();
+            // Eğer reçete modundaysak ve durduruyorsak, reçeteyi durdurma komutunu da gönderelim.
+            if (operatingMode === 'recipe') { // Bu kontrol backend'de de var ama UI tutarlılığı için iyi
+                sendRecipeStop();
+            }
         } else {
-            // Eğer motor duruyorsa, mevcut çalışma moduna göre
-            // uygun başlatma komutunu gönder.
-            const currentRpm = pwmToClosestRpm(motor.pwm);
-            if (operatingMode === 'continuous') {
+            // Motor duruyorsa, seçili moda göre başlat
+            if (operatingMode === 'recipe') {
+                if (activeRecipe) {
+                    sendRecipeStart(activeRecipe);
+                } else {
+                    NotificationService.showError('Çalıştırılacak aktif bir reçete bulunamadı. Lütfen bir reçete oluşturup kaydedin.');
+                }
+            } else if (operatingMode === 'continuous') {
                 sendStartMotor();
-            } else { // operatingMode === 'oscillation'
+            } else { // Diğer manuel modlar
+                const currentRpm = pwmToClosestRpm(motor.pwm);
                 sendStartOscillation({
                     pwm: motor.pwm,
                     angle: oscillationSettings.angle,
@@ -157,12 +168,13 @@ export function ControlPanel() {
                             fullWidth
                             size="md"
                             value={operatingMode}
-                            onChange={(value) => handleModeChange(value as OperatingMode)}
+                            onChange={(value) => handleModeChange(value as OperatingMode | 'recipe')}
                             data={[
                                 { label: 'Sürekli', value: 'continuous' },
                                 { label: 'Osilasyon', value: 'oscillation' },
                                 { label: 'Darbe', value: 'pulse' },
                                 { label: 'Titreşim', value: 'vibration' },
+                                { label: 'Reçete', value: 'recipe' }, // <-- YENİ REÇETE MODU
                             ]}
                         />
                     </Stack>

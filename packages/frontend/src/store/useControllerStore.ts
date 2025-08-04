@@ -5,7 +5,7 @@ import type {
     ContinuousSettings,
     DeviceStatus,
     MotorStatus, OperatingMode,
-    PulseSettings,
+    PulseSettings, Recipe,
     VibrationSettings
 } from '../../../shared-types';
 
@@ -81,6 +81,8 @@ interface ControllerState extends DeviceStatus {
     consoleFilters: ConsoleFilters;
     /** Konsolun durum güncellemelerini görmezden gelip görmeyeceğini belirtir. */
     isIgnoringStatusUpdates: boolean;
+
+    activeRecipe: Recipe | null;
 }
 
 /**
@@ -133,6 +135,8 @@ interface ControllerActions {
      * Bu, sürekli modun özel ayarlarını (örn: hız) içerir.
      */
     setContinuousSettings: (settings: Partial<ContinuousSettings>) => void;
+
+    setActiveRecipe: (recipe: Recipe | null) => void;
 }
 
 
@@ -159,6 +163,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     consoleFilters: {
         hideStatusUpdates: false,
     },
+    activeRecipe: null,
 
     // --- Eylemler (Actions) ---
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -218,6 +223,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
         }
     })),
 
+
     startIgnoringStatusUpdates: () => {
         // Önceki zamanlayıcı varsa temizle
         if (updateTimeout) clearTimeout(updateTimeout);
@@ -230,6 +236,8 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
             set({ isIgnoringStatusUpdates: false });
         }, 400);
     },
+
+    setActiveRecipe: (recipe) => set({ activeRecipe: recipe }),
 
     /**
      * Backend'den 'device_status_update' olayı ile gelen tüm cihaz durumunu günceller.

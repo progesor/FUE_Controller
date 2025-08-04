@@ -10,7 +10,7 @@ import type {
     OperatingMode,
     OscillationSettings,
     DeviceStatus,
-    PulseSettings, VibrationSettings, ContinuousSettings
+    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
@@ -607,4 +607,58 @@ export const setVibrationSettings = (settings: VibrationSettings) => {
  */
 export const getIsArduinoConnected = () => {
     return isArduinoConnected;
+};
+
+/**
+ * Reçete servisinden gelen bir adımı alır ve ilgili motor fonksiyonunu çalıştırır.
+ * Bu, modüler yapının temelini oluşturan "yönlendiricidir".
+ * @param step - Çalıştırılacak reçete adımı.
+ */
+export const executeStep = (step: RecipeStep) => {
+    console.log(`Adım ${step.id} çalıştırılıyor: Mod=${step.mode}, Süre=${step.duration}ms`);
+
+    // 1. Gelen adımdaki ayarları ana deviceStatus'a işle
+    // Bu, motorun doğru ayarlarla başlamasını sağlar.
+    deviceStatus.operatingMode = step.mode;
+    if (step.settings) {
+        if (step.mode === 'continuous' && 'rampDuration' in step.settings) {
+            deviceStatus.continuousSettings = <ContinuousSettings>step.settings;
+        } else if (step.mode === 'oscillation' && 'angle' in step.settings) {
+            deviceStatus.oscillationSettings = <OscillationSettings>step.settings;
+        } else if (step.mode === 'pulse' && 'pulseDuration' in step.settings) {
+            deviceStatus.pulseSettings = <PulseSettings>step.settings;
+        } else if (step.mode === 'vibration' && 'intensity' in step.settings) {
+            deviceStatus.vibrationSettings = <VibrationSettings>step.settings;
+        }
+    }
+
+    // 2. İlgili motor fonksiyonunu çalıştır
+    switch (step.mode) {
+        case 'continuous':
+            startMotor(true);
+            break;
+        case 'oscillation':
+            const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
+            startOscillation({
+                pwm: deviceStatus.motor.pwm,
+                angle: deviceStatus.oscillationSettings.angle,
+                rpm: rpm,
+            }, true); // isContinuation parametresini de gönderiyoruz
+            break;
+        case 'pulse':
+            startPulseMode(true);
+            break;
+        case 'vibration':
+            startVibrationMode(true);
+            break;
+    }
+};
+
+/**
+ * Reçete bittiğinde veya durdurulduğunda motoru güvenli bir şekilde durdurur.
+ */
+export const stopMotorFromRecipe = () => {
+    internalStopMotor();
+    deviceStatus.motor.isActive = false;
+    broadcastDeviceStatus();
 };

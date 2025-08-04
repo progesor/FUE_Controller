@@ -20,7 +20,7 @@ const config = {
         port: '',
 
         baudRate: 115200,
-        reconnectTimeout: 5000, // ms cinsinden yeniden bağlanma deneme süresi
+        reconnectTimeout: 1000, // ms cinsinden yeniden bağlanma deneme süresi
         pingInterval: 3000,     // ms cinsinden bağlantı kontrol sıklığı
         logPings: false,
 
