@@ -32,6 +32,8 @@ export type FtswMode = 'foot' | 'hand';
 export interface OscillationSettings {
     /** Osilasyonun gerçekleşeceği açı (derece cinsinden). */
     angle: number;
+    /** [YENİ] Bu adıma özel motor hızı (0-255). Belirtilmezse global hız kullanılır. */
+    pwm?: number;
 }
 
 /** Darbe modu için gerekli ayarları içerir. */
@@ -40,6 +42,8 @@ export interface PulseSettings {
     pulseDuration: number;
     /** İki darbe arasındaki bekleme süresi (milisaniye). */
     pulseDelay: number;
+    /** [YENİ] Bu adıma özel motor hızı (0-255). Belirtilmezse global hız kullanılır. */
+    pwm?: number;
 }
 
 /** Titreşim modu için gerekli ayarları içerir. */
@@ -54,7 +58,10 @@ export interface VibrationSettings {
 export interface ContinuousSettings {
     /** Motorun 0'dan hedeflenen hıza ulaşma süresi (milisaniye). 0 ise rampa yok demektir. */
     rampDuration: number;
+    /** [YENİ] Bu adıma özel motor hızı (0-255). Belirtilmezse global hız kullanılır. */
+    pwm?: number;
 }
+
 
 export type AllModeSettings = ContinuousSettings | OscillationSettings | PulseSettings | VibrationSettings;
 

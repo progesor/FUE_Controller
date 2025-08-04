@@ -617,9 +617,32 @@ export const getIsArduinoConnected = () => {
 export const executeStep = (step: RecipeStep) => {
     console.log(`Adım ${step.id} çalıştırılıyor: Mod=${step.mode}, Süre=${step.duration}ms`);
 
-    // 1. Gelen adımdaki ayarları ana deviceStatus'a işle
-    // Bu, motorun doğru ayarlarla başlamasını sağlar.
+
     deviceStatus.operatingMode = step.mode;
+
+    if (step.settings) {
+        let stepPwm: number | undefined;
+
+        // 'vibration' modu hızı 'intensity' alanından alır.
+        if (step.mode === 'vibration' && 'intensity' in step.settings) {
+            stepPwm = (step.settings as VibrationSettings).intensity;
+        }
+        // Diğer modlar için 'pwm' alanını kontrol et.
+        else if ('pwm' in step.settings && typeof step.settings.pwm === 'number') {
+            stepPwm = step.settings.pwm;
+        }
+
+        // Eğer adım için bir PWM değeri bulunduysa, bunu ana motor durumuna işle.
+        // Bulunmadıysa, mevcut manuel ayardaki PWM değeri korunur.
+        if (stepPwm !== undefined) {
+            deviceStatus.motor.pwm = stepPwm;
+            console.log(`Adıma özel PWM ayarlandı: ${stepPwm}`);
+        } else {
+            console.log(`Adıma özel PWM belirtilmemiş, global PWM kullanılıyor: ${deviceStatus.motor.pwm}`);
+        }
+    }
+
+
     if (step.settings) {
         if (step.mode === 'continuous' && 'rampDuration' in step.settings) {
             deviceStatus.continuousSettings = <ContinuousSettings>step.settings;
@@ -632,7 +655,7 @@ export const executeStep = (step: RecipeStep) => {
         }
     }
 
-    // 2. İlgili motor fonksiyonunu çalıştır
+
     switch (step.mode) {
         case 'continuous':
             startMotor(true);
