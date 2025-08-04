@@ -12,47 +12,57 @@ export function MainLayout() {
 
     const [consoleOpened, { open: openConsole, close: closeConsole }] = useDisclosure(false);
 
+    const drawerSize = '25%';
+
     return (
         <>
             <Drawer
                 opened={consoleOpened}
                 onClose={closeConsole}
                 title="Geliştirici Konsolu"
-                position="bottom" // Konsol için alt taraf daha kullanışlı
-                size="40%"       // Ekranın %40'ını kaplasın
-                overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+                position="right" // 1. Sağdan açılacak
+                size={drawerSize} // 2. Genişliğini ayarladık
+                withOverlay={false} // 3. EN ÖNEMLİSİ: Arka planla etkileşime izin ver
+                // withCloseButton artık gerekli, çünkü overlay'e tıklayarak kapatamayız.
                 withCloseButton
+                // Gölge gibi stil detayları ekleyerek ana içerikten ayrışmasını sağlayabiliriz.
+                styles={{
+                    header: { borderBottom: '1px solid var(--mantine-color-dark-4)' },
+                    body: { height: 'calc(100% - 60px)' }, // Başlık yüksekliğini hesaptan düş
+                }}
             >
                 <DevConsolePanel />
             </Drawer>
         // Ana Konteyner: Tüm ekranı kapla (padding'leri hesaba katarak) ve dikey flex yapısı kur.
-        <Box style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)' }}>
-
-            {/* Paneller Alanı: Kalan tüm alanı dolduran YATAY bir flex container. */}
-            <Box style={{ display: 'flex', flex: 1, gap: 'var(--mantine-spacing-xl)', overflow: 'hidden' }}>
-
-                {/* 1. Sütun: Kontrol Paneli (Genişlik ~ span={3}) */}
-                <Box style={{ flexBasis: '25%', height: '100%' }}>
-                    <ControlPanel />
+            <Box
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: 'calc(100vh - 4rem)',
+                    // DEĞİŞİKLİK: Drawer açıldığında ana içeriği sola kaydır
+                    // Bu, konsolun içeriğin üzerine binmesini engeller.
+                    marginRight: consoleOpened ? drawerSize : 0,
+                    transition: 'margin-right 0.2s ease-in-out', // Pürüzsüz bir geçiş için
+                }}
+            >
+                {/* Paneller Alanı (Değişiklik yok) */}
+                <Box style={{ display: 'flex', flex: 1, gap: 'var(--mantine-spacing-xl)', overflow: 'hidden' }}>
+                    <Box style={{ flexBasis: '25%', height: '100%' }}>
+                        <ControlPanel />
+                    </Box>
+                    <Box style={{ flexBasis: '41.66%', height: '100%' }}>
+                        <DisplayPanel />
+                    </Box>
+                    <Box style={{ flexBasis: '33.33%', height: '100%' }}>
+                        <SettingsPanel />
+                    </Box>
                 </Box>
 
-                {/* 2. Sütun: Gösterge Paneli (Genişlik ~ span={5}) */}
-                <Box style={{ flexBasis: '41.66%', height: '100%' }}>
-                    <DisplayPanel />
+                {/* Durum Çubuğu Alanı (Değişiklik yok) */}
+                <Box mt="md">
+                    <StatusBar onConsoleOpen={openConsole} />
                 </Box>
-
-                {/* 3. Sütun: Ayarlar ve Konsol (Genişlik ~ span={4}) */}
-                <Box style={{ flexBasis: '33.33%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <SettingsPanel/>
-                </Box>
-
             </Box>
-
-            {/* Durum Çubuğu Alanı: Sabit bir şekilde en altta durur. */}
-            <Box mt="md">
-                <StatusBar onConsoleOpen={openConsole} />
-            </Box>
-        </Box>
             </>
     );
 }
