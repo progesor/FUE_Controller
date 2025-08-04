@@ -433,8 +433,17 @@ export const startVibrationMode = (isContinuation = false) => {
 
     // Frekansı (1-10) daha kısa ms değerlerine çevirelim.
     // Yüksek frekans = daha kısa süre ve daha az bekleme.
-    const stepDuration = Math.max(15, 40 - (frequency * 2)); // örn: frekans 10 -> 20ms, frekans 1 -> 38ms
-    const stepDelay = Math.max(10, 30 - frequency);      // örn: frekans 10 -> 20ms, frekans 1 -> 29ms
+    // const stepDuration = Math.max(15, 40 - (frequency * 2)); // örn: frekans 10 -> 20ms, frekans 1 -> 38ms
+    // const stepDelay = Math.max(10, 30 - frequency);      // örn: frekans 10 -> 20ms, frekans 1 -> 29ms
+    // Seviye 1'i daha yavaş, Seviye 10'u daha hızlı yapacak şekilde katsayıları güncelledik.
+    const VIB_BASE_DURATION = 60; // Temel dönüş süresi (ms)
+    const VIB_FREQ_MULTIPLIER_DURATION = 4; // Frekansın dönüş süresine etki çarpanı
+    const VIB_BASE_DELAY = 50; // Temel bekleme süresi (ms)
+    const VIB_FREQ_MULTIPLIER_DELAY = 3; // Frekansın bekleme süresine etki çarpanı
+
+    const stepDuration = Math.max(15, VIB_BASE_DURATION - (frequency * VIB_FREQ_MULTIPLIER_DURATION));
+    const stepDelay = Math.max(10, VIB_BASE_DELAY - (frequency * VIB_FREQ_MULTIPLIER_DELAY));
+
     const totalIntervalTime = stepDuration + stepDelay;
 
     const performStep = () => {
