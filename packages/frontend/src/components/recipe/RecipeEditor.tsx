@@ -1,11 +1,11 @@
 // packages/frontend/src/components/recipe/RecipeEditor.tsx
 
-import { useState, useCallback } from 'react';
-import { Box, Stack, Button, Group, TextInput, Title, Divider } from '@mantine/core';
+import { useState, useCallback, useEffect } from 'react';
+import { Stack, Button, Group, TextInput, Divider } from '@mantine/core';
 import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import type { Recipe, RecipeStep } from '../../../../shared-types';
 import { v4 as uuidv4 } from 'uuid';
-import {RecipeStepEditor} from "./RecipeStepEditor.tsx";
+import { RecipeStepEditor } from "./RecipeStepEditor.tsx";
 
 // Bileşene bir başlangıç reçetesi verilmezse kullanılacak varsayılan yapı.
 const createDefaultRecipe = (): Recipe => ({
@@ -22,38 +22,39 @@ const createDefaultRecipe = (): Recipe => ({
 });
 
 interface RecipeEditorProps {
-    // Düzenlemek için mevcut bir reçete alabilir veya varsayılanı kullanabilir.
-    initialRecipe?: Recipe;
+    // Düzenlemek için mevcut bir reçete alabilir (veya null olabilir).
+    initialRecipe?: Recipe | null;
     // Kullanıcı "Kaydet" butonuna tıkladığında tetiklenecek fonksiyon.
     onSave: (recipe: Recipe) => void;
+    // Kullanıcı "İptal" butonuna tıkladığında tetiklenecek fonksiyon.
+    onCancel: () => void;
 }
 
 /**
  * Reçete Editörü Ana Bileşeni
- * Kullanıcının operasyon akışlarını (reçeteleri) görsel olarak oluşturmasını,
- * düzenlemesini, adımları yönetmesini ve kaydetmesini sağlar.
+ * Artık bir Drawer içinde çalışacak şekilde tasarlandı.
  */
-export function RecipeEditor({ initialRecipe, onSave }: RecipeEditorProps) {
+export function RecipeEditor({ initialRecipe, onSave, onCancel }: RecipeEditorProps) {
     // initialRecipe prop'u varsa onu, yoksa varsayılan bir reçeteyi state'e yükle.
-    const [recipe, setRecipe] = useState<Recipe>(initialRecipe || createDefaultRecipe());
+    const [recipe, setRecipe] = useState<Recipe>(() => initialRecipe || createDefaultRecipe());
 
-    /**
-     * Bir adımdaki değişiklikleri ana reçete state'ine işler.
-     * RecipeStepEditor bileşeninden gelen güncellemeleri yönetir.
-     * useCallback ile sarmalanarak alt bileşenlerin gereksiz yere render olması engellenir.
-     */
+    // Eğer Drawer tekrar açıldığında farklı bir reçete gelirse, state'i güncelle.
+    useEffect(() => {
+        setRecipe(initialRecipe || createDefaultRecipe());
+    }, [initialRecipe]);
+
+
     const handleUpdateStep = useCallback((index: number, updatedStep: RecipeStep) => {
-        const newSteps = [...recipe.steps];
-        newSteps[index] = updatedStep;
-        setRecipe(prev => ({ ...prev, steps: newSteps }));
-    }, [recipe.steps]); // Sadece adımlar değiştiğinde fonksiyon yeniden oluşturulur.
+        setRecipe(prevRecipe => {
+            const newSteps = [...prevRecipe.steps];
+            newSteps[index] = updatedStep;
+            return { ...prevRecipe, steps: newSteps };
+        });
+    }, []);
 
-    /**
-     * Reçeteye yeni bir varsayılan adım ekler.
-     */
     const handleAddStep = () => {
         const newStep: RecipeStep = {
-            id: uuidv4(), // Her adımın benzersiz bir anahtarı olmalı
+            id: uuidv4(),
             mode: 'pulse',
             duration: 1000,
             settings: { pulseDuration: 150, pulseDelay: 300 }
@@ -61,10 +62,6 @@ export function RecipeEditor({ initialRecipe, onSave }: RecipeEditorProps) {
         setRecipe(prev => ({ ...prev, steps: [...prev.steps, newStep] }));
     };
 
-    /**
-     * Belirtilen index'teki adımı reçeteden siler.
-     * useCallback ile sarmalanmıştır.
-     */
     const handleDeleteStep = useCallback((index: number) => {
         setRecipe(prev => ({
             ...prev,
@@ -72,78 +69,75 @@ export function RecipeEditor({ initialRecipe, onSave }: RecipeEditorProps) {
         }));
     }, []);
 
-    /**
-     * Bir adımı listede yukarı veya aşağı taşır.
-     * useCallback ile sarmalanmıştır.
-     */
     const handleMoveStep = useCallback((index: number, direction: 'up' | 'down') => {
-        const newSteps = [...recipe.steps];
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        setRecipe(prevRecipe => {
+            const newSteps = [...prevRecipe.steps];
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
-        // Sınır kontrolü
-        if (targetIndex < 0 || targetIndex >= newSteps.length) return;
+            if (targetIndex < 0 || targetIndex >= newSteps.length) {
+                return prevRecipe;
+            }
 
-        // Elemanların yerini değiştir (array destructuring ile pratik bir yöntem)
-        [newSteps[index], newSteps[targetIndex]] = [newSteps[targetIndex], newSteps[index]];
-        setRecipe(prev => ({ ...prev, steps: newSteps }));
-    }, [recipe.steps]);
+            [newSteps[index], newSteps[targetIndex]] = [newSteps[targetIndex], newSteps[index]];
+            return { ...prevRecipe, steps: newSteps };
+        });
+    }, []);
 
-    /**
-     * Reçete adı input'undaki değişiklikleri state'e yansıtır.
-     */
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRecipe(prev => ({ ...prev, name: event.currentTarget.value }));
     };
 
     return (
-        <Box>
-            <Stack gap="xl">
-                <Group justify="space-between">
-                    <Title order={3}>Reçete Editörü</Title>
-                    <Button
-                        leftSection={<IconDeviceFloppy size={18} />}
-                        onClick={() => onSave(recipe)}
-                        disabled={!recipe.name || recipe.steps.length === 0}
-                    >
-                        Reçeteyi Kaydet
-                    </Button>
-                </Group>
-
-                <TextInput
-                    label="Reçete Adı"
-                    placeholder="Örn: Sert Doku için Başlangıç Protokolü"
-                    value={recipe.name}
-                    onChange={handleNameChange}
-                    required
-                />
-
-                <Divider my="xs" label="Reçete Adımları" labelPosition="center" />
-
-                <Stack gap="md">
-                    {recipe.steps.map((step, index) => (
-                        <RecipeStepEditor
-                            // React'in listeleri verimli bir şekilde güncellemesi için benzersiz anahtar.
-                            key={step.id}
-                            step={step}
-                            index={index}
-                            totalSteps={recipe.steps.length}
-                            onUpdate={handleUpdateStep}
-                            onDelete={handleDeleteStep}
-                            onMove={handleMoveStep}
-                        />
-                    ))}
-                </Stack>
-
-                <Button
-                    leftSection={<IconPlus size={18} />}
-                    variant="outline"
-                    onClick={handleAddStep}
-                    fullWidth
-                    mt="md"
-                >
-                    Yeni Adım Ekle
+        // Box yerine doğrudan Stack kullanarak bir seviye iç içeliği azaltalım.
+        <Stack gap="xl" h="100%">
+            {/* Butonları en üste taşıdık, daha iyi bir UX için */}
+            <Group justify="flex-end">
+                <Button variant="default" onClick={onCancel}>
+                    İptal
                 </Button>
+                <Button
+                    leftSection={<IconDeviceFloppy size={18} />}
+                    onClick={() => onSave(recipe)}
+                    disabled={!recipe.name || recipe.steps.length === 0}
+                >
+                    Kaydet ve Kapat
+                </Button>
+            </Group>
+
+            <TextInput
+                label="Reçete Adı"
+                placeholder="Örn: Sert Doku için Başlangıç Protokolü"
+                value={recipe.name}
+                onChange={handleNameChange}
+                required
+            />
+
+            <Divider my="xs" label="Reçete Adımları" labelPosition="center" />
+
+            {/* Adımların listelendiği alanın kendi içinde scroll olmasını sağlıyoruz */}
+            <Stack gap="md" style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+                {recipe.steps.map((step, index) => (
+                    <RecipeStepEditor
+                        key={step.id}
+                        step={step}
+                        index={index}
+                        totalSteps={recipe.steps.length}
+                        onUpdate={handleUpdateStep}
+                        onDelete={handleDeleteStep}
+                        onMove={handleMoveStep}
+                    />
+                ))}
             </Stack>
-        </Box>
+
+            <Button
+                leftSection={<IconPlus size={18} />}
+                variant="outline"
+                onClick={handleAddStep}
+                fullWidth
+                mt="md"
+            >
+                Yeni Adım Ekle
+            </Button>
+        </Stack>
     );
 }
