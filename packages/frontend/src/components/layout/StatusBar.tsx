@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {Paper, Group, Text, Divider, Badge, ActionIcon} from '@mantine/core';
 import {
     IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX,
-    IconPower, IconInfinity, IconRepeat, IconHandGrab, IconFlask
+    IconPower, IconInfinity, IconRepeat, IconHandGrab, IconFlask, IconTerminal2
 } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
 import { socket } from '../../services/socketService';
@@ -18,13 +18,17 @@ import {RndModal} from "../modals/RndModal.tsx";
  */
 const pwmToRpm = (pwm: number) => Math.round((pwm / 255) * 18000);
 
+interface StatusBarProps {
+    onConsoleOpen: () => void;
+}
+
 /**
  * Uygulamanın en altında yer alan ve anlık durum bilgilerini gösteren bileşen.
  * Sunucu ve cihaz bağlantısı, motor durumu, çalışma modu ve pedal durumu gibi
  * kritik bilgileri tek bir bakışta kullanıcıya sunar.
  * @returns {JSX.Element} Durum çubuğu JSX'i.
  */
-export function StatusBar() {
+export function StatusBar({ onConsoleOpen }: StatusBarProps) {
     // Gerekli tüm anlık durumları `useControllerStore` hook'u ile store'dan çekiyoruz.
     // Bu hook sayesinde, store'daki bu değerler her değiştiğinde bileşen otomatik
     // olarak yeniden render edilir.
@@ -105,6 +109,9 @@ export function StatusBar() {
                     {/* Sağ Taraf: Kontrol Modu ve Pedal Durumu */}
                     <Group gap="xs">
 
+                        <ActionIcon variant="outline" onClick={onConsoleOpen} title="Geliştirici Konsolunu Aç">
+                            <IconTerminal2 size={18} />
+                        </ActionIcon>
                         {/* YENİ: Ar-Ge Modal'ını açacak buton */}
                         <ActionIcon variant="outline" onClick={openRndModal} title="Ar-Ge Test Paneli">
                             <IconFlask size={18} />

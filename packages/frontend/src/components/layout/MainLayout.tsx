@@ -1,16 +1,30 @@
 // packages/frontend/src/components/layout/MainLayout.tsx
 
-import { Tabs, Box } from '@mantine/core';
-import {IconFlask, IconSettings, IconTerminal2} from '@tabler/icons-react';
+import {Box, Drawer} from '@mantine/core';
 import { ControlPanel } from '../panels/ControlPanel';
 import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';
 import { DevConsolePanel } from '../panels/DevConsolePanel';
 import { StatusBar } from './StatusBar.tsx';
-import {RndPanel} from "../panels/RndPanel.tsx";
+import {useDisclosure} from "@mantine/hooks";
 
 export function MainLayout() {
+
+    const [consoleOpened, { open: openConsole, close: closeConsole }] = useDisclosure(false);
+
     return (
+        <>
+            <Drawer
+                opened={consoleOpened}
+                onClose={closeConsole}
+                title="Geliştirici Konsolu"
+                position="bottom" // Konsol için alt taraf daha kullanışlı
+                size="40%"       // Ekranın %40'ını kaplasın
+                overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+                withCloseButton
+            >
+                <DevConsolePanel />
+            </Drawer>
         // Ana Konteyner: Tüm ekranı kapla (padding'leri hesaba katarak) ve dikey flex yapısı kur.
         <Box style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)' }}>
 
@@ -29,37 +43,16 @@ export function MainLayout() {
 
                 {/* 3. Sütun: Ayarlar ve Konsol (Genişlik ~ span={4}) */}
                 <Box style={{ flexBasis: '33.33%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Tabs defaultValue="settings" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <Tabs.List grow>
-                            <Tabs.Tab value="settings" leftSection={<IconSettings size={16} />}>
-                                Ayar Paneli
-                            </Tabs.Tab>
-                            <Tabs.Tab value="console" leftSection={<IconTerminal2 size={16} />}>
-                                Konsol
-                            </Tabs.Tab>
-                            <Tabs.Tab value="rnd" leftSection={<IconFlask size={16} />}>
-                                Ar-Ge
-                            </Tabs.Tab>
-                        </Tabs.List>
-
-                        <Tabs.Panel value="settings" pt="xs" style={{ flex: 1, overflow: 'auto' }}>
-                            <SettingsPanel />
-                        </Tabs.Panel>
-                        <Tabs.Panel value="console" pt="xs" style={{ flex: 1, overflow: 'hidden' }}>
-                            <DevConsolePanel />
-                        </Tabs.Panel>
-                        <Tabs.Panel value="rnd" pt="xs" style={{ flex: 1, overflow: 'auto' }}>
-                            <RndPanel />
-                        </Tabs.Panel>
-                    </Tabs>
+                    <SettingsPanel/>
                 </Box>
 
             </Box>
 
             {/* Durum Çubuğu Alanı: Sabit bir şekilde en altta durur. */}
             <Box mt="md">
-                <StatusBar />
+                <StatusBar onConsoleOpen={openConsole} />
             </Box>
         </Box>
+            </>
     );
 }

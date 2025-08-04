@@ -1,7 +1,17 @@
 // packages/frontend/src/components/panels/DevConsolePanel.tsx
 
 import {useEffect, useRef, useState} from 'react';
-import {Paper, Title, ScrollArea, Text, Badge, Box, UnstyledButton, Group, Checkbox, Button} from '@mantine/core';
+import {
+    ScrollArea,
+    Text,
+    Badge,
+    Box,
+    UnstyledButton,
+    Group,
+    Checkbox,
+    Button,
+    Stack
+} from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import type { ConsoleEntry } from '../../store/useControllerStore';
 import {JsonViewer} from "../common/JsonViewer.tsx";
@@ -70,33 +80,30 @@ export function DevConsolePanel() {
     });
 
     return (
-        <Paper withBorder p="md" h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+        <Stack h="100%" gap="md">
             <Group justify="space-between">
-                <Title order={3}>Geliştirici Konsolu</Title>
-                <Group>
-                    <Checkbox
-                        label="Status Güncellemelerini Gizle"
-                        checked={consoleFilters.hideStatusUpdates}
-                        onChange={(event) => setConsoleFilter('hideStatusUpdates', event.currentTarget.checked)}
-                    />
-                    <Button
-                        leftSection={<IconTrash size={16} />}
-                        variant="light"
-                        color="red"
-                        size="xs"
-                        onClick={clearConsoleEntries}
-                    >
-                        Temizle
-                    </Button>
-                </Group>
+                {/* Title kaldırıldı, Drawer'ın kendi başlığı var */}
+                <Checkbox
+                    label="Status Güncellemelerini Gizle"
+                    checked={consoleFilters.hideStatusUpdates}
+                    onChange={(event) => setConsoleFilter('hideStatusUpdates', event.currentTarget.checked)}
+                />
+                <Button
+                    leftSection={<IconTrash size={16} />}
+                    variant="light"
+                    color="red"
+                    size="xs"
+                    onClick={clearConsoleEntries}
+                >
+                    Temizle
+                </Button>
             </Group>
 
-            <ScrollArea viewportRef={viewport} mt="md" style={{ flex: 1 }}>
-                {/* FİLTRELENMİŞ LİSTEYİ MAP'LİYORUZ */}
+            <ScrollArea viewportRef={viewport} style={{ flex: 1 }}>
                 {filteredEntries.map((entry) => (
                     <LogEntry key={entry.id} entry={entry} />
                 ))}
             </ScrollArea>
-        </Paper>
+        </Stack>
     );
 }
