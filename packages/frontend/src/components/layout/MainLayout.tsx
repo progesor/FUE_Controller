@@ -6,13 +6,18 @@ import { DisplayPanel } from '../panels/DisplayPanel';
 import { SettingsPanel } from '../panels/SettingsPanel';
 import { DevConsolePanel } from '../panels/DevConsolePanel';
 import { StatusBar } from './StatusBar.tsx';
-import {useDisclosure} from "@mantine/hooks";
+import {useDisclosure, useMediaQuery} from "@mantine/hooks";
+
+// DEĞİŞİKLİK: Ayarları daha kolay yönetmek için sabitleri yukarı taşıyalım.
+const DRAWER_SIZE = '350px'; // İçeriğin rahat sığması için genişliği artırdık.
+const WIDE_SCREEN_BREAKPOINT = '(min-width: 1600px)'; // Breakpoint'i yeni boyuta göre güncelledik.
+
 
 export function MainLayout() {
 
     const [consoleOpened, { open: openConsole, close: closeConsole }] = useDisclosure(false);
 
-    const drawerSize = '25%';
+    const isWideScreen = useMediaQuery(WIDE_SCREEN_BREAKPOINT);
 
     return (
         <>
@@ -20,29 +25,26 @@ export function MainLayout() {
                 opened={consoleOpened}
                 onClose={closeConsole}
                 title="Geliştirici Konsolu"
-                position="right" // 1. Sağdan açılacak
-                size={drawerSize} // 2. Genişliğini ayarladık
-                withOverlay={false} // 3. EN ÖNEMLİSİ: Arka planla etkileşime izin ver
-                // withCloseButton artık gerekli, çünkü overlay'e tıklayarak kapatamayız.
+                position="right"
+                size={DRAWER_SIZE} // Yeni boyutu kullandık
+                withOverlay={false}
                 withCloseButton
-                // Gölge gibi stil detayları ekleyerek ana içerikten ayrışmasını sağlayabiliriz.
                 styles={{
                     header: { borderBottom: '1px solid var(--mantine-color-dark-4)' },
-                    body: { height: 'calc(100% - 60px)' }, // Başlık yüksekliğini hesaptan düş
+                    body: { height: 'calc(100% - 60px)', padding: 0 },
                 }}
             >
                 <DevConsolePanel />
             </Drawer>
-        // Ana Konteyner: Tüm ekranı kapla (padding'leri hesaba katarak) ve dikey flex yapısı kur.
+
             <Box
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
                     height: 'calc(100vh - 4rem)',
-                    // DEĞİŞİKLİK: Drawer açıldığında ana içeriği sola kaydır
-                    // Bu, konsolun içeriğin üzerine binmesini engeller.
-                    marginRight: consoleOpened ? drawerSize : 0,
-                    transition: 'margin-right 0.2s ease-in-out', // Pürüzsüz bir geçiş için
+                    // Mantık aynı, ama artık güncel değerlerle çalışıyor.
+                    marginRight: consoleOpened && !isWideScreen ? DRAWER_SIZE : 0,
+                    transition: 'margin-right 0.2s ease-in-out',
                 }}
             >
                 {/* Paneller Alanı (Değişiklik yok) */}
