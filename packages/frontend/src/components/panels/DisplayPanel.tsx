@@ -3,6 +3,7 @@
 import { Paper, Text, Stack, Group, Button } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import {RPM_CALIBRATION_MARKS} from "../../config/calibration.ts";
+import {RecipePlayer} from "../RecipePlayer.tsx";
 
 // /**
 //  * PWM değerini (0-255) daha anlamlı olan RPM (devir/dakika) değerine çevirir.
@@ -40,7 +41,7 @@ export function DisplayPanel() {
     // Gerekli tüm durumları ve eylemleri `useControllerStore` hook'u ile
     // merkezi state'ten alıyoruz. Bu hook sayesinde, bu değerler her
     // değiştiğinde bileşenimiz otomatik olarak güncellenir.
-    const { motor, graftCount, sessionTime, incrementGraftCount, resetSession } = useControllerStore();
+    const { motor, graftCount, sessionTime, incrementGraftCount, resetSession,recipeStatus  } = useControllerStore();
 
     /**
      * Toplam saniye olarak tutulan zamanı "DAKİKA:SANİYE" formatına çevirir.
@@ -56,38 +57,38 @@ export function DisplayPanel() {
     return (
         <Paper withBorder p="xl" h="100%">
             <Stack align="center" justify="space-around" h="100%">
-                {/* RPM Göstergesi Alanı */}
+                {/* RPM Göstergesi Alanı (Aynı kalıyor) */}
                 <Stack gap={0} align="center">
                     <Text size="xl" c="dimmed">MOTOR HIZI</Text>
-                    {/* Motorun aktif olup olmamasına göre rengi değiştir (aktif ise yeşil, pasif ise soluk) */}
                     <Text fz={80} fw={700} c={motor.isActive ? 'teal.4' : 'dimmed'}>
                         {pwmToClosestRpm(motor.pwm)}
                     </Text>
                     <Text size="xl" c="dimmed">RPM</Text>
                 </Stack>
 
-                {/* Greft Sayısı ve Seans Süresi Alanı */}
-                <Group grow justify="center" w="100%">
-                    {/* Greft Sayısı Bloğu */}
-                    <Stack gap={0} align="center">
-                        <Text size="lg" c="dimmed">GREFT SAYISI</Text>
-                        <Text fz={50} fw={600}>{graftCount}</Text>
-                        {/* Manuel Artır Butonu: Store'daki `incrementGraftCount` eylemini tetikler. */}
-                        <Button onClick={incrementGraftCount} size="xs" variant="outline">
-                            MANUEL ARTIR
-                        </Button>
-                    </Stack>
-
-                    {/* Seans Süresi Bloğu */}
-                    <Stack gap={0} align="center">
-                        <Text size="lg" c="dimmed">SEANS SÜRESİ</Text>
-                        <Text fz={50} fw={600}>{formatTime(sessionTime)}</Text>
-                        {/* Sıfırla Butonu: Store'daki `resetSession` eylemini tetikler. */}
-                        <Button onClick={resetSession} color="red" size="xs" variant="outline">
-                            SIFIRLA
-                        </Button>
-                    </Stack>
-                </Group>
+                {/* YENİ KOŞULLU GÖSTERİM */}
+                {recipeStatus.isRunning ? (
+                    // Eğer reçete çalışıyorsa, RecipePlayer'ı göster
+                    <RecipePlayer />
+                ) : (
+                    // Değilse, normal Graft/Seans bilgilerini göster
+                    <Group grow justify="center" w="100%">
+                        <Stack gap={0} align="center">
+                            <Text size="lg" c="dimmed">GREFT SAYISI</Text>
+                            <Text fz={50} fw={600}>{graftCount}</Text>
+                            <Button onClick={incrementGraftCount} size="xs" variant="outline">
+                                MANUEL ARTIR
+                            </Button>
+                        </Stack>
+                        <Stack gap={0} align="center">
+                            <Text size="lg" c="dimmed">SEANS SÜRESİ</Text>
+                            <Text fz={50} fw={600}>{formatTime(sessionTime)}</Text>
+                            <Button onClick={resetSession} color="red" size="xs" variant="outline">
+                                SIFIRLA
+                            </Button>
+                        </Stack>
+                    </Group>
+                )}
             </Stack>
         </Paper>
     );

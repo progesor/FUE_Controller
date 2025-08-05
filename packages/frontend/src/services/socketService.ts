@@ -9,7 +9,7 @@ import type {
     MotorDirection,
     OperatingMode,
     OscillationSettings,
-    PulseSettings, VibrationSettings, ContinuousSettings, Recipe
+    PulseSettings, VibrationSettings, ContinuousSettings, Recipe, RecipeStatus
 } from '../../../shared-types';
 import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";
@@ -70,6 +70,7 @@ export const listenToEvents = () => {
         setFtswMode,
         updateDeviceStatus,
         addConsoleEntry,
+        setRecipeStatus,
         // setIsSessionActive, // Seansı başlatmak/durdurmak için
     } = useControllerStore.getState();
 
@@ -105,6 +106,10 @@ export const listenToEvents = () => {
             return;
         }
         updateDeviceStatus(status);
+    });
+
+    socket.on('recipe_status_update', (status: RecipeStatus) => {
+        setRecipeStatus(status);
     });
 
     // --- Arduino Donanım Olayları ---

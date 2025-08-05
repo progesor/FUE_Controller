@@ -19,6 +19,10 @@ const recipeStatus: RecipeStatus = {
     remainingTimeInStep: 0,
 };
 
+export const getRecipeStatus = () => {
+    return recipeStatus;
+};
+
 /**
  * Recipe servisini ana Socket.IO sunucu örneği ile başlatır.
  */
@@ -27,32 +31,32 @@ export const initializeRecipeService = (socketIoServer: Server<ClientToServerEve
 };
 
 /**
- * Reçetenin anlık durumunu tüm istemcilere yayınlar.
- */
-const broadcastRecipeStatus = () => {
-    io?.emit('recipe_status_update', recipeStatus);
-};
-
-/**
  * Sıradaki reçete adımını çalıştırır.
  */
 const playNextStep = () => {
     if (!currentRecipe || currentStepIndex >= currentRecipe.steps.length - 1) {
-        stopRecipe(); // Reçete bitti
+        stopRecipe();
         return;
     }
 
     currentStepIndex++;
     const step = currentRecipe.steps[currentStepIndex];
+    let remainingTime = step.duration;
 
     recipeStatus.currentStepIndex = currentStepIndex;
     recipeStatus.totalSteps = currentRecipe.steps.length;
-    recipeStatus.remainingTimeInStep = step.duration;
 
-    executeStep(step); // Arduino servisine adımı çalıştırması için komut ver
-    broadcastRecipeStatus();
+    executeStep(step);
+
+    // YENİ: Kalan süreyi periyodik olarak güncelleyen ve yayınlayan interval
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = setInterval(() => {
+        remainingTime -= 100; // Her 100ms'de bir azalt
+        recipeStatus.remainingTimeInStep = Math.max(0, remainingTime);
+    }, 100);
 
     // Bu adımın süresi dolduğunda bir sonrakine geçmek için zamanlayıcı kur
+    if (stepTimeout) clearTimeout(stepTimeout);
     stepTimeout = setTimeout(playNextStep, step.duration);
 };
 
@@ -79,9 +83,10 @@ export const stopRecipe = () => {
 
     console.log("Reçete durduruluyor...");
     if (stepTimeout) clearTimeout(stepTimeout);
+    // YENİ: Durum interval'ini de temizlediğimizden emin oluyoruz
     if (statusInterval) clearInterval(statusInterval);
 
-    stopMotorFromRecipe(); // Motoru durdur
+    stopMotorFromRecipe();
 
     // Durumu sıfırla
     currentRecipe = null;
@@ -90,5 +95,4 @@ export const stopRecipe = () => {
     recipeStatus.currentStepIndex = null;
     recipeStatus.remainingTimeInStep = 0;
 
-    broadcastRecipeStatus();
 };

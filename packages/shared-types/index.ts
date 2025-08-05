@@ -92,6 +92,8 @@ export interface DeviceStatus {
     vibrationSettings: VibrationSettings;
     /** Sürekli mod için geçerli ayarlar. */
     continuousSettings: ContinuousSettings;
+
+    recipeStatus?: RecipeStatus;
 }
 
 /** Bir reçetenin tek bir adımını tanımlar. */

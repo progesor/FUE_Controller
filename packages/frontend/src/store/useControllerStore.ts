@@ -5,7 +5,7 @@ import type {
     ContinuousSettings,
     DeviceStatus,
     MotorStatus, OperatingMode,
-    PulseSettings, Recipe,
+    PulseSettings, Recipe, RecipeStatus,
     VibrationSettings
 } from '../../../shared-types';
 
@@ -83,6 +83,8 @@ interface ControllerState extends DeviceStatus {
     isIgnoringStatusUpdates: boolean;
 
     activeRecipe: Recipe | null;
+
+    recipeStatus: RecipeStatus;
 }
 
 /**
@@ -137,6 +139,8 @@ interface ControllerActions {
     setContinuousSettings: (settings: Partial<ContinuousSettings>) => void;
 
     setActiveRecipe: (recipe: Recipe | null) => void;
+
+    setRecipeStatus: (status: RecipeStatus) => void;
 }
 
 
@@ -164,6 +168,12 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
         hideStatusUpdates: false,
     },
     activeRecipe: null,
+    recipeStatus: {
+        isRunning: false,
+        currentStepIndex: null,
+        totalSteps: 0,
+        remainingTimeInStep: 0,
+    },
 
     // --- Eylemler (Actions) ---
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -239,6 +249,8 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
 
     setActiveRecipe: (recipe) => set({ activeRecipe: recipe }),
 
+    setRecipeStatus: (status) => set({ recipeStatus: status }),
+
     /**
      * Backend'den 'device_status_update' olayı ile gelen tüm cihaz durumunu günceller.
      * Bu fonksiyon, backend'deki 'deviceStatus' nesnesi ile frontend'in senkronize
@@ -249,21 +261,12 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
         const wasActive = get().motor.isActive;
         const isActive = status.motor.isActive;
 
-        // Gelen yeni durumu state'e işle
-        set(status);
+        set((state) => ({ ...state, ...status }));
 
-        // Motorun durumu 'aktif değil'den 'aktif'e geçtiyse seansı başlat.
         if (isActive && !wasActive) {
             set({ isSessionActive: true });
-        }
-        // Motor 'aktif'ten 'aktif değil'e geçtiyse seansı durdur.
-        else if (!isActive && wasActive) {
+        } else if (!isActive && wasActive) {
             set({ isSessionActive: false });
         }
-        // Not: Bu mantık, `sessionService.ts` dosyasının sorumluluğunda olmalıdır.
-        // `sessionService` store'daki `isSessionActive` değişikliğini dinleyerek
-        // zamanlayıcıyı (setInterval) kendi içinde yönetmelidir.
-        // Bu fonksiyonda doğrudan zamanlayıcı kontrolü yapmak, sorumlulukların
-        // karışmasına neden olabilir.
     },
 }));

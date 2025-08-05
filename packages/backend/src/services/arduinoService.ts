@@ -14,6 +14,7 @@ import type {
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
+import { getRecipeStatus } from './recipeService';
 
 // ===================================================================
 //
@@ -96,7 +97,16 @@ export const initializeArduinoService = (socketIoServer: Server<ClientToServerEv
  * Cihazın durumunda bir değişiklik olduğunda çağrılır.
  */
 const broadcastDeviceStatus = () => {
-    io?.emit('device_status_update', deviceStatus);
+    // YENİ: Göndermeden önce, recipeService'den en güncel reçete durumunu al
+    const currentRecipeStatus = getRecipeStatus();
+
+    // İki durumu birleştirip tek bir paket olarak gönder
+    const combinedStatus = {
+        ...deviceStatus,
+        recipeStatus: currentRecipeStatus,
+    };
+
+    io?.emit('device_status_update', combinedStatus);
 };
 
 
