@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="katman_2" data-name="katman 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 286.67 286.67">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#Adsız_degrade_25);
+      }
+
+      .cls-2 {
+        stroke: #fff;
+        stroke-miterlimit: 10;
+      }
+
+      .cls-2, .cls-3 {
+        fill: none;
+      }
+    </style>
+    <linearGradient id="Adsız_degrade_25" data-name="Adsız degrade 25" x1="143.34" y1="194.39" x2="143.34" y2="92.29" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b55df"/>
+      <stop offset=".11" stop-color="#5650cf" stop-opacity=".91"/>
+      <stop offset=".5" stop-color="#454199" stop-opacity=".6"/>
+      <stop offset=".68" stop-color="#343265" stop-opacity=".35"/>
+      <stop offset=".89" stop-color="#23222f" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#1d1d1b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="katman_1" data-name="katman 1">
+    <circle class="cls-2" cx="143.34" cy="143.34" r="142.84"/>
+    <circle class="cls-1" cx="143.34" cy="143.34" r="51.05"/>
+    <g>
+      <ellipse class="cls-3" cx="143.34" cy="143.72" rx="137.82" ry="138.2"/>
+      <line class="cls-2" x1="143.31" y1="268.5" x2="143.3" y2="281.92"/>
+      <line class="cls-2" x1="266.44" y1="125.66" x2="279.72" y2="123.74"/>
+      <line class="cls-2" x1="242.21" y1="67.98" x2="252.89" y2="59.86"/>
+      <line class="cls-2" x1="193.07" y1="29.29" x2="198.47" y2="17.02"/>
+      <line class="cls-2" x1="131.28" y1="19.49" x2="130.01" y2="6.16"/>
+      <line class="cls-2" x1="72.59" y1="41.02" x2="64.96" y2="30.03"/>
+      <line class="cls-2" x1="31.75" y1="88.42" x2="19.74" y2="82.5"/>
+      <line class="cls-2" x1="19.05" y1="149.74" x2="5.68" y2="150.39"/>
+      <line class="cls-2" x1="37.59" y1="209.51" x2="26.21" y2="216.58"/>
+      <line class="cls-2" x1="82.79" y1="252.76" x2="76.25" y2="264.47"/>
+    </g>
+  </g>
+</svg>

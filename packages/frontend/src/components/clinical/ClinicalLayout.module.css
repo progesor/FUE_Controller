@@ -1,0 +1,26 @@
+.wrapper {
+    width: 100vw;
+    height: 100vh;
+    background-color: #0c0d14; /* Tasarımdaki ana koyu renk */
+    background-image: url('../../assets/clinical-background.svg'); /* Arka plan deseni */
+    background-size: cover;
+    background-position: center;
+    color: white;
+    font-family: 'Segoe UI', sans-serif; /* Tasarıma daha yakın bir font */
+    overflow: hidden; /* Taşmaları engelle */
+}
+
+.gaugePlaceholder {
+    width: 300px;
+    height: 300px;
+    border: 2px dashed #333;
+    border-radius: 50%;
+    color: #555;
+}
+
+.presetButtonPlaceholder {
+    width: 80px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid #444;
+}
