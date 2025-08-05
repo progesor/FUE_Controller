@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="katman_2" data-name="katman 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 291 291">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#Adsız_degrade_25);
+      }
+
+      .cls-2 {
+        stroke: #fff;
+        stroke-miterlimit: 10;
+      }
+
+      .cls-2, .cls-3 {
+        fill: none;
+      }
+    </style>
+    <linearGradient id="Adsız_degrade_25" data-name="Adsız degrade 25" x1="145.5" y1="197.32" x2="145.5" y2="93.68" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b55df"/>
+      <stop offset=".11" stop-color="#5650cf" stop-opacity=".91"/>
+      <stop offset=".5" stop-color="#454199" stop-opacity=".6"/>
+      <stop offset=".68" stop-color="#343265" stop-opacity=".35"/>
+      <stop offset=".89" stop-color="#23222f" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#1d1d1b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="katman_1" data-name="katman 1">
+    <g>
+      <circle class="cls-2" cx="145.5" cy="145.5" r="145"/>
+      <circle class="cls-1" cx="145.5" cy="145.5" r="51.82"/>
+      <g>
+        <ellipse class="cls-3" cx="145.5" cy="145.89" rx="139.9" ry="140.3"/>
+        <line class="cls-2" x1="145.47" y1="272.56" x2="145.47" y2="286.19"/>
+        <line class="cls-2" x1="268.95" y1="119.06" x2="282.27" y2="116.2"/>
+        <line class="cls-2" x1="241.05" y1="63.05" x2="251.37" y2="54.17"/>
+        <line class="cls-2" x1="189.78" y1="27.2" x2="194.59" y2="14.47"/>
+        <line class="cls-2" x1="127.55" y1="20.46" x2="125.64" y2="7"/>
+        <line class="cls-2" x1="69.8" y1="44.44" x2="61.64" y2="33.58"/>
+        <line class="cls-2" x1="30.58" y1="93.21" x2="18.21" y2="87.58"/>
+        <line class="cls-2" x1="19.5" y1="154.86" x2="5.94" y2="155.82"/>
+        <line class="cls-2" x1="39.17" y1="214.3" x2="27.73" y2="221.65"/>
+        <line class="cls-2" x1="84.87" y1="257.05" x2="78.32" y2="268.98"/>
+      </g>
+    </g>
+  </g>
+</svg>

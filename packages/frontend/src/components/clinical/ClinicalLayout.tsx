@@ -1,24 +1,15 @@
-import { Box, Center, Stack, Group } from '@mantine/core';
+import { Box, Stack, Group } from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
 
 // SVG varlıklarını projemize import ediyoruz
 import ertipLogo from '../../assets/ertip-logo.svg';
 import deviceGraphic from '../../assets/device-graphic.svg';
+import {Gauge} from "./Gauge.tsx";
+import {RPM_CALIBRATION_MARKS} from "../../config/calibration.ts";
+import {useControllerStore} from "../../store/useControllerStore.ts";
+import {InfoPanel} from "./InfoPanel.tsx";
+import {Clock} from "./Clock.tsx";
 
-// Gelecek fazlarda oluşturacağımız bileşenler için yer tutucular
-const GaugePlaceholder = ({ label }: { label: string }) => (
-    <Center className={classes.gaugePlaceholder}>
-        <Box ta="center">{label}</Box>
-    </Center>
-);
-
-const InfoPanelPlaceholder = () => (
-    <Group justify="space-around" w="100%" mt="md">
-        <Box ta="center">Work Time</Box>
-        <Box ta="center">Counter</Box>
-        <Box ta="center">Total Work Time</Box>
-    </Group>
-);
 
 const PresetButtonsPlaceholder = () => (
     <Group justify="center" gap="lg">
@@ -28,34 +19,56 @@ const PresetButtonsPlaceholder = () => (
     </Group>
 );
 
-const ClockPlaceholder = () => (
-    <Box mt="xl">09:54 AM</Box>
-);
+const pwmToClosestRpm = (pwm: number): number => {
+    if (pwm === 0) return 0;
+    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
+        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
+    );
+    return closestMark.rpm;
+};
 
 export function ClinicalLayout() {
+    // Store'dan anlık verileri çekiyoruz
+    const { motor, oscillationSettings } = useControllerStore();
+
+    // RPM ve Açı göstergeleri için maksimum değerleri belirliyoruz
+    const maxRpm = RPM_CALIBRATION_MARKS[RPM_CALIBRATION_MARKS.length - 1].rpm;
+    const maxAngle = 600;
+
     return (
         <Box className={classes.wrapper}>
-            {/* Arka plan SVG'si CSS üzerinden eklenecek.
-                Bu, içeriğin üzerinde konumlanmasını kolaylaştırır.
-            */}
             <Stack justify="space-between" h="100%" p="xl">
-                {/* Üst Kısım: Preset Butonları */}
+                {/* ... Diğer bileşenler aynı kalıyor ... */}
                 <PresetButtonsPlaceholder />
 
-                {/* Orta Kısım: Göstergeler ve Cihaz Grafiği */}
                 <Group justify="center" align="center" w="100%">
-                    <GaugePlaceholder label="Oscillation Gauge" />
+                    {/* Store'dan gelen 'oscillationSettings.angle' verisini bağlıyoruz */}
+                    <Gauge
+                        value={oscillationSettings.angle}
+                        maxValue={maxAngle}
+                        label="Oscillation"
+                        subLabel="%" // Bu kısmı şimdilik statik bırakabilir veya başka bir veri ile doldurabiliriz.
+                    />
+
                     <Stack align="center" mx="xl">
                         <img src={ertipLogo} alt="Ertip Logo" width="150" />
                         <img src={deviceGraphic} alt="Device" width="300" />
                     </Stack>
-                    <GaugePlaceholder label="RPM Gauge" />
+
+                    {/* Store'dan gelen 'motor.pwm' verisini RPM'e çevirip bağlıyoruz */}
+                    <Gauge
+                        value={pwmToClosestRpm(motor.pwm)}
+                        maxValue={maxRpm}
+                        label="RPM"
+                        mirror={true}
+                    />
                 </Group>
 
-                {/* Alt Kısım: Bilgiler ve Saat */}
+                {/* ... Diğer bileşenler aynı kalıyor ... */}
                 <Stack align="center">
-                    <InfoPanelPlaceholder />
-                    <ClockPlaceholder />
+                    {/* Placeholder'ları gerçek bileşenlerle değiştiriyoruz */}
+                    <InfoPanel />
+                    <Clock />
                 </Stack>
             </Stack>
         </Box>

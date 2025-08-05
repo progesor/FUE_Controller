@@ -2,7 +2,7 @@
     width: 100vw;
     height: 100vh;
     background-color: #0c0d14; /* Tasarımdaki ana koyu renk */
-    background-image: url('../../assets/clinical-background.svg'); /* Arka plan deseni */
+    /*background-image: url('../../assets/clinical-background.svg'); !* Arka plan deseni *!*/
     background-size: cover;
     background-position: center;
     color: white;

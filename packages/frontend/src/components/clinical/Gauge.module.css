@@ -1,0 +1,35 @@
+.wrapper {
+    position: relative;
+}
+
+.arcContainer {
+    /* Dönüş merkezini SVG'nin tam ortası yapıyoruz */
+    transform-origin: center center;
+    /* Dönüş ve opaklık animasyonlarını pürüzsüz hale getiriyoruz */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Metinlerin SVG içindeki diğer elementlerden etkilenmemesini sağlar */
+.textGroup {
+    pointer-events: none;
+}
+
+.valueText {
+    font-size: 36px;
+    font-weight: 700;
+    fill: #ffffff;
+}
+
+.subLabelText {
+    font-size: 24px;
+    font-weight: 400;
+    fill: #aab0c4;
+}
+
+.labelText {
+    font-size: 20px;
+    font-weight: 500;
+    fill: #aab0c4;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
