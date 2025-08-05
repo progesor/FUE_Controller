@@ -1,11 +1,11 @@
 // packages/frontend/src/components/layout/MainLayout.tsx
 
 import {Box, Drawer} from '@mantine/core';
-import { ControlPanel } from '../panels/ControlPanel';
-import { DisplayPanel } from '../panels/DisplayPanel';
-import { SettingsPanel } from '../panels/SettingsPanel';
-import { DevConsolePanel } from '../panels/DevConsolePanel';
-import { StatusBar } from './StatusBar.tsx';
+import { ControlPanel } from '../panels/ControlPanel.tsx';
+import { DisplayPanel } from '../panels/DisplayPanel.tsx';
+import { SettingsPanel } from '../panels/SettingsPanel.tsx';
+import { DevConsolePanel } from '../panels/DevConsolePanel.tsx';
+import { StatusBar } from '../layout/StatusBar.tsx';
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 
 // DEĞİŞİKLİK: Ayarları daha kolay yönetmek için sabitleri yukarı taşıyalım.
