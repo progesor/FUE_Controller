@@ -6,31 +6,43 @@ import cx from 'clsx';
 import React, {useRef, useState} from "react";
 
 // Küçük bir ses veya titreşim oluşturan geri bildirim fonksiyonu
-function playFeedback() {
-    if (typeof window === 'undefined') return;
+const playFeedback = (() => {
+    let audioCtx: AudioContext | null | undefined;
 
-    if ('vibrate' in navigator) {
-        navigator.vibrate(10);
-    }
+    return () => {
+        if (typeof window === 'undefined') return;
 
-    try {
-        const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
-        const AudioCtx = window.AudioContext || w.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 880;
-        gain.gain.value = 0.05;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.05);
-    } catch {
-        // Tarayıcı ses oluşturmayı engelleyebilir; sessizce başarısız ol
-    }
-}
+        if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+        }
+
+        try {
+            if (audioCtx === undefined) {
+                const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
+                const AudioContextClass = window.AudioContext || w.webkitAudioContext;
+                audioCtx = AudioContextClass ? new AudioContextClass() : null;
+            }
+
+            if (!audioCtx) return;
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.value = 0.05;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        } catch {
+            // Tarayıcı ses oluşturmayı engelleyebilir; sessizce başarısız ol
+        }
+    };
+})();
 
 interface HolographicGaugeProps {
     value: number;
@@ -74,18 +86,21 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (!isInteractive || !onChange) return;
+
         let newValue = value;
         if (e.key === '+' || e.key === '=') {
-            newValue = Math.min(maxValue, value + 1);
+            newValue = Math.min(maxValue, value + 50);
         } else if (e.key === '-' || e.key === '_') {
-            newValue = Math.max(0, value - 1);
+            newValue = Math.max(0, value - 50);
         } else {
             return;
         }
 
-        e.preventDefault();
-        onChange(newValue);
-        playFeedback();
+        if (newValue !== value) {
+            e.preventDefault();
+            onChange(newValue);
+            playFeedback();
+        }
     };
 
     const SIZE = 250;
