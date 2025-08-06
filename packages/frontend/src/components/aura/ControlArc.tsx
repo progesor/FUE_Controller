@@ -3,6 +3,7 @@
 import { Box, Text } from '@mantine/core';
 import classes from './ControlArc.module.css';
 import cx from 'clsx';
+import type React from 'react';
 import { IconInfinity, IconRepeat, IconListDetails, IconBook } from '@tabler/icons-react';
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import type {OperatingMode} from "../../../../shared-types";
@@ -85,21 +86,36 @@ export function ControlArc() {
                     const { x, y } = getButtonPosition(index);
                     const Icon = mode.icon;
 
+                    const handleKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleModeChange(mode.id);
+                        }
+                    };
+
+                    const isActive = uiMode === mode.id;
                     return (
                         <g
                             key={mode.id}
-                            transform={`translate(${x}, ${y})`}
-                            className={classes.arcButton}
+                            style={{
+                                transform: `translate(${x}px, ${y}px) scale(${isActive ? 1.15 : 1})`,
+                                transition: 'transform 0.3s ease',
+                                transformOrigin: 'center',
+                            }}
+                            className={cx(classes.arcButton, { [classes.buttonActive]: isActive })}
                             onClick={() => handleModeChange(mode.id)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={mode.label}
+                            onKeyDown={handleKeyDown}
                         >
-                            {/* Aktif butonu belirlemek için artık 'uiMode' kullanılıyor */}
                             <circle
                                 r="22"
-                                className={cx(classes.buttonCircle, { [classes.buttonActive]: uiMode === mode.id })}
+                                className={cx(classes.buttonCircle, { [classes.buttonActive]: isActive })}
                             />
                             <Icon
                                 size={24}
-                                className={cx(classes.buttonIcon, { [classes.buttonActive]: uiMode === mode.id })}
+                                className={cx(classes.buttonIcon, { [classes.buttonActive]: isActive })}
                                 x="-12" y="-12"
                             />
                         </g>
