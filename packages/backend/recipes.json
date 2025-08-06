@@ -1,0 +1,91 @@
+[
+  {
+    "id": "6937deba-e2bb-4728-95b8-cc7e7ba4ce1e",
+    "name": "Yeni Operasyon Reçetesi",
+    "steps": [
+      {
+        "id": "9995be9d-d396-441d-b980-5f539b28180d",
+        "mode": "continuous",
+        "duration": 2000,
+        "settings": {
+          "rampDuration": 500
+        }
+      },
+      {
+        "id": "9b94e2d5-e005-4400-82ea-9db3f66e5b8e",
+        "mode": "oscillation",
+        "duration": 1000,
+        "settings": {
+          "angle": 180
+        }
+      }
+    ]
+  },
+  {
+    "id": "5937f875-fb9f-4dc0-a1eb-41ad84f4d975",
+    "name": "Test 1",
+    "steps": [
+      {
+        "id": "bcd13399-ece2-440e-94fb-58f1f5ef754a",
+        "mode": "continuous",
+        "duration": 1500,
+        "settings": {
+          "rampDuration": 400,
+          "pwm": 255
+        }
+      },
+      {
+        "id": "20ecbeb7-1f51-499b-af4e-aa0149c5a104",
+        "mode": "oscillation",
+        "duration": 3500,
+        "settings": {
+          "angle": 225,
+          "pwm": 16
+        }
+      }
+    ]
+  },
+  {
+    "id": "dad870ab-0350-45c3-96d0-1fed21c3165c",
+    "name": "Test 2",
+    "steps": [
+      {
+        "id": "e90d8c53-8251-4b59-ab04-f96c5082a77e",
+        "mode": "pulse",
+        "duration": 5000,
+        "settings": {
+          "pulseDuration": 50,
+          "pulseDelay": 50,
+          "pwm": 160
+        }
+      },
+      {
+        "id": "3e6f9db6-c315-45b2-80e1-f130d22b59b2",
+        "mode": "pulse",
+        "duration": 1000,
+        "settings": {
+          "pulseDuration": 150,
+          "pulseDelay": 300
+        }
+      },
+      {
+        "id": "d6039041-6607-4df4-8070-7b9f66191846",
+        "mode": "pulse",
+        "duration": 1000,
+        "settings": {
+          "pulseDuration": 150,
+          "pulseDelay": 300
+        }
+      },
+      {
+        "id": "1c6594dc-383e-433b-bf66-e3894a49e8b3",
+        "mode": "pulse",
+        "duration": 1000,
+        "settings": {
+          "pulseDuration": 150,
+          "pulseDelay": 300
+        }
+      }
+    ]
+  }
+]

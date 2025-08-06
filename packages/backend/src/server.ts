@@ -28,7 +28,8 @@ import {
     setContinuousSettings
 } from './services/arduinoService';
 import {getCalibrationData} from "./services/calibrationService";
-import {startRecipe, stopRecipe} from "./services/recipeService";
+import {initializeRecipeService, startRecipe, stopRecipe} from "./services/recipeService";
+import {deleteRecipe, listRecipes, saveRecipe} from "./services/recipePersistenceService";
 
 // ===================================================================
 //
@@ -57,6 +58,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 });
 
 const PORT = config.server.port;
+
+initializeRecipeService(io);
 
 
 // --- Temel HTTP Endpoint ---
@@ -144,6 +147,24 @@ io.on('connection', (socket) => {
     socket.on('recipe_stop', () => {
         console.log(`[Client -> Server]: recipe_stop isteği`);
         stopRecipe();
+    });
+
+    listRecipes().then(recipes => {
+        socket.emit('recipe_list_update', recipes);
+    });
+
+    socket.on('recipe_save', async (recipe) => {
+        console.log(`[Client -> Server]: recipe_save isteği: ${recipe.name}`);
+        const updatedRecipes = await saveRecipe(recipe);
+        // Değişikliği tüm istemcilere yayınla
+        io.emit('recipe_list_update', updatedRecipes);
+    });
+
+    socket.on('recipe_delete', async (recipeId) => {
+        console.log(`[Client -> Server]: recipe_delete isteği: ${recipeId}`);
+        const updatedRecipes = await deleteRecipe(recipeId);
+        // Değişikliği tüm istemcilere yayınla
+        io.emit('recipe_list_update', updatedRecipes);
     });
 
     // 'disconnect' olayı, bir istemcinin bağlantısı koptuğunda tetiklenir.

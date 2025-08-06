@@ -2,77 +2,73 @@
 
 import { Paper, Title, Stack, Button, Drawer, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconListDetails } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
 import { RecipeEditor } from '../recipe/RecipeEditor';
 import { NotificationService } from '../../services/notificationService';
 import type { Recipe } from '../../../../shared-types';
 import { ManualSettings } from './settings/ManualSettings';
+import { RecipeLibrary } from '../recipe/RecipeLibrary';
+import { sendRecipeSave } from '../../services/socketService';
+import { useState } from 'react';
 
-/**
- * Cihazın çalışma parametrelerinin yapılandırıldığı ana panel.
- * Manuel mod ayarlarını içerir ve Reçete Editörünü bir Drawer içinde açar.
- */
 export function SettingsPanel() {
-    // Drawer'ın açık/kapalı durumunu yönetmek için Mantine hook'u
     const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+    const { setActiveRecipe } = useControllerStore();
 
-    // Gerekli state ve action'ları store'dan alıyoruz
-    const { activeRecipe, setActiveRecipe } = useControllerStore();
+    const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
 
-    /**
-     * RecipeEditor'dan gelen "Kaydet" olayını yönetir.
-     * @param recipe - RecipeEditor bileşeninde oluşturulan/düzenlenen reçete.
-     */
     const handleSaveRecipe = (recipe: Recipe) => {
-        // 1. Reçeteyi aktif reçete olarak state'e kaydet.
         setActiveRecipe(recipe);
-
-        // 2. Kullanıcıyı bilgilendir.
-        NotificationService.showSuccess(`'${recipe.name}' adlı reçete aktif olarak ayarlandı!`);
-
-        // 3. Drawer'ı kapat.
+        sendRecipeSave(recipe);
+        NotificationService.showSuccess(`'${recipe.name}' aktif reçete olarak ayarlandı ve kaydedildi!`);
         closeDrawer();
+    };
 
-        console.log('Kaydedilen ve aktif edilen reçete:', recipe);
+    // Bu fonksiyon artık SADECE editörü açma görevini üstleniyor.
+    const handleEditRecipe = (recipe: Recipe) => {
+        setRecipeToEdit(recipe);
+        openDrawer();
+    };
+
+    const handleCreateNewRecipe = () => {
+        setRecipeToEdit(null);
+        openDrawer();
     };
 
     return (
         <>
-            {/* Reçete Editörü için Drawer */}
             <Drawer
                 opened={drawerOpened}
                 onClose={closeDrawer}
                 title="Reçete Editörü"
                 position="right"
-                size="xl" // Geniş bir alan sağlamak için
+                size="xl"
                 overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
                 withCloseButton
             >
                 <RecipeEditor
-                    // Düzenlemek için mevcut aktif reçeteyi gönderiyoruz.
-                    // Eğer aktif reçete yoksa, editör kendi varsayılanını oluşturacak.
-                    initialRecipe={activeRecipe}
+                    initialRecipe={recipeToEdit}
                     onSave={handleSaveRecipe}
-                    onCancel={closeDrawer} // İptal butonu için Drawer'ı kapatma fonksiyonu
+                    onCancel={closeDrawer}
                 />
             </Drawer>
 
-            {/* Ana Ayar Paneli */}
             <Paper withBorder p="md" h="100%">
-                <Stack>
+                <Stack h="100%">
                     <Group justify="space-between" align="center">
-                        <Title order={3}>Ayar Paneli</Title>
+                        <Title order={3}>Reçete Paneli</Title>
                         <Button
-                            leftSection={<IconListDetails size={16} />}
+                            leftSection={<IconPlus size={16} />}
                             variant="outline"
-                            onClick={openDrawer} // Bu buton artık Drawer'ı açar
+                            onClick={handleCreateNewRecipe}
                         >
-                            Reçeteleri Yönet
+                            Yeni Reçete
                         </Button>
+                        <RecipeLibrary onEdit={handleEditRecipe} />
                     </Group>
 
-                    {/* Tabs yapısı kaldırıldı, sadece Manuel Ayarlar kaldı */}
+                    <Title order={4} mt="md">Manuel Ayarlar</Title>
                     <ManualSettings />
                 </Stack>
             </Paper>

@@ -83,6 +83,8 @@ interface ControllerState extends DeviceStatus {
     isIgnoringStatusUpdates: boolean;
 
     activeRecipe: Recipe | null;
+    /** YENİ: Sunucudan gelen kayıtlı reçetelerin listesini tutar. */
+    savedRecipes: Recipe[];
 
     recipeStatus: RecipeStatus;
 }
@@ -139,6 +141,8 @@ interface ControllerActions {
     setContinuousSettings: (settings: Partial<ContinuousSettings>) => void;
 
     setActiveRecipe: (recipe: Recipe | null) => void;
+    /** YENİ: Kayıtlı reçete listesini günceller. */
+    setSavedRecipes: (recipes: Recipe[]) => void;
 
     setRecipeStatus: (status: RecipeStatus) => void;
 }
@@ -168,6 +172,7 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
         hideStatusUpdates: false,
     },
     activeRecipe: null,
+    savedRecipes: [],
     recipeStatus: {
         isRunning: false,
         currentStepIndex: null,
@@ -248,6 +253,8 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     },
 
     setActiveRecipe: (recipe) => set({ activeRecipe: recipe }),
+
+    setSavedRecipes: (recipes) => set({ savedRecipes: recipes }),
 
     setRecipeStatus: (status) => set({ recipeStatus: status }),
 

@@ -71,6 +71,7 @@ export const listenToEvents = () => {
         updateDeviceStatus,
         addConsoleEntry,
         setRecipeStatus,
+        setSavedRecipes,
         // setIsSessionActive, // Seansı başlatmak/durdurmak için
     } = useControllerStore.getState();
 
@@ -110,6 +111,10 @@ export const listenToEvents = () => {
 
     socket.on('recipe_status_update', (status: RecipeStatus) => {
         setRecipeStatus(status);
+    });
+    /** YENİ: Reçete listesi güncellendiğinde bu olay tetiklenir */
+    socket.on('recipe_list_update', (recipes: Recipe[]) => {
+        setSavedRecipes(recipes); // Gelen yeni listeyi store'a kaydet
     });
 
     // --- Arduino Donanım Olayları ---
@@ -270,4 +275,26 @@ export const sendRecipeStop = () => {
         data: [],
     });
     socket.emit('recipe_stop');
+};
+
+/** Aktif reçeteyi sunucuya kaydetmesi veya güncellemesi için gönderir. */
+export const sendRecipeSave = (recipe: Recipe) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: recipe_save`,
+        data: [recipe],
+    });
+    socket.emit('recipe_save', recipe);
+};
+
+/** Belirtilen reçeteyi silmesi için sunucuya komut gönderir. */
+export const sendRecipeDelete = (recipeId: string) => {
+    useControllerStore.getState().addConsoleEntry({
+        type: 'command',
+        source: 'frontend',
+        message: `Komut gönderildi: recipe_delete`,
+        data: [{ id: recipeId }],
+    });
+    socket.emit('recipe_delete', recipeId);
 };

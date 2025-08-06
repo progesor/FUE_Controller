@@ -1,4 +1,4 @@
-// packages/frontend/src/components/recipe/RecipePlayer.tsx
+// packages/frontend/src/components/RecipePlayer.tsx
 
 import {Box, Text, Progress, Group, Divider, Stack} from '@mantine/core';
 import {useControllerStore} from "../store/useControllerStore.ts";
@@ -15,6 +15,14 @@ export function RecipePlayer() {
 
     const { currentStepIndex, totalSteps, remainingTimeInStep } = recipeStatus;
     const currentStep = activeRecipe.steps[currentStepIndex];
+
+    // --- KESİN ÇÖZÜM ---
+    // currentStep'in, state güncellemeleri arasındaki anlık uyuşmazlıklar nedeniyle
+    // undefined olma ihtimaline karşı bir güvenlik kontrolü ekliyoruz.
+    if (!currentStep) {
+        // Bu durum genellikle bir sonraki render'da düzelir. Çökmeyi engellemek için null dönüyoruz.
+        return null;
+    }
 
     // Mevcut adımın geçen süresini hesapla
     const stepProgress = ((currentStep.duration - remainingTimeInStep) / currentStep.duration) * 100;

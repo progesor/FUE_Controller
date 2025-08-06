@@ -141,6 +141,8 @@ export interface ServerToClientEvents {
     'calibration_data_response': (data: { pwm: number; duration: number }) => void;
     /** Reçetenin anlık çalışma durumu değiştiğinde backend tarafından gönderilir. */
     'recipe_status_update': (status: RecipeStatus) => void;
+    /** YENİ: Reçete listesi güncellendiğinde backend tarafından gönderilir. */
+    'recipe_list_update': (recipes: Recipe[]) => void;
 }
 
 /**
@@ -176,5 +178,9 @@ export interface ClientToServerEvents {
     'recipe_start': (recipe: Recipe) => void;
     /** Çalışan bir reçeteyi durdurmak için gönderilir. */
     'recipe_stop': () => void;
+    /** YENİ: Bir reçeteyi kaydetmek veya güncellemek için gönderilir. */
+    'recipe_save': (recipe: Recipe) => void;
+    /** YENİ: Bir reçeteyi silmek için gönderilir. */
+    'recipe_delete': (recipeId: string) => void;
 
 }
