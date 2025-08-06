@@ -97,11 +97,11 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                 </g>
 
                 <g className={classes.textGroup}>
-                    <text x="50%" y="50%" dy="-0.5em" textAnchor="middle" className={classes.valueText}>
+                    <text x="50%" y="60%" dy="-0.5em" textAnchor="middle" className={classes.valueText}>
                         {Math.round(value)}
                     </text>
                     {subLabel && (
-                        <text x="50%" y="60%" textAnchor="middle" className={classes.subLabelText}>
+                        <text x="50%" y="62%" textAnchor="middle" className={classes.subLabelText}>
                             {subLabel}
                         </text>
                     )}
