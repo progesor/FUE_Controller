@@ -87,6 +87,10 @@ interface ControllerState extends DeviceStatus {
     savedRecipes: Recipe[];
 
     recipeStatus: RecipeStatus;
+
+    isRecipeDrawerOpen: boolean;
+
+    uiMode: string;
 }
 
 /**
@@ -145,6 +149,10 @@ interface ControllerActions {
     setSavedRecipes: (recipes: Recipe[]) => void;
 
     setRecipeStatus: (status: RecipeStatus) => void;
+
+    toggleRecipeDrawer: (isOpen?: boolean) => void;
+
+    setUiMode: (mode: string) => void;
 }
 
 
@@ -179,6 +187,8 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
         totalSteps: 0,
         remainingTimeInStep: 0,
     },
+    isRecipeDrawerOpen: false,
+    uiMode: 'continuous',
 
     // --- Eylemler (Actions) ---
     setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -257,6 +267,13 @@ export const useControllerStore = create<ControllerState & ControllerActions>((s
     setSavedRecipes: (recipes) => set({ savedRecipes: recipes }),
 
     setRecipeStatus: (status) => set({ recipeStatus: status }),
+
+    toggleRecipeDrawer: (isOpen) => set((state) => ({
+        // Eğer bir değer verilmişse onu kullan, verilmemişse mevcut durumun tersini al
+        isRecipeDrawerOpen: isOpen !== undefined ? isOpen : !state.isRecipeDrawerOpen
+    })),
+
+    setUiMode: (mode) => set({ uiMode: mode }),
 
     /**
      * Backend'den 'device_status_update' olayı ile gelen tüm cihaz durumunu günceller.

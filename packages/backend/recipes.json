@@ -51,39 +51,89 @@
     "steps": [
       {
         "id": "e90d8c53-8251-4b59-ab04-f96c5082a77e",
-        "mode": "pulse",
-        "duration": 5000,
+        "mode": "continuous",
+        "duration": 3500,
         "settings": {
-          "pulseDuration": 50,
-          "pulseDelay": 50,
-          "pwm": 160
+          "rampDuration": 1000
         }
       },
       {
         "id": "3e6f9db6-c315-45b2-80e1-f130d22b59b2",
-        "mode": "pulse",
-        "duration": 1000,
+        "mode": "oscillation",
+        "duration": 4000,
         "settings": {
-          "pulseDuration": 150,
-          "pulseDelay": 300
+          "angle": 540,
+          "pwm": 16
         }
       },
       {
         "id": "d6039041-6607-4df4-8070-7b9f66191846",
-        "mode": "pulse",
-        "duration": 1000,
+        "mode": "oscillation",
+        "duration": 2000,
         "settings": {
-          "pulseDuration": 150,
-          "pulseDelay": 300
+          "angle": 225,
+          "pwm": 16
         }
       },
       {
         "id": "1c6594dc-383e-433b-bf66-e3894a49e8b3",
         "mode": "pulse",
+        "duration": 1500,
+        "settings": {
+          "pulseDuration": 50,
+          "pulseDelay": 50,
+          "pwm": 230
+        }
+      },
+      {
+        "id": "85b1537e-8880-4bee-bd13-f1e6d684ab8d",
+        "mode": "vibration",
         "duration": 1000,
         "settings": {
-          "pulseDuration": 150,
-          "pulseDelay": 300
+          "intensity": 91,
+          "frequency": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "71179ecb-08b6-4ec2-815f-7813a68ece8e",
+    "name": "Aicha",
+    "steps": [
+      {
+        "id": "8eb50ce2-130b-4bef-916e-305dde8e2cff",
+        "mode": "continuous",
+        "duration": 1000,
+        "settings": {
+          "rampDuration": 300,
+          "pwm": 90
+        }
+      },
+      {
+        "id": "feb137e9-db1c-4767-8f59-d1d5c8afa1d0",
+        "mode": "oscillation",
+        "duration": 2500,
+        "settings": {
+          "angle": 540,
+          "pwm": 16
+        }
+      },
+      {
+        "id": "46cb2c20-76ea-4c9f-a5e8-251ebb8356d7",
+        "mode": "oscillation",
+        "duration": 1500,
+        "settings": {
+          "angle": 180,
+          "pwm": 16
+        }
+      },
+      {
+        "id": "56fac8cc-7148-4f25-a0d9-daaf8164aa4a",
+        "mode": "continuous",
+        "duration": 1000,
+        "settings": {
+          "rampDuration": 300,
+          "pwm": 23
         }
       }
     ]

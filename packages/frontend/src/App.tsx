@@ -10,6 +10,7 @@ import { initializeSessionService } from "./services/sessionService.ts";
 // Bileşenleri yeni konumlarından import ediyoruz
 import { MainLayout } from './components/engineering/MainLayout';
 import { ClinicalLayout } from './components/clinical/ClinicalLayout';
+import {AuraLayout} from "./components/aura/AuraLayout.tsx";
 
 /**
  * Uygulamanın ana (root) bileşeni.
@@ -33,6 +34,9 @@ function App() {
             <Routes>
                 {/* Ana yol (`/`) tıklandığında Klinik Arayüzü göster. */}
                 <Route path="/" element={<ClinicalLayout />} />
+
+                {/* YENİ AURA ARAYÜZÜ YOLU */}
+                <Route path="/aura" element={<AuraLayout />} />
 
                 {/* `/dev` yolu tıklandığında Mühendislik Arayüzünü göster. */}
                 <Route

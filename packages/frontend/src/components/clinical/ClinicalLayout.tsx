@@ -51,7 +51,7 @@ export function ClinicalLayout() {
                     />
 
                     <Stack align="center" mx="xl">
-                        <img src={ertipLogo} alt="Ertip Logo" width="150" />
+                        <img src={ertipLogo} alt="Ertip Logo" width="300" />
                         <img src={deviceGraphic} alt="Device" width="300" />
                     </Stack>
 

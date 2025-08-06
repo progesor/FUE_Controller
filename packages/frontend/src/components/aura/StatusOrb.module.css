@@ -1,0 +1,41 @@
+/* packages/frontend/src/components/aura/StatusOrb.module.css */
+
+.statusOrb {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 20%),
+    radial-gradient(ellipse at center, #2c3e50 0%, #0a0d1a 100%);
+    box-shadow: 0 0 20px rgba(77, 137, 255, 0.3),
+    0 0 40px rgba(77, 137, 255, 0.2),
+    inset 0 0 15px rgba(0, 0, 0, 0.5);
+    animation: orbBreathe 6s ease-in-out infinite;
+    transition: all 0.5s ease;
+}
+.statusOrb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 120%, rgba(77, 137, 255, 0.4), transparent 70%);
+    opacity: 0.8;
+}
+.orbActive {
+    animation: orbActivePulse 2s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(0, 255, 225, 0.7), 0 0 60px rgba(0, 255, 225, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+.orbActive::after {
+    background: radial-gradient(circle at 50% 120%, rgba(0, 255, 225, 0.6), transparent 70%);
+}
+.orbDisconnected {
+    background: radial-gradient(ellipse at center, #5e2828 0%, #0a0d1a 100%);
+    animation: orbGlitch 1.5s linear infinite;
+    box-shadow: 0 0 30px rgba(255, 50, 50, 0.7), 0 0 60px rgba(255, 50, 50, 0.5);
+}
+.orbDisconnected::after {
+    background: radial-gradient(circle at 50% 120%, rgba(255, 50, 50, 0.6), transparent 70%);
+}
+@keyframes orbBreathe { 0%, 100% { transform: scale(0.98); } 50% { transform: scale(1); } }
+@keyframes orbActivePulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(0, 255, 225, 0.6), 0 0 60px rgba(0, 255, 225, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.5); } 50% { transform: scale(1.02); box-shadow: 0 0 40px rgba(0, 255, 225, 0.9), 0 0 80px rgba(0, 255, 225, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.5); } }
+@keyframes orbGlitch { 0%, 100% { transform: translate(0, 0); opacity: 1; } 10% { transform: translate(-2px, 2px); } 20% { transform: translate(2px, -2px); } 30% { transform: translate(-2px, -2px); opacity: 0.8; } 40% { transform: translate(2px, 2px); } 50% { transform: translate(0, 0); opacity: 1; } }

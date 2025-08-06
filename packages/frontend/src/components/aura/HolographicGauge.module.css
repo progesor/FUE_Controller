@@ -1,0 +1,105 @@
+/* packages/frontend/src/components/aura/HolographicGauge.module.css */
+
+.gaugeWrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    --gauge-color: #00e5ff;
+    transition: opacity 0.3s ease; /* Opaklık geçiş efekti */
+}
+.gaugeWrapper:not(.interactive) {
+    opacity: 0.4;
+}
+.gaugeWrapper svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+    overflow: visible;
+}
+.gaugeWrapper circle {
+    fill: none;
+    transform-origin: center;
+    transform: rotate(-90deg);
+    transition: stroke-dashoffset 0.5s ease-out;
+}
+.gaugeBackground {
+    stroke: rgba(255, 255, 255, 0.05);
+}
+.gaugeProgress {
+    stroke: var(--gauge-color);
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 8px var(--gauge-color)) drop-shadow(0 0 16px var(--gauge-color));
+}
+.gaugeTextContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+}
+.gaugeValue {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 0 10px var(--gauge-color);
+}
+.gaugeUnit {
+    font-size: 24px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1;
+}
+.gaugeLabel {
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 8px;
+}
+
+.interactive .gaugeTextContainer {
+    cursor: pointer;
+}
+
+/* İnteraktif olduğunda uygulanacak genel stiller */
+.interactive {
+    cursor: grab; /* Fare imlecini "tutulabilir" olarak değiştirir */
+}
+.interactive:active {
+    cursor: grabbing; /* Tıklanıp sürüklendiğinde imleci değiştirir */
+}
+
+/* İnteraktif olduğunda parlamayı daha belirgin hale getiriyoruz */
+.interactive .gaugeProgress {
+    filter: drop-shadow(0 0 18px var(--gauge-color)) drop-shadow(0 0 36px var(--gauge-color));
+    /* Parlamanın da nabız gibi atmasını sağlıyoruz */
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.dragging {
+    user-select: none; /* Chrome, Safari, Opera */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+}
+/* YENİ: Parlama için nabız animasyonu */
+@keyframes pulseGlow {
+    0% {
+        filter: drop-shadow(0 0 15px var(--gauge-color)) drop-shadow(0 0 30px var(--gauge-color));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px var(--gauge-color)) drop-shadow(0 0 40px var(--gauge-color));
+    }
+    100% {
+        filter: drop-shadow(0 0 15px var(--gauge-color)) drop-shadow(0 0 30px var(--gauge-color));
+    }
+}
