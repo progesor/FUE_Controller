@@ -1,7 +1,7 @@
 // packages/frontend/src/services/notificationService.tsx
 
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
 
 /**
  * Başarı bildirimini gösterir.
@@ -33,8 +33,24 @@ const showError = (message: string) => {
     });
 };
 
+/**
+ * Bilgi amaçlı bildirim gösterir.
+ * @param message - Bildirimde gösterilecek mesaj.
+ */
+const showInfo = (message: string) => {
+    notifications.show({
+        title: 'Bilgi',
+        message,
+        color: 'blue',
+        icon: <IconInfoCircle size={18} />,
+        withCloseButton: true,
+        autoClose: 3000,
+    });
+};
+
 // Fonksiyonları tek bir nesne altında export ederek daha temiz bir kullanım sağlıyoruz.
 export const NotificationService = {
     showSuccess,
     showError,
+    showInfo,
 };
