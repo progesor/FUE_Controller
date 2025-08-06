@@ -34,6 +34,7 @@
     fill: rgba(10, 13, 26, 0.8);
     stroke: rgba(255, 255, 255, 0.2);
     stroke-width: 2px;
+
     transition: stroke 0.3s ease, fill 0.3s ease;
     backdrop-filter: blur(5px);
 }

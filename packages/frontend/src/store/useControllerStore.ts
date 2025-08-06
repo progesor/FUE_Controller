@@ -49,7 +49,7 @@ export interface ConsoleEntry {
     type: 'event' | 'command' | 'status';
     source: 'frontend' | 'backend';
     message: string;
-    data?: any;
+    data?: unknown;
 }
 
 // Store'daki zamanlayıcıyı tutmak için

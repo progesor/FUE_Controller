@@ -67,8 +67,11 @@ const getDefaultSettingsForMode = (mode: OperatingMode): Partial<AllModeSettings
 export function RecipeStepEditor({ step, index, totalSteps, onUpdate, onDelete, onMove }: RecipeStepEditorProps) {
 
     // Adımın ana özelliklerini (mod, süre) günceller.
-    const handleFieldChange = (field: 'mode' | 'duration', value: any) => {
-        const updatedStep = { ...step, [field]: value };
+    const handleFieldChange = (
+        field: 'mode' | 'duration',
+        value: OperatingMode | number
+    ) => {
+        const updatedStep: RecipeStep = { ...step, [field]: value };
 
         // Eğer mod değiştirildiyse, o moda ait ayarları temiz bir başlangıç için sıfırla.
         if (field === 'mode') {

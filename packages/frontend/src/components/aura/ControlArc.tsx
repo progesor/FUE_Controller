@@ -114,6 +114,7 @@ export function ControlArc() {
                                     x="-12" y="-12"
                                 />
                             </g>
+
                         </g>
                     );
                 })}

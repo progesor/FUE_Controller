@@ -5,6 +5,45 @@ import classes from './HolographicGauge.module.css';
 import cx from 'clsx';
 import React, {useRef, useState} from "react";
 
+// Küçük bir ses veya titreşim oluşturan geri bildirim fonksiyonu
+const playFeedback = (() => {
+    let audioCtx: AudioContext | null | undefined;
+
+    return () => {
+        if (typeof window === 'undefined') return;
+
+        if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+        }
+
+        try {
+            if (audioCtx === undefined) {
+                const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
+                const AudioContextClass = window.AudioContext || w.webkitAudioContext;
+                audioCtx = AudioContextClass ? new AudioContextClass() : null;
+            }
+
+            if (!audioCtx) return;
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.value = 0.05;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        } catch {
+            // Tarayıcı ses oluşturmayı engelleyebilir; sessizce başarısız ol
+        }
+    };
+})();
+
 interface HolographicGaugeProps {
     value: number;
     maxValue: number;
@@ -33,12 +72,35 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
         lastY.current = e.clientY;
 
         const newValue = Math.min(maxValue, Math.max(0, value + (deltaY * sensitivity)));
+        const rounded = Math.round(newValue);
 
-        onChange(Math.round(newValue));
+        if (rounded !== value) {
+            onChange(rounded);
+            playFeedback();
+        }
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (!isInteractive || !onChange) return;
+
+        let newValue = value;
+        if (e.key === '+' || e.key === '=') {
+            newValue = Math.min(maxValue, value + 50);
+        } else if (e.key === '-' || e.key === '_') {
+            newValue = Math.max(0, value - 50);
+        } else {
+            return;
+        }
+
+        if (newValue !== value) {
+            e.preventDefault();
+            onChange(newValue);
+            playFeedback();
+        }
     };
 
     const SIZE = 250;
@@ -59,6 +121,8 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp} // Fare alandan çıkarsa da sürüklemeyi bitir
+            tabIndex={isInteractive ? 0 : undefined}
+            onKeyDown={handleKeyDown}
         >
             <svg
                 width={SIZE}
