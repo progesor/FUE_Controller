@@ -3,7 +3,6 @@
 import { Box, Text } from '@mantine/core';
 import classes from './ControlArc.module.css';
 import cx from 'clsx';
-import type React from 'react';
 import { IconInfinity, IconRepeat, IconListDetails, IconBook } from '@tabler/icons-react';
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import type {OperatingMode} from "../../../../shared-types";
@@ -86,22 +85,11 @@ export function ControlArc() {
                     const { x, y } = getButtonPosition(index);
                     const Icon = mode.icon;
 
-                    const handleKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleModeChange(mode.id);
-                        }
-                    };
-
                     return (
                         <g key={mode.id} transform={`translate(${x}, ${y})`}>
                             <g
                                 className={cx(classes.arcButton, { [classes.buttonActive]: uiMode === mode.id })}
                                 onClick={() => handleModeChange(mode.id)}
-                                tabIndex={0}
-                                role="button"
-                                aria-label={mode.label}
-                                onKeyDown={handleKeyDown}
                             >
                                 {/* Aktif butonu belirlemek için artık 'uiMode' kullanılıyor */}
                                 <circle
