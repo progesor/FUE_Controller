@@ -4,7 +4,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: 380px; /* Biraz daha genişletelim */
+    width: clamp(300px, 30vw, 440px);
     height: 100%;
     z-index: 20;
 
@@ -20,7 +20,7 @@
 
     display: flex;
     flex-direction: column;
-    padding: 30px 10px 30px 30px; /* İç boşlukları ayarladık */
+    padding: 30px 12px 30px 30px; /* İç boşlukları ayarladık */
 }
 
 .drawerOpen {
@@ -34,7 +34,7 @@
 }
 
 .drawerTitle {
-    font-size: 22px;
+    font-size: clamp(20px, 2vw, 26px);
     font-weight: 600;
     color: #fff;
     margin-bottom: 25px;
@@ -47,6 +47,16 @@
 .scrollArea {
     flex-grow: 1;
     padding-right: 15px; /* Kaydırma çubuğu için boşluk */
+}
+
+/* Dokunmatik ekranlarda kaydırma çubuğunu daha belirgin ve geniş hale getirelim */
+.scrollArea::-webkit-scrollbar {
+    width: 12px;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 229, 255, 0.3);
+    border-radius: 6px;
 }
 
 .header {
@@ -64,6 +74,7 @@
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
     color: #fff;
+    font-size: clamp(14px, 1.2vw, 16px);
 }
 
 .searchInput input::placeholder {
@@ -75,6 +86,7 @@
     color: #fff;
     border: none;
     transition: background 0.2s ease;
+    font-size: clamp(14px, 1.2vw, 16px);
 }
 
 .addButton:hover {
@@ -84,17 +96,19 @@
 .recipeButton {
     display: block;
     width: 100%;
-    padding: 14px 20px;
+    padding: 16px 24px;
     border-radius: 8px; /* Daha yumuşak kenarlar */
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     background-color: transparent; /* Arka planı tamamen şeffaf yapıyoruz */
     border: 1px solid rgba(255, 255, 255, 0.1); /* İnce bir çerçeve */
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .recipeButtonText {
     color: rgba(255, 255, 255, 0.7);
     transition: all 0.2s ease;
+    font-size: clamp(14px, 1.2vw, 18px);
 }
 
 .recipeButton:hover {

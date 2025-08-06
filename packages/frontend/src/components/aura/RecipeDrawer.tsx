@@ -50,13 +50,13 @@ export function RecipeDrawer() {
                         onChange={(e) => setSearch(e.currentTarget.value)}
                         placeholder="Reçetelerde ara..."
                         className={classes.searchInput}
-                        size="xs"
+                        size="sm"
                     />
                     <Button
-                        leftSection={<IconPlus size={16} />}
+                        leftSection={<IconPlus size={20} />}
                         onClick={handleCreateRecipe}
                         className={classes.addButton}
-                        size="xs"
+                        size="sm"
                     >
                         Yeni
                     </Button>
@@ -70,25 +70,26 @@ export function RecipeDrawer() {
                             <UnstyledButton
                                 key={recipe.id}
                                 className={cx(classes.recipeButton, { [classes.activeRecipe]: recipe.id === activeRecipe?.id })}
-                                onDoubleClick={() => handleActivateRecipe(recipe)}
+                                onClick={() => handleActivateRecipe(recipe)}
                             >
-                                <Group justify="space-between">
-                                    <Text size="sm" className={classes.recipeButtonText}>{recipe.name}</Text>
+                                <Group justify="space-between" align="center">
+                                    <Text className={classes.recipeButtonText}>{recipe.name}</Text>
                                     <ActionIcon
-                                        size="sm"
+                                        size="md"
                                         variant="subtle"
                                         className={classes.editIcon}
                                         onClick={(e) => { e.stopPropagation(); handleEditRecipe(recipe); }}
+                                        aria-label="Reçeteyi düzenle"
                                     >
-                                        <IconEdit size={14} />
+                                        <IconEdit size={18} />
                                     </ActionIcon>
                                 </Group>
                             </UnstyledButton>
                         ))
                     )}
                 </ScrollArea>
-                <Text c="dimmed" fz="xs" ta="center" mt="md">
-                    Aktif etmek için bir reçeteye çift tıklayın.
+                <Text c="dimmed" fz="sm" ta="center" mt="md">
+                    Aktif etmek için bir reçeteye dokunun.
                 </Text>
             </Box>
         </Box>
