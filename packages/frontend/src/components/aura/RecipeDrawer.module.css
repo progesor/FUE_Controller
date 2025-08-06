@@ -49,6 +49,38 @@
     padding-right: 15px; /* Kaydırma çubuğu için boşluk */
 }
 
+.header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.searchInput {
+    flex: 1;
+}
+
+.searchInput input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.searchInput input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.addButton {
+    background: linear-gradient(135deg, #00e5ff 0%, #d457ff 100%);
+    color: #fff;
+    border: none;
+    transition: background 0.2s ease;
+}
+
+.addButton:hover {
+    background: linear-gradient(135deg, #00b3cc 0%, #a43bcf 100%);
+}
+
 .recipeButton {
     display: block;
     width: 100%;
@@ -84,4 +116,13 @@
     color: #fff;
     font-weight: 500;
     text-shadow: 0 0 8px #d457ff;
+}
+
+.editIcon {
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s ease;
+}
+
+.editIcon:hover {
+    color: #00e5ff;
 }
