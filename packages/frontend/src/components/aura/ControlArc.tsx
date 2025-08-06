@@ -94,26 +94,27 @@ export function ControlArc() {
                     };
 
                     return (
-                        <g
-                            key={mode.id}
-                            transform={`translate(${x}, ${y})`}
-                            className={cx(classes.arcButton, { [classes.buttonActive]: uiMode === mode.id })}
-                            onClick={() => handleModeChange(mode.id)}
-                            tabIndex={0}
-                            role="button"
-                            aria-label={mode.label}
-                            onKeyDown={handleKeyDown}
-                        >
-                            {/* Aktif butonu belirlemek için artık 'uiMode' kullanılıyor */}
-                            <circle
-                                r="22"
-                                className={cx(classes.buttonCircle, { [classes.buttonActive]: uiMode === mode.id })}
-                            />
-                            <Icon
-                                size={24}
-                                className={cx(classes.buttonIcon, { [classes.buttonActive]: uiMode === mode.id })}
-                                x="-12" y="-12"
-                            />
+                        <g key={mode.id} transform={`translate(${x}, ${y})`}>
+                            <g
+                                className={cx(classes.arcButton, { [classes.buttonActive]: uiMode === mode.id })}
+                                onClick={() => handleModeChange(mode.id)}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={mode.label}
+                                onKeyDown={handleKeyDown}
+                            >
+                                {/* Aktif butonu belirlemek için artık 'uiMode' kullanılıyor */}
+                                <circle
+                                    r="22"
+                                    className={cx(classes.buttonCircle, { [classes.buttonActive]: uiMode === mode.id })}
+                                />
+                                <Icon
+                                    size={24}
+                                    className={cx(classes.buttonIcon, { [classes.buttonActive]: uiMode === mode.id })}
+                                    x="-12" y="-12"
+                                />
+                            </g>
+
                         </g>
                     );
                 })}
