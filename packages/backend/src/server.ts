@@ -7,7 +7,7 @@ import config from './config';
 import {
     ClientToServerEvents,
     ContinuousSettings,
-    PulseSettings,
+    PulseSettings, Recipe,
     ServerToClientEvents,
     VibrationSettings
 } from '../../shared-types';
@@ -25,7 +25,7 @@ import {
     sendRawArduinoCommand,
     setPulseSettings,
     setVibrationSettings,
-    setContinuousSettings
+    setContinuousSettings, setActiveRecipe, startCurrentMode
 } from './services/arduinoService';
 import {getCalibrationData} from "./services/calibrationService";
 import {initializeRecipeService, startRecipe, stopRecipe} from "./services/recipeService";
@@ -101,7 +101,7 @@ io.on('connection', (socket) => {
 
     socket.on('start_motor', () => {
         console.log(`[Client -> Server]: start_motor isteği`);
-        startMotor();
+        startCurrentMode(); // Değişiklik burada
     });
 
     socket.on('stop_motor', () => {
@@ -151,6 +151,12 @@ io.on('connection', (socket) => {
 
     listRecipes().then(recipes => {
         socket.emit('recipe_list_update', recipes);
+    });
+
+    // YENİ: Arayüzden gelen aktif reçete seçimini dinle ve servise ilet
+    socket.on('set_active_recipe', (recipe: Recipe | null) => {
+        console.log(`[Client -> Server]: Aktif reçete ayarlandı: ${recipe?.name || 'Hiçbiri'}`);
+        setActiveRecipe(recipe);
     });
 
     socket.on('recipe_save', async (recipe) => {

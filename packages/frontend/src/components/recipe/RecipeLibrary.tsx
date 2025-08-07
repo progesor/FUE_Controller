@@ -4,7 +4,7 @@ import { ScrollArea, Stack, Group, Text, Button, Paper, UnstyledButton, Divider,
 import { IconTrash, IconPencil } from '@tabler/icons-react';
 import { useControllerStore } from '../../store/useControllerStore';
 import type { Recipe } from '../../../../shared-types';
-import { sendRecipeDelete } from '../../services/socketService';
+import {sendActiveRecipe, sendRecipeDelete} from '../../services/socketService';
 import { NotificationService } from '../../services/notificationService';
 import { useState } from 'react';
 
@@ -18,7 +18,8 @@ export function RecipeLibrary({ onEdit }: RecipeLibraryProps) {
 
     // Bu fonksiyon bir reçeteyi SADECE AKTİF yapar.
     const handleActivateRecipe = (recipe: Recipe) => {
-        setActiveRecipe(recipe);
+        setActiveRecipe(recipe); // Frontend state'ini güncelle
+        sendActiveRecipe(recipe); // YENİ: Backend'e de bu reçetenin aktif olduğunu bildir
         NotificationService.showSuccess(`'${recipe.name}' aktif reçete olarak ayarlandı.`);
     };
 

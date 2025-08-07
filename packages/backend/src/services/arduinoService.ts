@@ -10,11 +10,11 @@ import type {
     OperatingMode,
     OscillationSettings,
     DeviceStatus,
-    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep
+    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep, Recipe
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
-import { getRecipeStatus } from './recipeService';
+import {getRecipeStatus, startRecipe} from './recipeService';
 
 // ===================================================================
 //
@@ -64,6 +64,14 @@ let oscillationDirection: MotorDirection = 0; // 0: CW, 1: CCW
 
 /** Bağlantı durumunu takip etmek için */
 let isArduinoConnected = false;
+
+// YENİ: Frontend'den seçilen ve pedalın başlamasını bekleyen reçeteyi tutar.
+let activeRecipe: Recipe | null = null;
+
+// YENİ: Bu fonksiyon, frontend'den gelen reçete seçimini değişkene atar.
+export const setActiveRecipe = (recipe: Recipe | null) => {
+    activeRecipe = recipe;
+};
 
 /**
  * Cihazın anlık durumunu tutan tek gerçek kaynak (Single Source of Truth).
@@ -141,24 +149,26 @@ export const sendRawArduinoCommand = (command: string) => {
  * @param data - Seri porttan gelen tek bir satırlık veri.
  */
 const handleData = (data: string) => {
-    // Ping cevaplarını (PONG) opsiyonel olarak gizle
     if (data.startsWith('PONG') && !config.arduino.logPings) return;
-
     console.log(`[Device -> Server]: ${data}`);
 
-    // Gelen veriyi olay (event) veya bilgi olarak işle ve istemcilere bildir.
     if (data.startsWith('EVT:PEDAL:1')) { // Pedal basıldı
-        if (deviceStatus.operatingMode === 'continuous') {
-            startMotor();
-        } else {
-            const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
-            startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm });
+        // Eğer bir aktif reçete seçilmişse VE bu reçete şu an çalışmıyorsa, pedala basmak bu reçeteyi başlatır.
+        if (activeRecipe && !getRecipeStatus().isRunning) {
+            startRecipe(activeRecipe);
+        } else if (!getRecipeStatus().isRunning) {
+            // Reçete çalışmıyorsa, seçili olan mevcut manuel modu başlat.
+            startCurrentMode();
         }
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
+
     } else if (data.startsWith('EVT:PEDAL:0')) { // Pedal bırakıldı
-        stopMotor();
+        // Pedal bırakıldığında SADECE manuel modlar durur. Çalışan bir reçete devam eder.
+        if (!getRecipeStatus().isRunning) {
+            stopMotor();
+        }
         io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
-    } else if (data.startsWith('EVT:FTSW:')) { // El/Ayak anahtarı durumu değişti
+    } else if (data.startsWith('EVT:FTSW:')) {
         const state = parseInt(data.split(':')[2]) as 0 | 1;
         io?.emit('arduino_event', { type: 'FTSW', state });
     }
@@ -518,35 +528,16 @@ export const setMotorDirection = (direction: MotorDirection) => {
  * @param mode - Yeni çalışma modu.
  */
 export const setOperatingMode = (mode: OperatingMode) => {
-    // Eğer zaten aynı moddaysak, hiçbir şey yapma
     if (deviceStatus.operatingMode === mode) return;
-
-    // 1. Motorun mevcut durumunu kaydet (çalışıyor muydu?)
     const wasActive = deviceStatus.motor.isActive;
-
-    // 2. Eğer motor çalışıyorsa, yeni moda geçmeden önce mevcut görevi durdur.
     if (wasActive) {
         internalStopMotor();
     }
-
-    // 3. Yeni çalışma modunu ayarla.
     deviceStatus.operatingMode = mode;
-
-    // 4. SADECE VE SADECE motor daha önce de çalışıyorsa, yeni modda tekrar başlat.
+    // Eğer motor daha önce de çalışıyorsa, yeni modda tekrar başlat.
     if (wasActive) {
-        if (mode === 'continuous') {
-            startMotor(true);
-        } else if (mode === 'oscillation') {
-            const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
-            startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm }, true);
-        } else if (mode === 'pulse') {
-            startPulseMode(true);
-        } else if (mode === 'vibration') {
-            startVibrationMode(true);
-        }
-    }
-    // 5. Eğer motor duruyorsa, motoru çalıştırma, sadece güncellenmiş durumu arayüze bildir.
-    else {
+        startCurrentMode(); // Artık tek ve doğru bir yerden başlatılıyor
+    } else {
         broadcastDeviceStatus();
     }
 };
@@ -703,4 +694,39 @@ export const stopMotorFromRecipe = () => {
     internalStopMotor();
     deviceStatus.motor.isActive = false;
     broadcastDeviceStatus();
+};
+
+// YENİ: startMotor fonksiyonu artık sadece sürekli modu başlatıyor
+export const startContinuousMode = (isContinuation = false) => {
+    if (!isContinuation && deviceStatus.motor.isActive) return;
+    internalStopMotor();
+    const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
+    deviceStatus.motor.isActive = true;
+    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+    _performRamp(0, targetPwm);
+    broadcastDeviceStatus();
+};
+
+// YENİ MERKEZİ BAŞLATMA FONKSİYONU
+/**
+ * @brief Cihazın mevcut `operatingMode`'una göre doğru motor başlatma fonksiyonunu çağırır.
+ * Bu, hem UI butonları hem de pedal için tek giriş noktasıdır.
+ */
+export const startCurrentMode = () => {
+    console.log(`Mevcut mod başlatılıyor: ${deviceStatus.operatingMode}`);
+    switch (deviceStatus.operatingMode) {
+        case 'continuous':
+            startContinuousMode();
+            break;
+        case 'oscillation':
+            const rpm = pwmToCalibratedRpm(deviceStatus.motor.pwm);
+            startOscillation({ ...deviceStatus.oscillationSettings, pwm: deviceStatus.motor.pwm, rpm });
+            break;
+        case 'pulse':
+            startPulseMode();
+            break;
+        case 'vibration':
+            startVibrationMode();
+            break;
+    }
 };

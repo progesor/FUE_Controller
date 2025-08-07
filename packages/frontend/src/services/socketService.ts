@@ -298,3 +298,8 @@ export const sendRecipeDelete = (recipeId: string) => {
     });
     socket.emit('recipe_delete', recipeId);
 };
+
+/** YENİ: Seçilen aktif reçeteyi (veya hiçbiri seçilmediyse null) backend'e bildirir. */
+export const sendActiveRecipe = (recipe: Recipe | null) => {
+    socket.emit('set_active_recipe', recipe);
+};

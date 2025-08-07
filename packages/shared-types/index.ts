@@ -20,7 +20,7 @@
 export type MotorDirection = 0 | 1;
 
 /** Cihazın ana çalışma modları. */
-export type OperatingMode = 'continuous' | 'oscillation' | 'pulse' | 'vibration' | 'recipe';
+export type OperatingMode = 'continuous' | 'oscillation' | 'pulse' | 'vibration';
 
 /** Kontrolün el (sürekli) veya ayak (pedal) modunda olup olmadığını belirtir. */
 export type FtswMode = 'foot' | 'hand';
@@ -182,5 +182,7 @@ export interface ClientToServerEvents {
     'recipe_save': (recipe: Recipe) => void;
     /** YENİ: Bir reçeteyi silmek için gönderilir. */
     'recipe_delete': (recipeId: string) => void;
+    /** YENİ: Çalıştırılmak üzere seçilen aktif reçeteyi backend'e bildirir. */
+    'set_active_recipe': (recipe: Recipe | null) => void
 
 }

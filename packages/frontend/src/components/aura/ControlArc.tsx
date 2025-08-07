@@ -6,7 +6,7 @@ import cx from 'clsx';
 import { IconInfinity, IconRepeat, IconListDetails, IconBook } from '@tabler/icons-react';
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import type {OperatingMode} from "../../../../shared-types";
-import {sendOperatingMode} from "../../services/socketService.ts";
+import {sendActiveRecipe, sendOperatingMode} from "../../services/socketService.ts";
 
 const modes = [
     { id: 'continuous', label: 'Sürekli', icon: IconInfinity },
@@ -23,7 +23,7 @@ const ARC_CENTER_X = SVG_WIDTH / 2;
 const ARC_CENTER_Y = SVG_HEIGHT - 5; // Arkın dikey merkezini biraz aşağı alıyoruz
 
 export function ControlArc() {
-    const { uiMode, setUiMode, setOperatingMode, toggleRecipeDrawer } = useControllerStore();
+    const { uiMode, setUiMode, setOperatingMode, toggleRecipeDrawer, setActiveRecipe } = useControllerStore();
 
     const handleModeChange = (modeId: string) => {
         // Arayüzde seçili butonu her zaman güncelle
@@ -35,6 +35,10 @@ export function ControlArc() {
             setOperatingMode(newOpMode);
             sendOperatingMode(newOpMode);
             toggleRecipeDrawer(false);
+
+            // Manuel moda geçildiğinde, seçili bir reçete olmamalı.
+            setActiveRecipe(null);
+            sendActiveRecipe(null); // Backend'e de bildir
         } else if (modeId === 'recipes') {
             // Reçetelerim modunda sadece paneli aç
             toggleRecipeDrawer(true);

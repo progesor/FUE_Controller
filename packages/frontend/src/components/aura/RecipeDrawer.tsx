@@ -1,6 +1,6 @@
-// packages/frontend/src/components/aura/RecipeDrawer.tsx (GÜNCELLENMİŞ HALİ)
+// packages/frontend/src/components/aura/RecipeDrawer.tsx (HATA DÜZELTİLDİ)
 
-import { ActionIcon, Box, Button, Group, ScrollArea, Text, TextInput, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Box, Button, Group, ScrollArea, Text, TextInput } from '@mantine/core';
 import { IconEdit, IconPlus } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { useControllerStore } from '../../store/useControllerStore';
@@ -8,6 +8,7 @@ import classes from './RecipeDrawer.module.css';
 import cx from 'clsx';
 import type { Recipe } from '../../../../shared-types';
 import { NotificationService } from '../../services/notificationService';
+import { sendActiveRecipe } from '../../services/socketService'; // Gerekli import'u ekledim
 
 export function RecipeDrawer() {
     const { isRecipeDrawerOpen, savedRecipes, activeRecipe, setActiveRecipe, toggleRecipeDrawer } = useControllerStore();
@@ -20,6 +21,7 @@ export function RecipeDrawer() {
 
     const handleActivateRecipe = (recipe: Recipe) => {
         setActiveRecipe(recipe);
+        sendActiveRecipe(recipe); // Backend'e bildir
         NotificationService.showSuccess(`'${recipe.name}' aktif reçete olarak ayarlandı.`);
         toggleRecipeDrawer(false);
     };
@@ -35,7 +37,6 @@ export function RecipeDrawer() {
     return (
         <Box
             className={cx(classes.drawerWrapper, { [classes.drawerOpen]: isRecipeDrawerOpen })}
-            // Panelin dışına tıklandığında kapanması için bir olay ekleyelim
             onClick={(e) => {
                 if (e.currentTarget === e.target) {
                     toggleRecipeDrawer(false);
@@ -67,13 +68,15 @@ export function RecipeDrawer() {
                         <Text c="dimmed" ta="center" pt="xl">Kayıtlı reçete bulunamadı.</Text>
                     ) : (
                         filteredRecipes.map(recipe => (
-                            <UnstyledButton
+                            // DÜZELTME: UnstyledButton yerine Box kullanıldı.
+                            // Bu, iç içe button hatasını çözer.
+                            <Box
                                 key={recipe.id}
                                 className={cx(classes.recipeButton, { [classes.activeRecipe]: recipe.id === activeRecipe?.id })}
                                 onClick={() => handleActivateRecipe(recipe)}
                             >
-                                <Group justify="space-between" align="center">
-                                    <Text className={classes.recipeButtonText}>{recipe.name}</Text>
+                                <Group justify="space-between" align="center" wrap="nowrap">
+                                    <Text className={classes.recipeButtonText} truncate>{recipe.name}</Text>
                                     <ActionIcon
                                         size="md"
                                         variant="subtle"
@@ -84,7 +87,7 @@ export function RecipeDrawer() {
                                         <IconEdit size={18} />
                                     </ActionIcon>
                                 </Group>
-                            </UnstyledButton>
+                            </Box>
                         ))
                     )}
                 </ScrollArea>
