@@ -73,7 +73,7 @@ export function AuraLayout() {
                         color="#00e5ff"
                         isInteractive={isRpmInteractive}
                         onChange={handleRpmChange}
-                        sensitivity={15}
+                        sensitivity={10}
                     />
                     <StatusOrb />
                     <HolographicGauge
@@ -84,7 +84,7 @@ export function AuraLayout() {
                         color="#d457ff"
                         isInteractive={isAngleInteractive}
                         onChange={handleAngleChange}
-                        sensitivity={3}
+                        sensitivity={2}
                     />
                 </Box>
                 <ControlArc />

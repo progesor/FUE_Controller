@@ -14,7 +14,7 @@ export function DynamicBackground() {
     const { motor, connectionStatus } = useControllerStore();
 
     const style: DynamicBgStyle = {
-        '--bg-speed': motor.isActive ? 2 : 1,
+        '--bg-speed': motor.isActive ? 5 : 1,
         '--bg-brightness': connectionStatus === 'connected' ? 0.8 : 0.4,
     };
 
