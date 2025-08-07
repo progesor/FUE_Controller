@@ -1,4 +1,4 @@
-// packages/frontend/src/components/aura/RecipeDrawer.tsx (HATA DÜZELTİLDİ)
+// packages/frontend/src/components/aura/RecipeDrawer.tsx
 
 import { ActionIcon, Box, Button, Group, ScrollArea, Text, TextInput } from '@mantine/core';
 import { IconEdit, IconPlus } from '@tabler/icons-react';
@@ -8,10 +8,10 @@ import classes from './RecipeDrawer.module.css';
 import cx from 'clsx';
 import type { Recipe } from '../../../../shared-types';
 import { NotificationService } from '../../services/notificationService';
-import { sendActiveRecipe } from '../../services/socketService'; // Gerekli import'u ekledim
+import { sendActiveRecipe } from '../../services/socketService';
 
 export function RecipeDrawer() {
-    const { isRecipeDrawerOpen, savedRecipes, activeRecipe, setActiveRecipe, toggleRecipeDrawer } = useControllerStore();
+    const { isRecipeDrawerOpen, savedRecipes, activeRecipe, setActiveRecipe, toggleRecipeDrawer, setUiMode } = useControllerStore();
     const [search, setSearch] = useState('');
 
     const filteredRecipes = useMemo(
@@ -21,7 +21,8 @@ export function RecipeDrawer() {
 
     const handleActivateRecipe = (recipe: Recipe) => {
         setActiveRecipe(recipe);
-        sendActiveRecipe(recipe); // Backend'e bildir
+        sendActiveRecipe(recipe);
+        setUiMode('recipe'); // UI modunu reçete olarak ayarla
         NotificationService.showSuccess(`'${recipe.name}' aktif reçete olarak ayarlandı.`);
         toggleRecipeDrawer(false);
     };
@@ -68,7 +69,7 @@ export function RecipeDrawer() {
                         <Text c="dimmed" ta="center" pt="xl">Kayıtlı reçete bulunamadı.</Text>
                     ) : (
                         filteredRecipes.map(recipe => (
-                            // DÜZELTME: UnstyledButton yerine Box kullanıldı.
+                            // DÜZELTME: UnstyledButton, Box ile değiştirildi.
                             // Bu, iç içe button hatasını çözer.
                             <Box
                                 key={recipe.id}

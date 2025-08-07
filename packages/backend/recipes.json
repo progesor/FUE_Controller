@@ -93,6 +93,15 @@
           "intensity": 91,
           "frequency": 7
         }
+      },
+      {
+        "id": "b1c1ab27-28c4-4f12-8f99-851fe62a514d",
+        "mode": "pulse",
+        "duration": 1000,
+        "settings": {
+          "pulseDuration": 150,
+          "pulseDelay": 300
+        }
       }
     ]
   },

@@ -106,3 +106,18 @@
     }
 }
 
+.mode-continuous {
+    --glow-rgb: 0, 229, 255; /* Turkuaz */
+}
+
+.mode-oscillation {
+    --glow-rgb: 212, 87, 255; /* Mor */
+}
+
+/* Reçete ve Protokol Modları Rengi (Altın/Sarı) */
+.mode-protocols,
+.mode-recipes,
+.mode-recipe {
+    --glow-rgb: 255, 215, 0; /* Altın/Sarı */
+}
+
