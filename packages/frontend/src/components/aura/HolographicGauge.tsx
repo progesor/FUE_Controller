@@ -1,34 +1,25 @@
-// packages/frontend/src/components/aura/HolographicGauge.tsx (BRACKET'LER KALDIRILDI)
+// packages/frontend/src/components/aura/HolographicGauge.tsx
 
 import { Box, Text } from '@mantine/core';
 import classes from './HolographicGauge.module.css';
 import cx from 'clsx';
-import React, {useRef, useState} from "react";
+import React, {useRef, useState, useEffect} from "react";
 
-// Küçük bir ses veya titreşim oluşturan geri bildirim fonksiyonu
+// Feedback fonksiyonu değişmeden kalıyor...
 const playFeedback = (() => {
     let audioCtx: AudioContext | null | undefined;
 
     return () => {
         if (typeof window === 'undefined') return;
-
-        if ('vibrate' in navigator) {
-            navigator.vibrate(10);
-        }
-
+        if ('vibrate' in navigator) navigator.vibrate(10);
         try {
             if (audioCtx === undefined) {
                 const w = window as unknown as { webkitAudioContext?: typeof AudioContext };
                 const AudioContextClass = window.AudioContext || w.webkitAudioContext;
                 audioCtx = AudioContextClass ? new AudioContextClass() : null;
             }
-
             if (!audioCtx) return;
-
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
@@ -38,11 +29,10 @@ const playFeedback = (() => {
             gain.connect(audioCtx.destination);
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05);
-        } catch {
-            // Tarayıcı ses oluşturmayı engelleyebilir; sessizce başarısız ol
-        }
+        } catch {}
     };
 })();
+
 
 interface HolographicGaugeProps {
     value: number;
@@ -57,7 +47,17 @@ interface HolographicGaugeProps {
 
 export function HolographicGauge({ value, maxValue, label, unit, color, isInteractive = false, onChange, sensitivity = 2 }: HolographicGaugeProps) {
     const [isDragging, setIsDragging] = useState(false);
+    // YENİ: Sürükleme sırasındaki anlık değeri tutacak yerel state
+    const [displayValue, setDisplayValue] = useState(value);
     const lastY = useRef(0);
+
+    // Ana 'value' prop'u (Zustand'dan gelen) değiştiğinde, yerel state'i de güncelle
+    useEffect(() => {
+        if (!isDragging) {
+            setDisplayValue(value);
+        }
+    }, [value, isDragging]);
+
 
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isInteractive || !onChange) return;
@@ -68,22 +68,28 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !isInteractive || !onChange) return;
 
-        const deltaY = lastY.current - e.clientY; // Yukarı sürükleme pozitif, aşağı negatif
+        const deltaY = lastY.current - e.clientY;
         lastY.current = e.clientY;
 
-        const newValue = Math.min(maxValue, Math.max(0, value + (deltaY * sensitivity)));
-        const rounded = Math.round(newValue);
-
-        if (rounded !== value) {
-            onChange(rounded);
-            playFeedback();
-        }
+        // Sadece yerel 'displayValue' state'ini güncelle, onChange'i çağırma!
+        setDisplayValue(prevValue => {
+            const newValue = Math.min(maxValue, Math.max(0, prevValue + (deltaY * sensitivity)));
+            const rounded = Math.round(newValue);
+            if (rounded !== Math.round(prevValue)) {
+                playFeedback();
+            }
+            return newValue;
+        });
     };
 
     const handleMouseUp = () => {
+        if (!isDragging || !onChange) return;
         setIsDragging(false);
+        // Sürükleme bittiğinde, nihai değeri onChange prop'u ile yukarı bildir.
+        onChange(displayValue);
     };
 
+    // Klavye kontrolleri doğrudan nihai değeri gönderebilir
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (!isInteractive || !onChange) return;
 
@@ -107,20 +113,21 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
     const STROKE_WIDTH = 10;
     const RADIUS = (SIZE - STROKE_WIDTH) / 2;
     const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-    const progress = Math.min(1, Math.max(0, value / maxValue));
+    // Gösterge artık anlık 'displayValue'yu kullanıyor
+    const progress = Math.min(1, Math.max(0, displayValue / maxValue));
     const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 
     return (
         <Box
             className={cx(classes.gaugeWrapper, {
                 [classes.interactive]: isInteractive,
-                [classes.dragging]: isDragging // Sürükleme sırasında ek bir class
+                [classes.dragging]: isDragging
             })}
             style={{ '--gauge-color': color } as React.CSSProperties}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp} // Fare alandan çıkarsa da sürüklemeyi bitir
+            onMouseLeave={handleMouseUp}
             tabIndex={isInteractive ? 0 : undefined}
             onKeyDown={handleKeyDown}
         >
@@ -142,7 +149,8 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
                 />
             </svg>
             <Box className={classes.gaugeTextContainer}>
-                <Text className={classes.gaugeValue}>{Math.round(value)}</Text>
+                {/* Değer olarak anlık 'displayValue' gösteriliyor */}
+                <Text className={classes.gaugeValue}>{Math.round(displayValue)}</Text>
                 <Text className={classes.gaugeUnit}>{unit}</Text>
                 <Text className={classes.gaugeLabel}>{label}</Text>
             </Box>

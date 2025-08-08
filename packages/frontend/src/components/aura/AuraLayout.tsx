@@ -1,4 +1,4 @@
-// packages/frontend/src/components/aura/AuraLayout.tsx (YENİDEN OLUŞTURULMUŞ HALİ)
+// packages/frontend/src/components/aura/AuraLayout.tsx
 
 import { Box } from '@mantine/core';
 import { DynamicBackground } from './DynamicBackground';
@@ -11,7 +11,6 @@ import classes from './AuraLayout.module.css';
 import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
 import {RecipeDrawer} from "./RecipeDrawer.tsx";
 
-// PWM'i en yakın RPM değerine çeviren yardımcı fonksiyon (değişiklik yok)
 const pwmToClosestRpm = (pwm: number): number => {
     if (pwm === 0) return 0;
     const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
@@ -20,7 +19,6 @@ const pwmToClosestRpm = (pwm: number): number => {
     return closestMark.rpm;
 };
 
-// RPM'i en yakın PWM değerine çeviren yeni yardımcı fonksiyon
 const rpmToClosestPwm = (rpm: number): number => {
     if (rpm === 0) return 0;
     const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
@@ -40,22 +38,25 @@ export function AuraLayout() {
     const isRpmInteractive = operatingMode === 'continuous' || operatingMode === 'oscillation';
     const isAngleInteractive = operatingMode === 'oscillation';
 
-    const handleRpmChange = (newRpm: number) => {
-        const newPwm = rpmToClosestPwm(newRpm);
-        // Önce frontend state'ini anında güncelle (daha akıcı his için)
+    // YENİ MANTIK: Bu fonksiyon artık sadece sürükleme bittiğinde çağrılır.
+    const handleRpmChange = (finalRpm: number) => {
+        // 1. En yakın kalibrasyonlu PWM'i hesapla ("snap" verisi)
+        const newPwm = rpmToClosestPwm(finalRpm);
+        // 2. Zustand store'u bu "doğru" değerle hemen güncelle
         setMotorStatus({ pwm: newPwm });
-        // Sonra bu değişikliği backend'e gönder
+        // 3. Backend'e tek bir nihai komut gönder
         sendMotorPwm(newPwm);
     };
 
-    const handleAngleChange = (newAngle: number) => {
-        // En yakın geçerli açıya yuvarla (isteğe bağlı ama daha iyi bir UX)
+    // YENİ MANTIK: Bu fonksiyon da sadece sürükleme bittiğinde çağrılır.
+    const handleAngleChange = (finalAngle: number) => {
+        // 1. En yakın geçerli açıya yuvarla ("snap" verisi)
         const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
-            Math.abs(curr - newAngle) < Math.abs(prev - newAngle) ? curr : prev
+            Math.abs(curr - finalAngle) < Math.abs(prev - finalAngle) ? curr : prev
         );
-        // Frontend state'ini güncelle
+        // 2. Zustand store'u hemen güncelle
         setOscillationSettings({ angle: closestAngle });
-        // Backend'e gönder
+        // 3. Backend'e tek bir nihai komut gönder
         sendOscillationSettings({ angle: closestAngle });
     };
 
