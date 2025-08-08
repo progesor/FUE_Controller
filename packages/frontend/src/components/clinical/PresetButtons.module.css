@@ -5,8 +5,15 @@
     border-color: rgba(255, 255, 255, 0.1);
     color: #aab0c4;
     font-weight: 500;
-    width: 140px; /* Butonlara standart bir genişlik verelim */
+    width: 160px; /* Genişlik artırıldı */
+    height: 50px; /* Yükseklik artırıldı */
+    padding: 0 16px;
     transition: all 0.2s ease;
+}
+
+/* Mantine'in buton içindeki flex yapısını yönetmek için */
+.presetButton > .mantine-Button-inner {
+    justify-content: flex-start;
 }
 
 .presetButton:hover {
@@ -20,4 +27,8 @@
     border-color: #00e5ff;
     color: #fff;
     box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+
+.buttonLabel {
+    font-size: 16px; /* Yazı boyutu ayarlandı */
 }
