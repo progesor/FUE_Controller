@@ -13,22 +13,34 @@ import {
     Stack
 } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
+// DÜZELTME: Gerekli tipleri store'dan import ediyoruz
 import type { ConsoleEntry } from '../../store/useControllerStore';
 import {JsonViewer} from "../common/JsonViewer.tsx";
 import {IconCode, IconInfoCircle, IconTrash} from "@tabler/icons-react";
 import {LogSummary} from "../common/LogSummary.tsx";
+import type {DeviceStatus} from "../../../../shared-types";
 
 const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
     const [viewMode, setViewMode] = useState<'summary' | 'raw'>('summary');
 
-    const isDataAvailable = entry.data && entry.data[0] && Object.keys(entry.data[0]).length > 0;
+    // DÜZELTME: 'unknown' tipindeki veriyi güvenli bir şekilde kontrol edip yeni bir değişkene atıyoruz.
+    // Bu, TypeScript'e verinin tipinin ne olduğunu net bir şekilde söyler.
+    const getLogData = (): DeviceStatus | null => {
+        if (Array.isArray(entry.data) && entry.data.length > 0 && typeof entry.data[0] === 'object' && entry.data[0] !== null) {
+            // TypeScript'e bu nesnenin bir DeviceStatus olduğunu söylüyoruz.
+            return entry.data[0] as DeviceStatus;
+        }
+        return null;
+    };
+
+    const logData = getLogData();
     const isStatusUpdate = entry.message.includes('device_status_update');
 
     return (
         <Box mb="sm">
             <Group justify="space-between">
                 <Text size="xs" c="dimmed" component="div">
-                <Badge
+                    <Badge
                         size="xs"
                         variant="light"
                         color={entry.source === 'backend' ? 'grape' : 'blue'}
@@ -38,23 +50,21 @@ const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
                     </Badge>
                     [{entry.timestamp}] - {entry.message}
                 </Text>
-
-                {/* Sadece status_update olaylarında mod değiştirme butonu göster */}
-                {isStatusUpdate && (
+                {/* Artık sadece 'logData'nın varlığını kontrol etmek yeterli */}
+                {logData && isStatusUpdate && (
                     <UnstyledButton onClick={() => setViewMode(viewMode === 'summary' ? 'raw' : 'summary')}>
-                        {viewMode === 'summary' ?
-                            <IconCode size={16} color="gray" /> :
-                            <IconInfoCircle size={16} color="gray" />}
+                        {viewMode === 'summary' ? <IconCode size={16} color="gray" /> : <IconInfoCircle size={16} color="gray" />}
                     </UnstyledButton>
                 )}
             </Group>
 
-            {isDataAvailable && isStatusUpdate && (
+            {/* Artık 'logData'nın varlığını ve tipini bildiğimiz için güvenle kullanabiliriz */}
+            {logData && isStatusUpdate && (
                 viewMode === 'summary' ? (
-                    <LogSummary data={entry.data[0]} />
+                    <LogSummary data={logData} />
                 ) : (
                     <Box mt={4}>
-                        <JsonViewer data={entry.data[0]}/>
+                        <JsonViewer data={logData}/>
                     </Box>
                 )
             )}
@@ -82,7 +92,6 @@ export function DevConsolePanel() {
     return (
         <Stack h="100%" gap="md">
             <Group justify="space-between">
-                {/* Title kaldırıldı, Drawer'ın kendi başlığı var */}
                 <Checkbox
                     label="Status Güncellemelerini Gizle"
                     checked={consoleFilters.hideStatusUpdates}
@@ -98,7 +107,6 @@ export function DevConsolePanel() {
                     Temizle
                 </Button>
             </Group>
-
             <ScrollArea viewportRef={viewport} style={{ flex: 1 }}>
                 {filteredEntries.map((entry) => (
                     <LogEntry key={entry.id} entry={entry} />
