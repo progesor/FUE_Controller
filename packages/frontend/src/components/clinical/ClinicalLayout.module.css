@@ -60,6 +60,12 @@
     line-height: 1.2 !important;
 }
 
+.chartStack {
+    /* küçük ekranda çok az bindir, büyükte biraz daha */
+    margin-top: clamp(-180px, -8vh, -200px);
+    margin-bottom: clamp(-120px, -30vh, -50px);
+}
+
 /* ========== Logo (SVG) ========== */
 .logo {
     cursor: pointer;

@@ -1,12 +1,56 @@
+.bar {
+    position: relative;
+    width: min(1100px, 92vw);
+    margin-inline: auto;
+    padding: 14px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    background: linear-gradient(180deg, rgba(20,28,48,.55), rgba(8,12,24,.55));
+    backdrop-filter: blur(6px);
+    box-shadow:
+            0 0 0 1px rgba(255,255,255,.02) inset,
+            0 8px 32px rgba(0,0,0,.45),
+            0 0 28px rgba(0,229,255,.08);
+}
+
+.grid {
+    /* Mantine Grid zaten flex/row düzeninde */
+}
+
+.item {
+    flex-direction: column;
+    text-align: center;
+}
+
 .label {
     color: #aab0c4;
-    font-size: 18px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    line-height: 1;
+    margin-bottom: 2px;
 }
 
 .value {
     color: #ffffff;
-    font-size: 32px;
-    font-weight: 600;
+    font-size: clamp(20px, 2.4vw, 28px);
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.sep {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    left: 25%;
+    border-color: rgba(255,255,255,0.06);
+    display: none;   /* varsayılan: gizli (mobil) */
+}
+
+.sep:nth-of-type(2) { left: 50%; }
+.sep:nth-of-type(3) { left: 75%; }
+
+@media (min-width: 768px) {
+    .sep { display: block; }
 }

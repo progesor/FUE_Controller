@@ -1,16 +1,17 @@
 import {Box, Stack, Group, Text} from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
-// import ertipLogo from '../../assets/ertip-logo.svg';
 import {Gauge} from "./Gauge.tsx";
 import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import {InfoPanel} from "./InfoPanel.tsx";
-import {Clock} from "./Clock.tsx";
 import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 import {PresetButtons} from "./PresetButtons.tsx";
 import {sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor} from "../../services/socketService.ts";
 import ErtipLogo from '../../assets/ertip-logo.svg?react';
 import cx from 'clsx';
+// import {TissueHardnessChart} from "./TissueHardnessChart.tsx";
+import {MAX_OSC_ANGLE, pwmToRpm} from "../../utils/deviceSelectors.ts";
+import {TissueHardnessChartBar} from "./TissueHardnessChartBar.tsx";
 
 
 export function ClinicalLayout() {
@@ -92,6 +93,12 @@ export function ClinicalLayout() {
         }
     };
 
+    //temp
+    const rpm = pwmToRpm(motor.pwm);
+    const oscPercent = Math.round(
+        (Math.max(0, oscillationSettings.angle) / MAX_OSC_ANGLE) * 100
+    );
+
 
     return (
         <Box className={classes.wrapper}>
@@ -120,7 +127,16 @@ export function ClinicalLayout() {
                             <Text className={classes.welcomeText}>Hoş geldiniz</Text>
                             <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
                         </Box>
+
+                        <Stack align="center" mt={8} mb={-200}>
+                            <TissueHardnessChartBar
+                                isRunning={motor.isActive}
+                                rpm={rpm}
+                                oscillation={oscPercent}
+                            />
+                        </Stack>
                     </Stack>
+
                     <Gauge
                         value={oscillationSettings.angle}
                         maxValue={maxAngle}
@@ -132,11 +148,14 @@ export function ClinicalLayout() {
                         onChange={handleAngleGaugeChange}
                         onSliderChange={handleAngleSliderChange}
                     />
-
                 </Group>
-                <Stack align="center">
-                    <InfoPanel />
-                    <Clock />
+                {/*<Stack align="center" gap={8} className={classes.chartStack}>*/}
+                {/*    <TissueHardnessChart />*/}
+                {/*</Stack>*/}
+                <Stack align="center" gap="md">
+                    {/*<InfoPanel />*/}
+                    {/*<Clock />*/}
+                    <InfoPanel showClock/>
                 </Stack>
             </Stack>
         </Box>
