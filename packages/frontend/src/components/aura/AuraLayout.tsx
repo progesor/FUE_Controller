@@ -23,27 +23,19 @@ export function AuraLayout() {
     const isRpmInteractive = operatingMode === 'continuous' || operatingMode === 'oscillation';
     const isAngleInteractive = operatingMode === 'oscillation';
 
-    // YENİ MANTIK: Bu fonksiyon artık sadece sürükleme bittiğinde çağrılır.
     const handleRpmChange = (finalRpm: number) => {
-        // 1. En yakın kalibrasyonlu PWM'i hesapla ("snap" verisi)
         const newPwm = rpmToClosestPwm(finalRpm);
-        // 2. Zustand store'u bu "doğru" değerle hemen güncelle
         setMotorStatus({ pwm: newPwm });
-        // 3. Backend'e tek bir nihai komut gönder
         sendMotorPwm(newPwm);
     };
 
-    // YENİ MANTIK: Bu fonksiyon da sadece sürükleme bittiğinde çağrılır.
     const handleAngleChange = (finalAngle: number) => {
-        // 1. En yakın geçerli açıya yuvarla ("snap" verisi)
-        const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
-            Math.abs(curr - finalAngle) < Math.abs(prev - finalAngle) ? curr : prev
-        );
-        // 2. Zustand store'u hemen güncelle
-        setOscillationSettings({ angle: closestAngle });
-        // 3. Backend'e tek bir nihai komut gönder
-        sendOscillationSettings({ angle: closestAngle });
-    };
+    const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
+        Math.abs(curr - finalAngle) < Math.abs(prev - finalAngle) ? curr : prev
+    );
+    setOscillationSettings({ angle: closestAngle });
+    sendOscillationSettings({ angle: closestAngle });
+};
 
 
     return (
@@ -60,6 +52,7 @@ export function AuraLayout() {
                         isInteractive={isRpmInteractive}
                         onChange={handleRpmChange}
                         sensitivity={10}
+                        mirror={false}
                     />
                     <StatusOrb />
                     <HolographicGauge
@@ -71,6 +64,7 @@ export function AuraLayout() {
                         isInteractive={isAngleInteractive}
                         onChange={handleAngleChange}
                         sensitivity={2}
+                        mirror={true}
                     />
                 </Box>
                 <ControlArc />

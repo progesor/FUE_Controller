@@ -2,14 +2,14 @@
 
 .gaugeWrapper {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 250px;
+    height: 250px;
     display: flex;
     justify-content: center;
     align-items: center;
     --gauge-color: #00e5ff;
     --gauge-glow: 16px;
-    transition: opacity 0.3s ease; /* Opaklık geçiş efekti */
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .gaugeWrapper:not(.interactive) {
     opacity: 0.4;
@@ -23,10 +23,9 @@
     height: 250px;
     overflow: visible;
 }
-.gaugeWrapper circle {
+/* DEĞİŞİKLİK: circle -> path */
+.gaugeWrapper path {
     fill: none;
-    transform-origin: center;
-    transform: rotate(-90deg);
     transition: stroke-dashoffset 0.5s ease-out;
 }
 .gaugeBackground {
@@ -44,6 +43,7 @@
     transform: translate(-50%, -50%);
     text-align: center;
     pointer-events: none;
+    transition: transform 0.3s ease; /* Transform eklendi */
 }
 .gaugeValue {
     font-size: 48px;
@@ -71,43 +71,47 @@
     cursor: pointer;
 }
 
-/* İnteraktif olduğunda uygulanacak genel stiller */
 .interactive {
-    cursor: grab; /* Fare imlecini "tutulabilir" olarak değiştirir */
+    cursor: ns-resize; /* Dikey sürüklemeyi belirtmek için imleç değişti */
 }
 .interactive:active {
-    cursor: grabbing; /* Tıklanıp sürüklendiğinde imleci değiştirir */
+    cursor: ns-resize;
 }
 
-/* İnteraktif olduğunda parlamayı daha belirgin hale getiriyoruz */
 .interactive .gaugeProgress {
     filter: drop-shadow(0 0 calc(var(--gauge-glow) * 1.1) var(--gauge-color)) drop-shadow(0 0 calc(var(--gauge-glow) * 2) var(--gauge-color));
-    /* Parlamanın da nabız gibi atmasını sağlıyoruz */
     animation: pulseGlow 2s infinite ease-in-out;
 }
 
 .dragging {
-    --gauge-glow: 40px;
-    user-select: none; /* Chrome, Safari, Opera */
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
-    filter: drop-shadow(0 0 var(--gauge-glow) var(--gauge-color)) drop-shadow(0 0 calc(var(--gauge-glow) * 1.5) var(--gauge-color));
-    transform: perspective(600px) translateZ(30px);
+    --gauge-glow: 40px; /* Parlama boyutunu kontrol eden değişken */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    filter: drop-shadow(0 0 var(--gauge-glow) var(--gauge-color));
 }
 
 .dragging .gaugeProgress {
-    filter: drop-shadow(0 0 var(--gauge-glow) var(--gauge-color)) drop-shadow(0 0 calc(var(--gauge-glow) * 2) var(--gauge-color));
+    filter:
+            drop-shadow(0 0 calc(var(--gauge-glow) / 2) var(--gauge-color))
+            drop-shadow(0 0 calc(var(--gauge-glow) * 1.5) var(--gauge-color));
 }
-/* YENİ: Parlama için nabız animasyonu */
+
+.interactive .gaugeProgress {
+    /* İnteraktif ama sürüklenmeyen durumdaki parlamayı da biraz artıralım */
+    filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
 @keyframes pulseGlow {
     0% {
-        filter: drop-shadow(0 0 15px var(--gauge-color)) drop-shadow(0 0 30px var(--gauge-color));
+        filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
     }
     50% {
-        filter: drop-shadow(0 0 20px var(--gauge-color)) drop-shadow(0 0 40px var(--gauge-color));
+        filter: drop-shadow(0 0 16px var(--gauge-color)) drop-shadow(0 0 32px var(--gauge-color));
     }
     100% {
-        filter: drop-shadow(0 0 15px var(--gauge-color)) drop-shadow(0 0 30px var(--gauge-color));
+        filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
     }
 }

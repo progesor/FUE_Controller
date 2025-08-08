@@ -33,6 +33,20 @@ const playFeedback = (() => {
     };
 })();
 
+function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    return {
+        x: centerX + radius * Math.cos(angleInRadians),
+        y: centerY + radius * Math.sin(angleInRadians),
+    };
+}
+
+function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number) {
+    const start = polarToCartesian(x, y, radius, endAngle);
+    const end = polarToCartesian(x, y, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+}
 
 interface HolographicGaugeProps {
     value: number;
@@ -43,21 +57,19 @@ interface HolographicGaugeProps {
     isInteractive?: boolean;
     onChange?: (newValue: number) => void;
     sensitivity?: number;
+    mirror?: boolean;
 }
 
-export function HolographicGauge({ value, maxValue, label, unit, color, isInteractive = false, onChange, sensitivity = 2 }: HolographicGaugeProps) {
+export function HolographicGauge({ value, maxValue, label, unit, color, isInteractive = false, onChange, sensitivity = 2, mirror = false }: HolographicGaugeProps) {
     const [isDragging, setIsDragging] = useState(false);
-    // YENİ: Sürükleme sırasındaki anlık değeri tutacak yerel state
     const [displayValue, setDisplayValue] = useState(value);
     const lastY = useRef(0);
 
-    // Ana 'value' prop'u (Zustand'dan gelen) değiştiğinde, yerel state'i de güncelle
     useEffect(() => {
         if (!isDragging) {
             setDisplayValue(value);
         }
     }, [value, isDragging]);
-
 
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isInteractive || !onChange) return;
@@ -68,16 +80,18 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !isInteractive || !onChange) return;
 
+        // Yukarı sürükleme her zaman pozitif bir deltaY üretir.
         const deltaY = lastY.current - e.clientY;
         lastY.current = e.clientY;
 
-        // Sadece yerel 'displayValue' state'ini güncelle, onChange'i çağırma!
+        // KESİN DÜZELTME: Ayna modu için özel bir mantığa gerek YOKTUR.
+        // Fare hareketi viewport'a göredir ve her iki gösterge için de aynı şekilde çalışmalıdır.
+        const effectiveDelta = deltaY;
+
         setDisplayValue(prevValue => {
-            const newValue = Math.min(maxValue, Math.max(0, prevValue + (deltaY * sensitivity)));
+            const newValue = Math.min(maxValue, Math.max(0, prevValue + (effectiveDelta * sensitivity)));
             const rounded = Math.round(newValue);
-            if (rounded !== Math.round(prevValue)) {
-                playFeedback();
-            }
+            if (rounded !== Math.round(prevValue)) playFeedback();
             return newValue;
         });
     };
@@ -85,37 +99,30 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
     const handleMouseUp = () => {
         if (!isDragging || !onChange) return;
         setIsDragging(false);
-        // Sürükleme bittiğinde, nihai değeri onChange prop'u ile yukarı bildir.
         onChange(displayValue);
     };
 
-    // Klavye kontrolleri doğrudan nihai değeri gönderebilir
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (!isInteractive || !onChange) return;
-
-        let newValue = value;
-        if (e.key === '+' || e.key === '=') {
-            newValue = Math.min(maxValue, value + 50);
-        } else if (e.key === '-' || e.key === '_') {
-            newValue = Math.max(0, value - 50);
-        } else {
-            return;
+    const getTransformStyle = () => {
+        const transforms = [];
+        if (mirror) {
+            transforms.push('scaleX(-1)');
         }
-
-        if (newValue !== value) {
-            e.preventDefault();
-            onChange(newValue);
-            playFeedback();
+        if (isDragging) {
+            transforms.push('perspective(600px) translateZ(30px)');
         }
+        return transforms.join(' ');
     };
 
     const SIZE = 250;
     const STROKE_WIDTH = 10;
     const RADIUS = (SIZE - STROKE_WIDTH) / 2;
-    const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-    // Gösterge artık anlık 'displayValue'yu kullanıyor
+    const START_ANGLE = -150;
+    const END_ANGLE = -30;
+    const ANGLE_RANGE = END_ANGLE - START_ANGLE;
     const progress = Math.min(1, Math.max(0, displayValue / maxValue));
-    const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+    const currentAngle = START_ANGLE + progress * ANGLE_RANGE;
+    const backgroundArcPath = describeArc(SIZE / 2, SIZE / 2, RADIUS, START_ANGLE, END_ANGLE);
+    const progressArcPath = describeArc(SIZE / 2, SIZE / 2, RADIUS, START_ANGLE, currentAngle);
 
     return (
         <Box
@@ -123,13 +130,14 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
                 [classes.interactive]: isInteractive,
                 [classes.dragging]: isDragging
             })}
-            style={{ '--gauge-color': color } as React.CSSProperties}
+            style={{
+                '--gauge-color': color,
+                transform: getTransformStyle()
+            } as React.CSSProperties}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            tabIndex={isInteractive ? 0 : undefined}
-            onKeyDown={handleKeyDown}
         >
             <svg
                 width={SIZE}
@@ -137,19 +145,23 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
                 viewBox={`0 0 ${SIZE} ${SIZE}`}
                 className={classes.gaugeSvg}
             >
-                <circle
+                <path
                     className={classes.gaugeBackground}
-                    cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} strokeWidth={STROKE_WIDTH}
+                    d={backgroundArcPath}
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
                 />
-                <circle
+                <path
                     className={classes.gaugeProgress}
-                    cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} strokeWidth={STROKE_WIDTH}
-                    strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={strokeDashoffset}
+                    d={progressArcPath}
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
                 />
             </svg>
-            <Box className={classes.gaugeTextContainer}>
-                {/* Değer olarak anlık 'displayValue' gösteriliyor */}
+            <Box
+                className={classes.gaugeTextContainer}
+                style={{ transform: `translate(-50%, -50%) ${mirror ? 'scaleX(-1)' : ''}`}}
+            >
                 <Text className={classes.gaugeValue}>{Math.round(displayValue)}</Text>
                 <Text className={classes.gaugeUnit}>{unit}</Text>
                 <Text className={classes.gaugeLabel}>{label}</Text>
