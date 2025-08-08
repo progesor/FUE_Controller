@@ -10,22 +10,7 @@ import { RPM_CALIBRATION_MARKS, VALID_ANGLES } from '../../config/calibration';
 import classes from './AuraLayout.module.css';
 import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
 import {RecipeDrawer} from "./RecipeDrawer.tsx";
-
-const pwmToClosestRpm = (pwm: number): number => {
-    if (pwm === 0) return 0;
-    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
-    );
-    return closestMark.rpm;
-};
-
-const rpmToClosestPwm = (rpm: number): number => {
-    if (rpm === 0) return 0;
-    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-        Math.abs(curr.rpm - rpm) < Math.abs(prev.rpm - rpm) ? curr : prev
-    );
-    return closestMark.pwm;
-};
+import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 
 
 export function AuraLayout() {

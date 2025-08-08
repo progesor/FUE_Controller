@@ -9,6 +9,7 @@ import {RPM_CALIBRATION_MARKS} from "../../config/calibration.ts";
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import {InfoPanel} from "./InfoPanel.tsx";
 import {Clock} from "./Clock.tsx";
+import {pwmToClosestRpm} from "../../utils/rpmUtils.ts";
 
 
 const PresetButtonsPlaceholder = () => (
@@ -18,14 +19,6 @@ const PresetButtonsPlaceholder = () => (
         ))}
     </Group>
 );
-
-const pwmToClosestRpm = (pwm: number): number => {
-    if (pwm === 0) return 0;
-    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
-    );
-    return closestMark.rpm;
-};
 
 export function ClinicalLayout() {
     // Store'dan anlık verileri çekiyoruz

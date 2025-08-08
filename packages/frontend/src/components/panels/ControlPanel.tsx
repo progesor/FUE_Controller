@@ -17,14 +17,7 @@ import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
 import type { MotorDirection, OperatingMode } from "../../../../shared-types";
 import { NotificationService } from "../../services/notificationService.tsx";
 import { useEffect, useState } from "react";
-
-const pwmToClosestRpm = (pwm: number): number => {
-    if (pwm === 0) return 0;
-    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
-    );
-    return closestMark.rpm;
-};
+import {findClosestMarkIndex, pwmToClosestRpm} from '../../utils/rpmUtils.ts';
 
 export function ControlPanel() {
     // DÜZELTME: Eksik olan 'setActiveRecipe' eklendi
@@ -81,13 +74,6 @@ export function ControlPanel() {
                 sendStartMotor();
             }
         }
-    };
-
-    const findClosestMarkIndex = (pwm: number): number => {
-        const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-            Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
-        );
-        return RPM_CALIBRATION_MARKS.indexOf(closestMark);
     };
 
     const currentMarkIndex = findClosestMarkIndex(motor.pwm);

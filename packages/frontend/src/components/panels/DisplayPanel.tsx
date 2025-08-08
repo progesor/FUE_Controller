@@ -2,34 +2,8 @@
 
 import { Paper, Text, Stack, Group, Button } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
-import {RPM_CALIBRATION_MARKS} from "../../config/calibration.ts";
 import {RecipePlayer} from "../RecipePlayer.tsx";
-
-// /**
-//  * PWM değerini (0-255) daha anlamlı olan RPM (devir/dakika) değerine çevirir.
-//  * Bu, kullanıcıya teknik bir değer yerine tanıdık bir birim göstermek içindir.
-//  * @param pwm - 0 ile 255 arasında motorun anlık PWM değeri.
-//  * @returns {number} Yaklaşık RPM karşılığı.
-//  */
-// const pwmToRpm = (pwm: number) => {
-//     if (pwm === 0) return 0;
-//     // Bu formül, maksimum PWM (255) değerinin yaklaşık 18000 RPM'e
-//     // karşılık geldiği varsayımına dayanır. Gerçek değerler kalibrasyona
-//     // göre değişebilir ancak bu, gösterge için yeterlidir.
-//     return Math.round((pwm / 255) * 18000);
-// };
-
-/**
- * Verilen anlık PWM değerine en yakın kalibre edilmiş RPM değerini bulur.
- * Bu fonksiyon artık ControlPanel ile aynı mantığı kullanıyor.
- */
-const pwmToClosestRpm = (pwm: number): number => {
-    if (pwm === 0) return 0;
-    const closestMark = RPM_CALIBRATION_MARKS.reduce((prev, curr) =>
-        Math.abs(curr.pwm - pwm) < Math.abs(prev.pwm - pwm) ? curr : prev
-    );
-    return closestMark.rpm;
-};
+import {pwmToClosestRpm} from "../../utils/rpmUtils.ts";
 
 /**
  * Ana gösterge panelini oluşturan bileşen.
