@@ -31,6 +31,48 @@ export function AuraLayout() {
         sendMotorPwm(newPwm);
     };
 
+    const handleIncrementAngle = () => {
+        const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
+        const nextIndex = Math.min(VALID_ANGLES.length - 1, currentIndex + 1);
+        if (currentIndex !== nextIndex) {
+            const newAngle = VALID_ANGLES[nextIndex];
+            setOscillationSettings({ angle: newAngle });
+            sendOscillationSettings({ angle: newAngle });
+        }
+    };
+
+    const handleDecrementAngle = () => {
+        const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
+        const prevIndex = Math.max(0, currentIndex - 1);
+        if (currentIndex !== prevIndex) {
+            const newAngle = VALID_ANGLES[prevIndex];
+            setOscillationSettings({ angle: newAngle });
+            sendOscillationSettings({ angle: newAngle });
+        }
+    };
+
+    const handleIncrementRpm = () => {
+        const currentMark = RPM_CALIBRATION_MARKS.find(m => m.pwm === motor.pwm) || RPM_CALIBRATION_MARKS[0];
+        const currentIndex = RPM_CALIBRATION_MARKS.indexOf(currentMark);
+        const nextIndex = Math.min(RPM_CALIBRATION_MARKS.length - 1, currentIndex + 1);
+        if (currentIndex !== nextIndex) {
+            const newPwm = RPM_CALIBRATION_MARKS[nextIndex].pwm;
+            setMotorStatus({ pwm: newPwm });
+            sendMotorPwm(newPwm);
+        }
+    };
+
+    const handleDecrementRpm = () => {
+        const currentMark = RPM_CALIBRATION_MARKS.find(m => m.pwm === motor.pwm) || RPM_CALIBRATION_MARKS[0];
+        const currentIndex = RPM_CALIBRATION_MARKS.indexOf(currentMark);
+        const prevIndex = Math.max(0, currentIndex - 1);
+        if (currentIndex !== prevIndex) {
+            const newPwm = RPM_CALIBRATION_MARKS[prevIndex].pwm;
+            setMotorStatus({ pwm: newPwm });
+            sendMotorPwm(newPwm);
+        }
+    };
+
     const handleAngleChange = (finalAngle: number) => {
     const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
         Math.abs(curr - finalAngle) < Math.abs(prev - finalAngle) ? curr : prev
@@ -58,6 +100,8 @@ export function AuraLayout() {
                         onChange={handleRpmChange}
                         sensitivity={10}
                         mirror={false}
+                        onIncrement={handleIncrementRpm}
+                        onDecrement={handleDecrementRpm}
                     />
                     <StatusOrb />
                     <HolographicGauge
@@ -70,6 +114,8 @@ export function AuraLayout() {
                         onChange={handleAngleChange}
                         sensitivity={2}
                         mirror={true}
+                        onIncrement={handleIncrementAngle}
+                        onDecrement={handleDecrementAngle}
                     />
                 </Box>
                 <ControlArc />

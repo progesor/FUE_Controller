@@ -1,9 +1,10 @@
 // packages/frontend/src/components/aura/HolographicGauge.tsx
 
-import { Box, Text } from '@mantine/core';
+import {ActionIcon, Box, Stack, Text} from '@mantine/core';
 import classes from './HolographicGauge.module.css';
 import cx from 'clsx';
 import React, {useRef, useState, useEffect} from "react";
+import { IconPlus, IconMinus } from '@tabler/icons-react';
 
 // Feedback fonksiyonu değişmeden kalıyor...
 const playFeedback = (() => {
@@ -58,9 +59,11 @@ interface HolographicGaugeProps {
     onChange?: (newValue: number) => void;
     sensitivity?: number;
     mirror?: boolean;
+    onIncrement?: () => void;
+    onDecrement?: () => void;
 }
 
-export function HolographicGauge({ value, maxValue, label, unit, color, isInteractive = false, onChange, sensitivity = 2, mirror = false }: HolographicGaugeProps) {
+export function HolographicGauge({ value, maxValue, label, unit, color, isInteractive = false, onChange, sensitivity = 2, mirror = false, onIncrement, onDecrement }: HolographicGaugeProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [displayValue, setDisplayValue] = useState(value);
     const lastY = useRef(0);
@@ -102,6 +105,15 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
         onChange(displayValue);
     };
 
+    const handleStepChange = (direction: 'up' | 'down') => {
+        if (direction === 'up' && onIncrement) {
+            onIncrement();
+        }
+        if (direction === 'down' && onDecrement) {
+            onDecrement();
+        }
+    };
+
     const getTransformStyle = () => {
         const transforms = [];
         if (mirror) {
@@ -139,6 +151,16 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
         >
+            {isInteractive && (
+                <Stack className={cx(classes.buttonContainer)} gap="xl">
+                    <ActionIcon variant="transparent" className={classes.stepButton} onClick={() => handleStepChange('up')}>
+                        <IconPlus size={20} />
+                    </ActionIcon>
+                    <ActionIcon variant="transparent" className={classes.stepButton} onClick={() => handleStepChange('down')}>
+                        <IconMinus size={20} />
+                    </ActionIcon>
+                </Stack>
+            )}
             <svg
                 width={SIZE}
                 height={SIZE}

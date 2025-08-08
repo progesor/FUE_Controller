@@ -104,6 +104,44 @@
     animation: pulseGlow 2s infinite ease-in-out;
 }
 
+.buttonContainer {
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    left: -80px;
+}
+
+.stepButton {
+    width: 80px; /* Boyut artırıldı */
+    height: 80px; /* Boyut artırıldı */
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stepButton:hover {
+    color: var(--gauge-color);
+    border-color: var(--gauge-color);
+    background-color: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 15px -3px var(--gauge-color);
+}
+
+/* Mantine ActionIcon içindeki SVG'yi hedeflemek için bu seçiciyi kullanıyoruz */
+.stepButton :is(svg) {
+    width: 48px;  /* İkon boyutu artırıldı */
+    height: 48px; /* İkon boyutu artırıldı */
+    stroke-width: 2.5; /* İkon kalınlığı artırıldı */
+}
+
 @keyframes pulseGlow {
     0% {
         filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
