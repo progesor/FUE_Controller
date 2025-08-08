@@ -27,7 +27,7 @@
     top: 50%;
     left: 50%;
     /* Küme'yi dikeyde biraz yukarı iterek ControlArc'a yer açıyoruz */
-    transform: translate(-50%, -85%);
+    transform: translate(-50%, -65%);
 }
 
 /* Dynamic background */

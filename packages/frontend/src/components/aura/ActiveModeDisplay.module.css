@@ -1,0 +1,50 @@
+/* packages/frontend/src/components/aura/ActiveModeDisplay.module.css */
+
+.displayWrapper {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    /* KALDIRILDI: transform: translateX(-50%); */
+    /* Bu kural artık bileşenin kendi içinde yönetiliyor. */
+
+    z-index: 50;
+    pointer-events: none;
+    padding: 6px 16px;
+    max-width: 250px;
+
+    background: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(10px);
+
+    border-bottom: 1px solid rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+
+    border-top-left-radius: 120px 40px;
+    border-top-right-radius: 120px 40px;
+}
+
+.displayIcon {
+    color: rgba(0, 229, 255, 0.9);
+    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.8));
+    margin-right: 4px;
+    flex-shrink: 0; /* İkonun küçülmesini engelle */
+}
+
+.displayLabel {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    line-height: 1;
+    text-align: left;
+}
+
+.displayValue {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    line-height: 1.2;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+    text-align: left;
+    white-space: nowrap;
+}

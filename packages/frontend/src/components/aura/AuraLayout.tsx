@@ -12,6 +12,7 @@ import {sendMotorPwm, sendOscillationSettings} from "../../services/socketServic
 import {RecipeDrawer} from "./RecipeDrawer.tsx";
 import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 import {SessionHUD} from "./SessionHUD.tsx";
+import {ActiveModeDisplay} from "./ActiveModeDisplay.tsx";
 
 
 export function AuraLayout() {
@@ -43,6 +44,8 @@ export function AuraLayout() {
         <Box className={classes.wrapper}>
             <DynamicBackground />
             <SessionHUD />
+
+            <ActiveModeDisplay />
             <Box className={classes.content}>
                 <Box className={classes.gaugeCluster}>
                     <HolographicGauge
