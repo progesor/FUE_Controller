@@ -1,8 +1,8 @@
-import { Box } from '@mantine/core';
+import {ActionIcon, Box, Group, Stack} from '@mantine/core';
 import classes from './Gauge.module.css';
-
 import arcImage from '../../assets/clinical/gauge-arc.png';
 import backgroundImage from '../../assets/clinical/gauge-background.png';
+import { IconPlus, IconMinus } from '@tabler/icons-react';
 
 // --- GÖSTERGE KONFİGÜRASYONU (Tüm ayarları buradan yapabilirsin) ---
 const CONFIG = {
@@ -51,9 +51,11 @@ interface GaugeProps {
     label: string;
     subLabel?: string;
     mirror?: boolean;
+    onIncrement?: () => void;
+    onDecrement?: () => void;
 }
 
-export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror = false }: GaugeProps) {
+export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror = false, onIncrement, onDecrement }: GaugeProps) {
     const viewBox = `0 0 ${CONFIG.SIZE} ${CONFIG.SIZE}`;
     const center = CONFIG.SIZE / 2;
 
@@ -72,6 +74,7 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
     const maskPath = describeArcForMask(center, center, center, maskStart, maskEnd);
 
     return (
+        <Stack align="center" gap="xs">
         <Box className={classes.wrapper} w={CONFIG.SIZE} h={CONFIG.SIZE}>
             <svg width={CONFIG.SIZE} height={CONFIG.SIZE} viewBox={viewBox}>
                 <defs>
@@ -111,5 +114,16 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                 </g>
             </svg>
         </Box>
+            {(onIncrement || onDecrement) && (
+                <Group className={classes.buttonContainer} gap="xl">
+                    <ActionIcon size="xl" variant="outline" onClick={onDecrement} className={classes.stepButton}>
+                        <IconMinus size={24} />
+                    </ActionIcon>
+                    <ActionIcon size="xl" variant="outline" onClick={onIncrement} className={classes.stepButton}>
+                        <IconPlus size={24} />
+                    </ActionIcon>
+                </Group>
+            )}
+        </Stack>
     );
 }
