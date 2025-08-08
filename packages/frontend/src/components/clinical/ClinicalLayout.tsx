@@ -1,6 +1,6 @@
 import {Box, Stack, Group, Text} from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
-import ertipLogo from '../../assets/ertip-logo.svg';
+// import ertipLogo from '../../assets/ertip-logo.svg';
 import {Gauge} from "./Gauge.tsx";
 import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
 import {useControllerStore} from "../../store/useControllerStore.ts";
@@ -8,7 +8,9 @@ import {InfoPanel} from "./InfoPanel.tsx";
 import {Clock} from "./Clock.tsx";
 import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 import {PresetButtons} from "./PresetButtons.tsx";
-import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
+import {sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor} from "../../services/socketService.ts";
+import ErtipLogo from '../../assets/ertip-logo.svg?react';
+import cx from 'clsx';
 
 
 export function ClinicalLayout() {
@@ -82,13 +84,21 @@ export function ClinicalLayout() {
         handleAngleSliderChange(gaugeValue);
     };
 
+    const handleLogoDoubleClick = () => {
+        if (motor.isActive) {
+            sendStopMotor();
+        } else {
+            sendStartMotor();
+        }
+    };
+
 
     return (
         <Box className={classes.wrapper}>
             <Stack justify="space-between" h="100%" p="xl">
                 <PresetButtons />
 
-                <Group justify="center" align="center" w="100%">
+                <Group justify="center" align="center" w="100%" className={classes.centerGroup}>
 
                     <Gauge
                         value={pwmToClosestRpm(motor.pwm)}
@@ -100,9 +110,12 @@ export function ClinicalLayout() {
                         onChange={handleRpmGaugeChange}
                         onSliderChange={handleRpmSliderChange}
                     />
-                    <Stack align="center" mx="xl">
-                        <img src={ertipLogo} alt="Ertip Logo" width="300" />
-                        {/*<img src={deviceGraphic} alt="Device" width="300" />*/}
+                    <Stack align="center" mx="xl" className={classes.logoWrap}>
+                        <ErtipLogo
+                            className={cx(classes.logo, { [classes.logoActive]: motor.isActive })}
+                            onDoubleClick={handleLogoDoubleClick}
+                            width="300"
+                        />
                         <Box className={classes.centerGraphic}>
                             <Text className={classes.welcomeText}>Hoş geldiniz</Text>
                             <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
