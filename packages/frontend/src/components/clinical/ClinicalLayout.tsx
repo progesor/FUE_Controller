@@ -80,18 +80,16 @@ export function ClinicalLayout() {
     };
 
     const handleAngleGaugeChange = (gaugeValue: number) => {
-        handleAngleSliderChange(gaugeValue); // Aynı mantığı kullanabiliriz
+        handleAngleSliderChange(gaugeValue);
     };
 
 
     return (
         <Box className={classes.wrapper}>
             <Stack justify="space-between" h="100%" p="xl">
-                {/* ... Diğer bileşenler aynı kalıyor ... */}
                 <PresetButtons />
 
                 <Group justify="center" align="center" w="100%">
-                    {/* Store'dan gelen 'oscillationSettings.angle' verisini bağlıyoruz */}
 
                     <Gauge
                         value={pwmToClosestRpm(motor.pwm)}
@@ -106,7 +104,10 @@ export function ClinicalLayout() {
                     <Stack align="center" mx="xl">
                         <img src={ertipLogo} alt="Ertip Logo" width="300" />
                         {/*<img src={deviceGraphic} alt="Device" width="300" />*/}
-                        <Box className={classes.centerGraphic} />
+                        <Box className={classes.centerGraphic}>
+                            <text className={classes.welcomeText}>Hoş geldiniz</text>
+                            <text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</text>
+                        </Box>
                     </Stack>
                     <Gauge
                         value={oscillationSettings.angle}
