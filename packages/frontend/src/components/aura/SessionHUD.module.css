@@ -2,45 +2,53 @@
 
 .hudWrapper {
     position: absolute;
-    top: 20px;
+    bottom: 275px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
     pointer-events: none;
+    width: 480px; /* ControlArc ile aynı genişlikte */
+    padding: 10px 30px;
+    box-sizing: border-box;
 
-    background: linear-gradient(to bottom, rgba(15, 20, 40, 0.4), rgba(10, 13, 26, 0.6));
-    backdrop-filter: blur(8px);
-    box-shadow: inset 0px -1px 0px rgba(77, 137, 255, 0.3);
-    border-radius: 12px;
-    padding: 8px 24px;
+    background: rgba(15, 23, 42, 0.3); /* Daha az belirgin bir arka plan */
+    backdrop-filter: blur(10px);
+
+    /* YENİ: Üstte ince bir parlama çizgisi ve kavisli alt kenar */
+    border-top: 1px solid rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+
+    /* YAY ŞEKLİ */
+    border-bottom-left-radius: 240px 60px;
+    border-bottom-right-radius: 240px 60px;
 }
 
 .hudContent {
-    align-items: center;
+    width: 100%;
 }
 
 .hudItem {
-    text-align: center;
+    flex-shrink: 0; /* Elemanların sıkışmasını önle */
+}
+
+.hudIcon {
+    color: rgba(0, 229, 255, 0.8);
+    filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.7));
 }
 
 .hudLabel {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
     letter-spacing: 2px;
     text-transform: uppercase;
+    line-height: 1;
 }
 
 .hudValue {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 500;
     color: #fff;
-    line-height: 1.1;
-    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
-}
-
-.hudDivider {
-    border-color: rgba(77, 137, 255, 0.2);
-    height: 40px;
-    align-self: center;
+    line-height: 1.2;
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
 }

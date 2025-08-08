@@ -1,11 +1,11 @@
 // packages/frontend/src/components/aura/SessionHUD.tsx
 
-import { Box, Group, Text, Divider } from '@mantine/core';
+import { Box, Group, Text } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import classes from './SessionHUD.module.css';
-import { AnimatePresence, motion } from 'framer-motion';
+import { IconClock, IconRecycle } from '@tabler/icons-react';
 
-// Zamanı "DAKİKA:SANİYE" formatına çeviren yardımcı fonksiyon
+// formatTime fonksiyonu aynı kalıyor
 const formatTime = (timeInSeconds: number) => {
     const minutes = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
     const seconds = (timeInSeconds % 60).toString().padStart(2, '0');
@@ -13,31 +13,28 @@ const formatTime = (timeInSeconds: number) => {
 };
 
 export function SessionHUD() {
-    const { graftCount, sessionTime, motor } = useControllerStore();
+    // isSessionActive koşulu kaldırıldı
+    const { graftCount, sessionTime } = useControllerStore();
 
     return (
-        <AnimatePresence>
-            {motor.isActive && (
-                <motion.div
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -50, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                    className={classes.hudWrapper}
-                >
-                    <Group className={classes.hudContent} gap="xl">
-                        <Box className={classes.hudItem}>
-                            <Text className={classes.hudLabel}>GREFT</Text>
-                            <Text className={classes.hudValue}>{graftCount}</Text>
-                        </Box>
-                        <Divider orientation="vertical" className={classes.hudDivider} />
-                        <Box className={classes.hudItem}>
-                            <Text className={classes.hudLabel}>SEANS SÜRESİ</Text>
-                            <Text className={classes.hudValue}>{formatTime(sessionTime)}</Text>
-                        </Box>
-                    </Group>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <Box className={classes.hudWrapper}>
+            <Group className={classes.hudContent} justify="space-between" align="center">
+                <Group gap="xs" className={classes.hudItem}>
+                    <IconClock size={28} className={classes.hudIcon} stroke={1.5} />
+                    <Box>
+                        <Text className={classes.hudLabel}>SEANS SÜRESİ</Text>
+                        <Text className={classes.hudValue}>{formatTime(sessionTime)}</Text>
+                    </Box>
+                </Group>
+
+                <Group gap="xs" className={classes.hudItem} justify="flex-end">
+                    <Box style={{ textAlign: 'right' }}>
+                        <Text className={classes.hudLabel}>GREFT SAYISI</Text>
+                        <Text className={classes.hudValue}>{graftCount}</Text>
+                    </Box>
+                    <IconRecycle size={28} className={classes.hudIcon} stroke={1.5} />
+                </Group>
+            </Group>
+        </Box>
     );
 }
