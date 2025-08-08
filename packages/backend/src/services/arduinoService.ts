@@ -3,14 +3,14 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import type {
+import {
     MotorDirection,
     ClientToServerEvents,
     ServerToClientEvents,
     OperatingMode,
     OscillationSettings,
     DeviceStatus,
-    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep, Recipe
+    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep, Recipe, ArduinoCommands
 } from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
@@ -126,7 +126,7 @@ const broadcastDeviceStatus = () => {
  * Arduino'ya belirli bir formatta komut gönderir.
  * @param command - Arduino'ya gönderilecek 'GRUP.KOMUT:PARAMETRE' formatındaki dize.
  */
-export const sendRawArduinoCommand = (command: string) => {
+export const sendCommand = (command: string) => {
     if (port && port.isOpen) {
         port.write(`${command}\n`, (err) => {
             if (err) {
@@ -152,24 +152,23 @@ const handleData = (data: string) => {
     if (data.startsWith('PONG') && !config.arduino.logPings) return;
     console.log(`[Device -> Server]: ${data}`);
 
-    if (data.startsWith('EVT:PEDAL:1')) { // Pedal basıldı
-        // Eğer bir aktif reçete seçilmişse VE bu reçete şu an çalışmıyorsa, pedala basmak bu reçeteyi başlatır.
+    const pedalPrefix = `${ArduinoCommands.EVT}PEDAL:`;
+    const ftswPrefix = `${ArduinoCommands.EVT}FTSW:`;
+
+    if (data.startsWith(pedalPrefix + '1')) {
         if (activeRecipe && !getRecipeStatus().isRunning) {
             startRecipe(activeRecipe);
         } else if (!getRecipeStatus().isRunning) {
-            // Reçete çalışmıyorsa, seçili olan mevcut manuel modu başlat.
             startCurrentMode();
         }
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
-
-    } else if (data.startsWith('EVT:PEDAL:0')) { // Pedal bırakıldı
-        // Pedal bırakıldığında SADECE manuel modlar durur. Çalışan bir reçete devam eder.
+    } else if (data.startsWith(pedalPrefix + '0')) {
         if (!getRecipeStatus().isRunning) {
             stopMotor();
         }
         io?.emit('arduino_event', { type: 'PEDAL', state: 0 });
-    } else if (data.startsWith('EVT:FTSW:')) {
-        const state = parseInt(data.split(':')[2]) as 0 | 1;
+    } else if (data.startsWith(ftswPrefix)) {
+        const state = parseInt(data.substring(ftswPrefix.length)) as 0 | 1;
         io?.emit('arduino_event', { type: 'FTSW', state });
     }
 };
@@ -226,9 +225,9 @@ export const connectToArduino = async () => {
         console.log(`Arduino'ya başarıyla bağlanıldı: ${portPath}`);
         isArduinoConnected = true;
         if (pingInterval) clearInterval(pingInterval);
-        pingInterval = setInterval(() => sendRawArduinoCommand('SYS.PING'), config.arduino.pingInterval);
+        pingInterval = setInterval(() => sendCommand(ArduinoCommands.SYS_PING), config.arduino.pingInterval);
         io?.emit('arduino_connected');
-        broadcastDeviceStatus(); // Bağlanır bağlanmaz mevcut durumu arayüze gönder
+        broadcastDeviceStatus();
     });
 
     parser.on('data', handleData);
@@ -258,27 +257,13 @@ export const connectToArduino = async () => {
  * Mod değişiklikleri arasında temiz bir geçiş sağlar.
  */
 const internalStopMotor = () => {
-    if (oscillationInterval) {
-        clearInterval(oscillationInterval);
-        oscillationInterval = null;
-    }
-    if (pulseInterval) {
-        clearInterval(pulseInterval);
-        pulseInterval = null;
-    }
-    if (vibrationInterval) {
-        clearInterval(vibrationInterval);
-        vibrationInterval = null;
-    }
-    if (rampArduinoInterval) {
-        clearInterval(rampArduinoInterval);
-        rampArduinoInterval = null;
-    }
-    if (rampUiInterval) {
-        clearInterval(rampUiInterval);
-        rampUiInterval = null;
-    }
-    sendRawArduinoCommand('DEV.MOTOR.STOP');
+    if (oscillationInterval) clearInterval(oscillationInterval);
+    if (pulseInterval) clearInterval(pulseInterval);
+    if (vibrationInterval) clearInterval(vibrationInterval);
+    if (rampArduinoInterval) clearInterval(rampArduinoInterval);
+    if (rampUiInterval) clearInterval(rampUiInterval);
+    oscillationInterval = pulseInterval = vibrationInterval = rampArduinoInterval = rampUiInterval = null;
+    sendCommand(ArduinoCommands.MOTOR_STOP);
 };
 
 /**
@@ -303,7 +288,7 @@ const _performRamp = (startPwm: number, targetPwm: number) => {
     // Eğer rampa istenmiyorsa, anında hedef hıza geç ve bitir.
     if (rampDuration < 100) {
         deviceStatus.motor.pwm = targetPwm;
-        sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${targetPwm}`);
+        sendCommand(`${ArduinoCommands.MOTOR_SET_PWM}:${targetPwm}`);
         broadcastDeviceStatus();
         return;
     }
@@ -326,7 +311,7 @@ const _performRamp = (startPwm: number, targetPwm: number) => {
             if (rampArduinoInterval) clearInterval(rampArduinoInterval);
         }
 
-        sendRawArduinoCommand(`DEV.MOTOR.SET_PWM:${Math.round(currentPwm)}`);
+        sendCommand(`${ArduinoCommands.MOTOR_SET_PWM}:${Math.round(currentPwm)}`);
     }, stepInterval);
 
     // 2. GÖREV: ARAYÜZÜ DAHA YAVAŞ VE MAKUL BİR HIZDA GÜNCELLE
@@ -356,7 +341,7 @@ export const startMotor = (isContinuation = false) => {
     const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
 
     deviceStatus.motor.isActive = true;
-    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+    sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${deviceStatus.motor.direction}`);
 
     // Rampalama işini yeni özel fonksiyonumuza devrediyoruz (başlangıç hızı 0)
     _performRamp(0, targetPwm);
@@ -388,8 +373,8 @@ export const startOscillation = (options: { pwm: number; angle: number; rpm: num
 
     // Osilasyon adımını gerçekleştiren fonksiyon
     const performStep = () => {
-        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${oscillationDirection}`);
-        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${ms}`);
+        sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${oscillationDirection}`);
+        sendCommand(`${ArduinoCommands.MOTOR_TIMED_RUN}:${deviceStatus.motor.pwm}|${ms}`);
         // Her adımdan sonra yönü tersine çevir
         oscillationDirection = oscillationDirection === 0 ? 1 : 0;
     };
@@ -419,16 +404,14 @@ export const startPulseMode = (isContinuation = false) => {
     const totalIntervalTime = pulseDuration + pulseDelay;
 
     const performStep = () => {
-        // 1. Motor yönünü ayarla
-        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
-        // 2. Belirlenen süre kadar motoru çalıştır
-        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${pulseDuration}`);
+        sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${deviceStatus.motor.direction}`);
+        sendCommand(`${ArduinoCommands.MOTOR_TIMED_RUN}:${deviceStatus.motor.pwm}|${pulseDuration}`);
 
         // 3. YENİ ADIM: Darbe biter bitmez fren komutunu gönder
         // Arduino'daki delay nedeniyle bu komutun tamamlanmasını beklemeyeceğiz,
         // backend kendi döngüsüne devam edecek.
         setTimeout(() => {
-            sendRawArduinoCommand('DEV.MOTOR.BRAKE');
+            sendCommand(ArduinoCommands.MOTOR_BRAKE);
         }, pulseDuration); // Darbe bittiği anda fren yap
     };
 
@@ -467,8 +450,8 @@ export const startVibrationMode = (isContinuation = false) => {
     const totalIntervalTime = stepDuration + stepDelay;
 
     const performStep = () => {
-        sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${vibrationDirection}`);
-        sendRawArduinoCommand(`DEV.MOTOR.EXEC_TIMED_RUN:${deviceStatus.motor.pwm}|${stepDuration}`);
+        sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${vibrationDirection}`);
+        sendCommand(`${ArduinoCommands.MOTOR_TIMED_RUN}:${deviceStatus.motor.pwm}|${stepDuration}`);
         vibrationDirection = vibrationDirection === 0 ? 1 : 0; // Her adımda yönü değiştir
     };
 
@@ -518,7 +501,7 @@ export const setMotorPwm = (value: number) => {
  */
 export const setMotorDirection = (direction: MotorDirection) => {
     deviceStatus.motor.direction = direction;
-    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${direction}`);
+    sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${direction}`);
     broadcastDeviceStatus();
 };
 
@@ -702,7 +685,7 @@ export const startContinuousMode = (isContinuation = false) => {
     internalStopMotor();
     const targetPwm = deviceStatus.motor.pwm === 0 ? 100 : deviceStatus.motor.pwm;
     deviceStatus.motor.isActive = true;
-    sendRawArduinoCommand(`DEV.MOTOR.SET_DIR:${deviceStatus.motor.direction}`);
+    sendCommand(`${ArduinoCommands.MOTOR_SET_DIR}:${deviceStatus.motor.direction}`);
     _performRamp(0, targetPwm);
     broadcastDeviceStatus();
 };

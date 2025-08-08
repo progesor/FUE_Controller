@@ -22,7 +22,7 @@ import {
     setOscillationSettings,
     setOperatingMode,
     getIsArduinoConnected,
-    sendRawArduinoCommand,
+    sendCommand,
     setPulseSettings,
     setVibrationSettings,
     setContinuousSettings, setActiveRecipe, startCurrentMode
@@ -196,7 +196,7 @@ io.on('connection', (socket) => {
     // Ar-Ge panelinden gelen ham komutları dinle
     socket.on('send_raw_command', (command) => {
         console.log(`[Ar-Ge Client -> Server]: Ham komut isteği: ${command}`);
-        sendRawArduinoCommand(command); // Doğrudan arduinoService'e pasla
+        sendCommand(command); // Doğrudan arduinoService'e pasla
     });
 });
 
