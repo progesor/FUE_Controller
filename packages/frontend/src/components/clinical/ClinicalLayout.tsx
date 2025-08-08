@@ -1,7 +1,5 @@
-import { Box, Stack, Group } from '@mantine/core';
+import {Box, Stack, Group, Text} from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
-
-// SVG varlıklarını projemize import ediyoruz
 import ertipLogo from '../../assets/ertip-logo.svg';
 import {Gauge} from "./Gauge.tsx";
 import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
@@ -16,7 +14,8 @@ import {sendMotorPwm, sendOscillationSettings} from "../../services/socketServic
 export function ClinicalLayout() {
     const { motor, oscillationSettings, setMotorStatus, setOscillationSettings } = useControllerStore();
     const maxRpm = RPM_CALIBRATION_MARKS[RPM_CALIBRATION_MARKS.length - 1].rpm;
-    const maxAngle = 600;
+    // const maxAngle = 600;
+    const maxAngle=VALID_ANGLES[VALID_ANGLES.length-1];
 
     const handleIncrementRpm = () => {
         const currentMark = RPM_CALIBRATION_MARKS.find(m => m.pwm === motor.pwm) || RPM_CALIBRATION_MARKS[0];
@@ -105,8 +104,8 @@ export function ClinicalLayout() {
                         <img src={ertipLogo} alt="Ertip Logo" width="300" />
                         {/*<img src={deviceGraphic} alt="Device" width="300" />*/}
                         <Box className={classes.centerGraphic}>
-                            <text className={classes.welcomeText}>Hoş geldiniz</text>
-                            <text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</text>
+                            <Text className={classes.welcomeText}>Hoş geldiniz</Text>
+                            <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
                         </Box>
                     </Stack>
                     <Gauge

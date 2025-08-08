@@ -42,15 +42,15 @@
 
 /* YENİ: Karşılama metni için stiller */
 .welcomeText {
-    color: #aab0c4;
-    font-size: 16px;
-    font-weight: 400;
-    letter-spacing: 1px;
+    color: #aab0c4 !important;;
+    font-size: 16px !important;;
+    font-weight: 400 !important;;
+    letter-spacing: 1px !important;;
 }
 
 .doctorName {
-    color: #ffffff;
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.2;
+    color: #ffffff !important;
+    font-size: 28px !important;;
+    font-weight: 600 !important;;
+    line-height: 1.2 !important;;
 }

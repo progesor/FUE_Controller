@@ -11,7 +11,7 @@ import 'rc-slider/assets/index.css';
 
 const CONFIG = {
     SIZE: 300,
-    NORMAL_ANGLE_START: 49,
+    NORMAL_ANGLE_START: 102,
     NORMAL_ANGLE_END: 424,
     MIRRORED_ANGLE_START: -102,
     MIRRORED_ANGLE_END: -424,
@@ -71,6 +71,30 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
         setDisplayValue(prev => Math.min(maxValue, Math.max(minValue, prev + (deltaY * sensitivity))));
     };
 
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (onChange) {
+            setIsDragging(true);
+            lastY.current = e.touches[0].clientY;
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (!isDragging || !onChange) return;
+        const touchY = e.touches[0].clientY;
+        const deltaY = lastY.current - touchY;
+        lastY.current = touchY;
+        const sensitivity = maxValue / 300;
+        setDisplayValue(prev => Math.min(maxValue, Math.max(minValue, prev + (deltaY * sensitivity))));
+        e.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+        if (isDragging && onChange) {
+            setIsDragging(false);
+            onChange(displayValue);
+        }
+    };
+
     const valueRatio = Math.min(1, Math.max(0, (displayValue - minValue) / (maxValue - minValue)));
     const angleStart = mirror ? CONFIG.MIRRORED_ANGLE_START : CONFIG.NORMAL_ANGLE_START;
     const angleEnd = mirror ? CONFIG.MIRRORED_ANGLE_END : CONFIG.NORMAL_ANGLE_END;
@@ -114,6 +138,10 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
                 >
                     <svg width={CONFIG.SIZE} height={CONFIG.SIZE} viewBox={`0 0 ${CONFIG.SIZE} ${CONFIG.SIZE}`}>
                         <defs>
