@@ -11,6 +11,7 @@ import classes from './AuraLayout.module.css';
 import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
 import {RecipeDrawer} from "./RecipeDrawer.tsx";
 import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
+import {SessionHUD} from "./SessionHUD.tsx";
 
 
 export function AuraLayout() {
@@ -41,6 +42,7 @@ export function AuraLayout() {
     return (
         <Box className={classes.wrapper}>
             <DynamicBackground />
+            <SessionHUD />
             <Box className={classes.content}>
                 <Box className={classes.gaugeCluster}>
                     <HolographicGauge

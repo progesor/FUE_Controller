@@ -5,62 +5,114 @@
     height: 200px;
     position: relative;
     border-radius: 50%;
-    --orb-color: 44, 62, 80;
-    --glow-rgb: 77, 137, 255;
+    --orb-color-base: 44, 62, 80;
+    --glow-rgb-base: 77, 137, 255;
     background:
-        radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 20%),
-        radial-gradient(ellipse at center, rgb(var(--orb-color)) 0%, #0a0d1a 100%);
+            radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 20%),
+            radial-gradient(ellipse at center, rgb(var(--orb-color-base)) 0%, #0a0d1a 100%);
     box-shadow:
-        0 0 20px rgba(var(--glow-rgb), 0.3),
-        0 0 40px rgba(var(--glow-rgb), 0.2),
-        inset 0 0 15px rgba(0, 0, 0, 0.5);
-    transition: background 0.5s ease, box-shadow 0.5s ease;
+            0 0 15px rgba(var(--glow-rgb-base), 0.3),
+            0 0 30px rgba(var(--glow-rgb-base), 0.2),
+            inset 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     will-change: transform, opacity, box-shadow;
+    overflow: hidden;
 }
 
+.statusOrb::before,
 .statusOrb::after {
     content: '';
     position: absolute;
-    inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle at 50% 120%, rgba(var(--glow-rgb), 0.4), transparent 70%);
-    opacity: 0.8;
+    opacity: 0.7;
+    transition: opacity 0.3s ease-in-out, background 0.3s ease-in-out;
+}
+
+.statusOrb::after {
+    inset: 0;
+    background: radial-gradient(circle at 50% 120%, rgba(var(--glow-rgb-base), 0.3), transparent 70%);
 }
 
 .orbBreathing {
-    --orb-color: 44, 62, 80;
-    --glow-rgb: 77, 137, 255;
-    animation: breath 6s ease-in-out infinite;
+    --orb-color-base: 44, 62, 80;
+    --glow-rgb-base: 77, 137, 255;
+    animation: breath 5s ease-in-out infinite;
 }
 
 .orbHeartbeat {
-    --orb-color: 0, 255, 225;
-    --glow-rgb: 0, 255, 225;
-    animation: heartbeat 2s ease-in-out infinite;
+    --orb-color-base: 0, 255, 225;
+    --glow-rgb-base: 0, 255, 225;
+    animation: heartbeat-smooth 2s ease-in-out infinite;
     box-shadow:
-        0 0 30px rgba(var(--glow-rgb), 0.7),
-        0 0 60px rgba(var(--glow-rgb), 0.5),
-        inset 0 0 20px rgba(0, 0, 0, 0.5);
+            0 0 20px rgba(var(--glow-rgb-base), 0.6),
+            0 0 40px rgba(var(--glow-rgb-base), 0.4),
+            inset 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
 .orbGlitch {
-    --orb-color: 94, 40, 40;
-    --glow-rgb: 255, 50, 50;
-    animation: glitch 1.5s linear infinite;
-    background: radial-gradient(ellipse at center, rgb(var(--orb-color)) 0%, #0a0d1a 100%);
+    --orb-color-base: 94, 40, 40;
+    --glow-rgb-base: 255, 50, 50;
+    animation: glitch-smooth 1.5s linear infinite;
+    background: radial-gradient(ellipse at center, rgb(var(--orb-color-base)) 0%, #0a0d1a 100%);
     box-shadow:
-        0 0 30px rgba(var(--glow-rgb), 0.7),
-        0 0 60px rgba(var(--glow-rgb), 0.5);
+            0 0 20px rgba(var(--glow-rgb-base), 0.6),
+            0 0 40px rgba(var(--glow-rgb-base), 0.4);
 }
 
+/* YENİ: Osilasyon Modu Animasyonu */
+.orbFlowing::before {
+    width: 150%;
+    height: 150%;
+    left: -25%;
+    top: -25%;
+    background: conic-gradient(
+            from 0deg,
+            transparent 0%,
+            rgba(0, 255, 225, 0.3) 20%,
+            transparent 50%,
+            rgba(0, 255, 225, 0.3) 80%,
+            transparent 100%
+    );
+    animation: flow-smooth 3s ease-in-out infinite;
+}
+
+/* YENİ: Darbe Modu Animasyonu */
+.orbPulsing {
+    --orb-color-base: 255, 100, 0;
+    --glow-rgb-base: 255, 100, 0;
+    animation: pulse-smooth 1.2s ease-in-out infinite;
+    box-shadow:
+            0 0 15px rgba(var(--glow-rgb-base), 0.5),
+            inset 0 0 10px rgba(0, 0, 0, 0.3);
+}
+.orbPulsing::after {
+    animation: pulse-after-smooth 1.2s ease-in-out infinite;
+    background: radial-gradient(circle at 50% 120%, rgba(var(--glow-rgb-base), 0.2), transparent 70%);
+}
+
+/* YENİ: Titreşim Modu Animasyonu */
+.orbVibrating {
+    --orb-color-base: 212, 87, 255;
+    --glow-rgb-base: 212, 87, 255;
+    animation: vibrate-opacity 0.15s linear infinite;
+}
+.orbVibrating::before {
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='noise' x='0%25' y='0%25' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.1;
+    animation: vibrate-translate 0.05s linear infinite;
+}
+
+
 @keyframes breath {
-    0%,
-    100% {
-        transform: scale(0.98);
-    }
-    50% {
-        transform: scale(1);
-    }
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes heartbeat-smooth {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
 }
 
 @keyframes heartbeat {
@@ -121,3 +173,57 @@
     --glow-rgb: 255, 215, 0; /* Altın/Sarı */
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-sharp {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    5% { transform: scale(1.05); opacity: 1; }
+    10% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes vibrate {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(1px, -1px); }
+    50% { transform: translate(-1px, 1px); }
+    75% { transform: translate(1px, 1px); }
+    100% { transform: translate(0, 0); }
+}
+
+
+@keyframes glitch-smooth {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
+    10% { transform: translate(-5px, 3px) scale(0.98); opacity: 0.9; }
+    20% { transform: translate(2px, -2px) scale(1.02); opacity: 1.1; }
+    30%, 70% { transform: translate(0, 0) scale(1); opacity: 1; }
+    80% { transform: translate(4px, 1px) scale(0.99); opacity: 0.95; }
+    90% { transform: translate(-3px, -1px) scale(1.01); opacity: 1.05; }
+}
+
+@keyframes flow-smooth {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(180deg); }
+}
+
+@keyframes pulse-smooth {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(var(--glow-rgb-base), 0.5), inset 0 0 10px rgba(0, 0, 0, 0.3); }
+    50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(var(--glow-rgb-base), 0.7), inset 0 0 15px rgba(0, 0, 0, 0.4); }
+}
+@keyframes pulse-after-smooth {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.1); }
+}
+
+@keyframes vibrate-opacity {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.9; }
+}
+@keyframes vibrate-translate {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(0.5px, -0.5px); }
+    50% { transform: translate(-0.5px, 0.5px); }
+    75% { transform: translate(0.5px, 0.5px); }
+    100% { transform: translate(0, 0); }
+}
