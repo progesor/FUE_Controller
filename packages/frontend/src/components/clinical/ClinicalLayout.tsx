@@ -12,6 +12,7 @@ import cx from 'clsx';
 // import {TissueHardnessChart} from "./TissueHardnessChart.tsx";
 import {MAX_OSC_ANGLE, pwmToRpm} from "../../utils/deviceSelectors.ts";
 import {TissueHardnessChartBar} from "./TissueHardnessChartBar.tsx";
+import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
 
 
 export function ClinicalLayout() {
@@ -102,6 +103,7 @@ export function ClinicalLayout() {
 
     return (
         <Box className={classes.wrapper}>
+            <LayoutSwitchButton />
             <Stack justify="space-between" h="100%" p="xl">
                 <PresetButtons />
 

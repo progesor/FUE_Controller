@@ -1,0 +1,59 @@
+/* packages/frontend/src/components/layout/LayoutSelector.module.css */
+
+.wrapper {
+    min-height: 100vh;
+    background-color: #0c0d14;
+    display: flex;
+    align-items: center;
+}
+
+.title {
+    color: #fff;
+    font-size: 44px;
+    font-weight: 800;
+}
+
+.card {
+    width: 350px;
+    height: 350px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 0 auto;
+
+    /* DEĞİŞİKLİK: Arka plan resmini kontrol eden stiller */
+    /* contain: Resmin tamamını, oranını bozmadan alana sığdırır */
+    background-size: contain;
+    background-position: top;
+    background-repeat: no-repeat;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 30px rgba(0, 229, 255, 0.2);
+    /* DEĞİŞİKLİK: Arka plan boyutu değiştirilmiyor, sadece kartın kendisi hareket ediyor */
+}
+
+/* .cardImage sınıfına artık ihtiyaç yok. */
+
+.cardOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(12, 13, 20, 1) 20%, rgba(12, 13, 20, 0) 80%);
+    transition: background 0.3s ease;
+}
+
+.card:hover .cardOverlay {
+    background: linear-gradient(to top, rgba(12, 13, 20, 1) 15%, rgba(12, 13, 20, 0) 70%);
+}
+
+.cardContent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--mantine-spacing-lg);
+    color: #fff;
+}

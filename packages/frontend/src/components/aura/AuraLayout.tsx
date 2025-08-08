@@ -13,6 +13,7 @@ import {RecipeDrawer} from "./RecipeDrawer.tsx";
 import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 import {SessionHUD} from "./SessionHUD.tsx";
 import {ActiveModeDisplay} from "./ActiveModeDisplay.tsx";
+import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
 
 
 export function AuraLayout() {
@@ -84,6 +85,7 @@ export function AuraLayout() {
 
     return (
         <Box className={classes.wrapper}>
+            <LayoutSwitchButton />
             <DynamicBackground />
             <SessionHUD />
 

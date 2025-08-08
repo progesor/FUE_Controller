@@ -4,6 +4,7 @@ import { Paper, Text, Stack, Group, Button } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import {RecipePlayer} from "../RecipePlayer.tsx";
 import {pwmToClosestRpm} from "../../utils/rpmUtils.ts";
+import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
 
 /**
  * Ana gösterge panelini oluşturan bileşen.
@@ -30,6 +31,7 @@ export function DisplayPanel() {
 
     return (
         <Paper withBorder p="xl" h="100%">
+            <LayoutSwitchButton />
             <Stack align="center" justify="space-around" h="100%">
                 {/* RPM Göstergesi Alanı (Aynı kalıyor) */}
                 <Stack gap={0} align="center">
