@@ -8,7 +8,7 @@ import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
 import {useControllerStore} from "../../store/useControllerStore.ts";
 import {InfoPanel} from "./InfoPanel.tsx";
 import {Clock} from "./Clock.tsx";
-import {pwmToClosestRpm} from "../../utils/rpmUtils.ts";
+import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
 import {PresetButtons} from "./PresetButtons.tsx";
 import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
 
@@ -60,6 +60,29 @@ export function ClinicalLayout() {
         }
     };
 
+    const handleRpmSliderChange = (sliderValue: number) => {
+        const newPwm = rpmToClosestPwm(sliderValue);
+        setMotorStatus({ pwm: newPwm });
+        sendMotorPwm(newPwm);
+    };
+
+    const handleAngleSliderChange = (sliderValue: number) => {
+        const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
+            Math.abs(curr - sliderValue) < Math.abs(prev - sliderValue) ? curr : prev
+        );
+        setOscillationSettings({ angle: closestAngle });
+        sendOscillationSettings({ angle: closestAngle });
+    };
+
+    // YENİ: Dokunmatik sürükleme için handler'lar (slider ile aynı mantık)
+    const handleRpmGaugeChange = (gaugeValue: number) => {
+        handleRpmSliderChange(gaugeValue); // Aynı mantığı kullanabiliriz
+    };
+
+    const handleAngleGaugeChange = (gaugeValue: number) => {
+        handleAngleSliderChange(gaugeValue); // Aynı mantığı kullanabiliriz
+    };
+
 
     return (
         <Box className={classes.wrapper}>
@@ -77,6 +100,8 @@ export function ClinicalLayout() {
                         mirror={false}
                         onIncrement={handleIncrementRpm}
                         onDecrement={handleDecrementRpm}
+                        onChange={handleRpmGaugeChange}
+                        onSliderChange={handleRpmSliderChange}
                     />
                     <Stack align="center" mx="xl">
                         <img src={ertipLogo} alt="Ertip Logo" width="300" />
@@ -91,6 +116,8 @@ export function ClinicalLayout() {
                         mirror={true}
                         onIncrement={handleIncrementAngle}
                         onDecrement={handleDecrementAngle}
+                        onChange={handleAngleGaugeChange}
+                        onSliderChange={handleAngleSliderChange}
                     />
 
                 </Group>
