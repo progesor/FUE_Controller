@@ -1,8 +1,8 @@
 .wrapper {
     width: 100vw;
     height: 100vh;
-    background-color: #0c0d14; /* Tasarımdaki ana koyu renk */
-    background-image: url('../../assets/clinical-background.svg'); /* Arka plan deseni */
+    background-color: #000000; /* Tasarımdaki ana koyu renk */
+    /*background-image: url('../../assets/clinical-background.svg'); !* Arka plan deseni *!*/
     background-size: cover;
     background-position: center;
     color: white;
@@ -23,4 +23,13 @@
     height: 40px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid #444;
+}
+
+/* YENİ: Ortadaki panel için stil */
+.centerGraphic {
+    width: 400px;
+    height: 100px;
+    background-color: #1a2c5a; /* Örnek renk */
+    clip-path: polygon(15% 0, 85% 0, 100% 100%, 0% 100%); /* Trapez şekli */
+    margin-top: 20px;
 }
