@@ -131,8 +131,8 @@ export function TissueHardnessChartBar({ isRunning, rpm = 0, oscillation = 0 }: 
                     return 'rgba(75, 192, 75, 0.9)';
                 },
                 borderRadius: 0,
-                barPercentage: 0.8,       // ✅ dataset seviyesinde
-                categoryPercentage: 0.9,  // ✅ dataset seviyesinde
+                barPercentage: 0.9,       // ✅ dataset seviyesinde
+                categoryPercentage: 1,  // ✅ dataset seviyesinde
             },
         ],
     };
