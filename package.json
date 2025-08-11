@@ -9,7 +9,7 @@
   "scripts": {
     "install-all": "npm install --workspaces --if-present",
     "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
-    "dev": "npm run dev --workspace=backend & npm run dev --workspace=frontend",
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
     "start": "npm start --workspace=backend"
   },
   "repository": {
@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/progesor/FUE_Controller/issues"
   },
-  "homepage": "https://github.com/progesor/FUE_Controller#readme"
+  "homepage": "https://github.com/progesor/FUE_Controller#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
 }

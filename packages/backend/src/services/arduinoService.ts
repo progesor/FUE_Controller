@@ -215,7 +215,7 @@ export const connectToArduino = async () => {
         setTimeout(connectToArduino, config.arduino.reconnectTimeout);
         return;
     }
-
+    try {
     console.log(`'${portPath}' portu üzerinden Arduino'ya bağlanılıyor...`);
     port = new SerialPort({ path: portPath, baudRate: config.arduino.baudRate });
     parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
@@ -244,6 +244,18 @@ export const connectToArduino = async () => {
         console.error(`Seri port hatası (${portPath}):`, err.message);
         port?.close(); // Hata durumunda portu kapatıp 'close' olayını tetikle
     });
+    } catch (err) {
+        if (err instanceof Error) {
+            console.error(`'${portPath}' portuna bağlanırken kritik bir hata oluştu:`, err.message);
+        } else {
+            // Eğer 'err' bir Error nesnesi değilse, olduğu gibi logla
+            console.error(`'${portPath}' portuna bağlanırken beklenmedik bir hata oluştu:`, err);
+        }
+        // --- BİTİŞ ---
+        isArduinoConnected = false;
+        io?.emit('arduino_disconnected');
+        setTimeout(connectToArduino, config.arduino.reconnectTimeout);
+    }
 };
 
 
