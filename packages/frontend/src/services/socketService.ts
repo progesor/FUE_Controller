@@ -11,7 +11,7 @@ import type {
     OscillationSettings,
     PulseSettings, VibrationSettings, ContinuousSettings, Recipe, RecipeStatus
 } from '../../../shared-types';
-import config from '../../../backend/src/config';
+// import config from '../../../backend/src/config';
 import {NotificationService} from "./notificationService.tsx";
 
 // ===================================================================
@@ -34,7 +34,7 @@ let isSocketInitialized = false;
 
 // Backend sunucusunun adresini doğrudan backend konfigürasyon dosyasından alıyoruz.
 // Bu, her iki paketin de aynı portu kullanmasını garanti eder.
-const SERVER_URL = `http://localhost:${config.server.port}`;
+const SERVER_URL = `http://localhost:3000`;
 
 /**
  * Uygulamanın backend ile iletişim kurmak için kullanacağı tek (singleton)
