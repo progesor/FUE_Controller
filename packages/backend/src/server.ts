@@ -1,5 +1,5 @@
 // packages/backend/src/server.ts
-
+import path from 'path';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -61,6 +61,22 @@ const PORT = config.server.port;
 
 initializeRecipeService(io);
 
+
+// ===================================================================
+//                        STATIC FILE SERVING (ÜRETİM İÇİN)
+// ===================================================================
+// Bu bölüm, projenin production build'inde frontend'in derlenmiş
+// statik dosyalarını (HTML, CSS, JS) servis etmeyi sağlar.
+if (process.env.NODE_ENV === 'production') {
+    const frontendDistPath = path.join(__dirname, '..', '..', 'frontend', 'dist');
+    app.use(express.static(frontendDistPath));
+
+    // Arayüzdeki routing'in (react-router-dom) bozulmaması için
+    // tüm bilinmeyen istekleri index.html'e yönlendir.
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+}
 
 // --- Temel HTTP Endpoint ---
 
