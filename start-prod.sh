@@ -29,7 +29,7 @@ unclutter -idle 1 -root &
 
 # Backend hazır olduğu an tarayıcıyı kiosk modunda başlat
 # Dikkat: Port 3000 olarak değiştirildi
-chromium-browser --kiosk --incognito --no-sandbox http://localhost:3000
+chromium-browser --kiosk --incognito --no-sandbox --force-device-scale-factor=1.5 http://localhost:3000
 
 # Tarayıcı kapatıldığında, arka plandaki sunucuyu da durdur
 echo "Tarayıcı kapatıldı. Arka plan sunucusu durduruluyor..."
