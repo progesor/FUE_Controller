@@ -1,7 +1,7 @@
 // packages/frontend/src/components/aura/DynamicBackground.tsx
 
 import { Box } from '@mantine/core';
-import classes from './AuraLayout.module.css';
+import classes from '../../views/AuraLayout.module.css';
 import { useControllerStore } from '../../store/useControllerStore';
 import type { CSSProperties } from 'react';
 

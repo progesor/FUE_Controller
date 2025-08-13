@@ -6,12 +6,10 @@ import { Container } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { listenToEvents } from './services/socketService';
 import { initializeSessionService } from "./services/sessionService.ts";
-
-// Bileşenleri yeni konumlarından import ediyoruz
-import { MainLayout } from './components/engineering/MainLayout';
-import { ClinicalLayout } from './components/clinical/ClinicalLayout';
-import {AuraLayout} from "./components/aura/AuraLayout.tsx";
-import {LayoutSelector} from "./components/layout/LayoutSelector.tsx";
+import { ClinicalLayout } from './views/ClinicalLayout.tsx';
+import {AuraLayout} from "./views/AuraLayout.tsx";
+import {LayoutSelector} from "./views/LayoutSelector.tsx";
+import {EngineeringLayout} from "./views/EngineeringLayout.tsx";
 
 function AppInitializer() {
     const navigate = useNavigate();
@@ -63,7 +61,7 @@ function App() {
                     path="/dev"
                     element={
                         <Container size="xl" p="md">
-                            <MainLayout />
+                            <EngineeringLayout />
                         </Container>
                     }
                 />

@@ -2,7 +2,7 @@
 
 import { Paper, Title, Stack, Text, SegmentedControl, Center, Box, Slider, Button } from '@mantine/core';
 import { IconArrowBackUp, IconArrowForwardUp, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
-import { useControllerStore } from '../../store/useControllerStore';
+import { useControllerStore } from '../../../store/useControllerStore.ts';
 import {
     sendMotorPwm,
     sendStopMotor,
@@ -12,12 +12,12 @@ import {
     sendRecipeStop,
     sendRecipeStart,
     sendActiveRecipe
-} from '../../services/socketService';
-import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
-import type { MotorDirection, OperatingMode } from "../../../../shared-types";
-import { NotificationService } from "../../services/notificationService.tsx";
+} from '../../../services/socketService.ts';
+import { RPM_CALIBRATION_MARKS } from '../../../config/calibration.ts';
+import type { MotorDirection, OperatingMode } from "../../../../../shared-types";
+import { NotificationService } from "../../../services/notificationService.tsx";
 import { useEffect, useState } from "react";
-import {findClosestMarkIndex, pwmToClosestRpm} from '../../utils/rpmUtils.ts';
+import {findClosestMarkIndex, pwmToClosestRpm} from '../../../utils/rpmUtils.ts';
 
 export function ControlPanel() {
     // DÜZELTME: Eksik olan 'setActiveRecipe' eklendi

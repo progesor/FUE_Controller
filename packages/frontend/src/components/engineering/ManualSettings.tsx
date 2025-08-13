@@ -1,14 +1,14 @@
 // packages/frontend/src/components/panels/settings/ManualSettings.tsx
 
 import { Stack, Text, Collapse, Slider } from '@mantine/core';
-import { useControllerStore } from '../../../store/useControllerStore';
-import { VALID_ANGLES } from '../../../config/calibration';
+import { useControllerStore } from '../../store/useControllerStore.ts';
+import { VALID_ANGLES } from '../../config/calibration.ts';
 import {
     sendContinuousSettings,
     sendOscillationSettings,
     sendPulseSettings,
     sendVibrationSettings
-} from '../../../services/socketService';
+} from '../../services/socketService.ts';
 
 const MIN_PWM = 0;
 const MAX_PWM = 255;

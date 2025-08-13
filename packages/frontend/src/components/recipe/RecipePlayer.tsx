@@ -1,7 +1,7 @@
 // packages/frontend/src/components/RecipePlayer.tsx
 
 import {Box, Text, Progress, Group, Divider, Stack} from '@mantine/core';
-import {useControllerStore} from "../store/useControllerStore.ts";
+import {useControllerStore} from "../../store/useControllerStore.ts";
 
 /**
  * Çalışan bir reçetenin anlık durumunu ve ilerlemesini gösteren bileşen.

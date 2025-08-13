@@ -12,13 +12,13 @@ import {
     Button,
     Stack
 } from '@mantine/core';
-import { useControllerStore } from '../../store/useControllerStore';
+import { useControllerStore } from '../../../store/useControllerStore.ts';
 // DÜZELTME: Gerekli tipleri store'dan import ediyoruz
-import type { ConsoleEntry } from '../../store/useControllerStore';
-import {JsonViewer} from "../common/JsonViewer.tsx";
+import type { ConsoleEntry } from '../../../store/useControllerStore.ts';
+import {JsonViewer} from "../../common/JsonViewer.tsx";
 import {IconCode, IconInfoCircle, IconTrash} from "@tabler/icons-react";
-import {LogSummary} from "../common/LogSummary.tsx";
-import type {DeviceStatus} from "../../../../shared-types";
+import {LogSummary} from "../../common/LogSummary.tsx";
+import type {DeviceStatus} from "../../../../../shared-types";
 
 const LogEntry = ({ entry }: { entry: ConsoleEntry }) => {
     const [viewMode, setViewMode] = useState<'summary' | 'raw'>('summary');

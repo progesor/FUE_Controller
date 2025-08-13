@@ -3,9 +3,9 @@
 import { Container, Grid, Paper, Text, Title, Stack } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import classes from './LayoutSelector.module.css';
-import auraPreview from '../../assets/aura-preview.png';
-import clinicalPreview from '../../assets/clinical-preview.png';
-import devPreview from '../../assets/dev-preview.png';
+import auraPreview from '../assets/aura/aura-preview.png';
+import clinicalPreview from '../assets/clinical/clinical-preview.png';
+import devPreview from '../assets/engineering/dev-preview.png';
 
 const layouts = [
     { name: 'AURA Interface', path: '/aura', description: 'Yeni nesil, dokunmatik odaklı fütüristik klinik arayüz.', image: auraPreview },

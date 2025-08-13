@@ -1,18 +1,18 @@
 import {Box, Stack, Group, Text} from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
-import {Gauge} from "./Gauge.tsx";
-import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
-import {useControllerStore} from "../../store/useControllerStore.ts";
-import {InfoPanel} from "./InfoPanel.tsx";
-import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
-import {PresetButtons} from "./PresetButtons.tsx";
-import {sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor} from "../../services/socketService.ts";
-import ErtipLogo from '../../assets/ertip-logo.svg?react';
+import {Gauge} from "../components/clinical/Gauge.tsx";
+import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../config/calibration.ts";
+import {useControllerStore} from "../store/useControllerStore.ts";
+import {InfoPanel} from "../components/clinical/InfoPanel.tsx";
+import {pwmToClosestRpm, rpmToClosestPwm} from "../utils/rpmUtils.ts";
+import {PresetButtons} from "../components/clinical/PresetButtons.tsx";
+import {sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor} from "../services/socketService.ts";
+import ErtipLogo from '../assets/clinical/ertip-logo.svg?react';
 import cx from 'clsx';
 // import {TissueHardnessChart} from "./TissueHardnessChart.tsx";
-import {MAX_OSC_ANGLE, pwmToRpm} from "../../utils/deviceSelectors.ts";
-import {TissueHardnessChartBar} from "./TissueHardnessChartBar.tsx";
-import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
+import {MAX_OSC_ANGLE, pwmToRpm} from "../utils/deviceSelectors.ts";
+import {TissueHardnessChartBar} from "../components/clinical/TissueHardnessChartBar.tsx";
+import {LayoutSwitchButton} from "../components/common/LayoutSwitchButton.tsx";
 
 
 export function ClinicalLayout() {

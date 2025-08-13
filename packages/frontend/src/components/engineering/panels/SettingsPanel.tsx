@@ -3,13 +3,13 @@
 import { Paper, Title, Stack, Button, Drawer, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
-import { useControllerStore } from '../../store/useControllerStore';
-import { RecipeEditor } from '../recipe/RecipeEditor';
-import { NotificationService } from '../../services/notificationService';
-import type { Recipe } from '../../../../shared-types';
-import { ManualSettings } from './settings/ManualSettings';
-import { RecipeLibrary } from '../recipe/RecipeLibrary';
-import { sendRecipeSave } from '../../services/socketService';
+import { useControllerStore } from '../../../store/useControllerStore.ts';
+import { RecipeEditor } from '../../recipe/RecipeEditor.tsx';
+import { NotificationService } from '../../../services/notificationService.tsx';
+import type { Recipe } from '../../../../../shared-types';
+import { ManualSettings } from '../ManualSettings.tsx';
+import { RecipeLibrary } from '../../recipe/RecipeLibrary.tsx';
+import { sendRecipeSave } from '../../../services/socketService.ts';
 import { useState } from 'react';
 
 export function SettingsPanel() {

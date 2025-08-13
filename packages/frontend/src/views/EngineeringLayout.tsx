@@ -1,11 +1,11 @@
-// packages/frontend/src/components/layout/MainLayout.tsx
+// packages/frontend/src/components/layout/EngineeringLayout.tsx
 
 import {Box, Drawer} from '@mantine/core';
-import { ControlPanel } from '../panels/ControlPanel.tsx';
-import { DisplayPanel } from '../panels/DisplayPanel.tsx';
-import { SettingsPanel } from '../panels/SettingsPanel.tsx';
-import { DevConsolePanel } from '../panels/DevConsolePanel.tsx';
-import { StatusBar } from '../layout/StatusBar.tsx';
+import { ControlPanel } from '../components/engineering/panels/ControlPanel.tsx';
+import { DisplayPanel } from '../components/engineering/panels/DisplayPanel.tsx';
+import { SettingsPanel } from '../components/engineering/panels/SettingsPanel.tsx';
+import { DevConsolePanel } from '../components/engineering/panels/DevConsolePanel.tsx';
+import { StatusBar } from '../components/engineering/StatusBar.tsx';
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 
 // DEĞİŞİKLİK: Ayarları daha kolay yönetmek için sabitleri yukarı taşıyalım.
@@ -13,7 +13,7 @@ const DRAWER_SIZE = '350px'; // İçeriğin rahat sığması için genişliği a
 const WIDE_SCREEN_BREAKPOINT = '(min-width: 1600px)'; // Breakpoint'i yeni boyuta göre güncelledik.
 
 
-export function MainLayout() {
+export function EngineeringLayout() {
 
     const [consoleOpened, { open: openConsole, close: closeConsole }] = useDisclosure(false);
 

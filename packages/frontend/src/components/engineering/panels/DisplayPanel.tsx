@@ -1,10 +1,10 @@
 // packages/frontend/src/components/panels/DisplayPanel.tsx
 
 import { Paper, Text, Stack, Group, Button } from '@mantine/core';
-import { useControllerStore } from '../../store/useControllerStore';
-import {RecipePlayer} from "../RecipePlayer.tsx";
-import {pwmToClosestRpm} from "../../utils/rpmUtils.ts";
-import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
+import { useControllerStore } from '../../../store/useControllerStore.ts';
+import {RecipePlayer} from "../../recipe/RecipePlayer.tsx";
+import {pwmToClosestRpm} from "../../../utils/rpmUtils.ts";
+import {LayoutSwitchButton} from "../../common/LayoutSwitchButton.tsx";
 
 /**
  * Ana gösterge panelini oluşturan bileşen.

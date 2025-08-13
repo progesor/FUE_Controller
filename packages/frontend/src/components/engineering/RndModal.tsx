@@ -2,8 +2,8 @@
 
 import {useState, useRef, useEffect} from 'react';
 import {Modal, Title, Stack, Text, Slider, Button, Group, NumberInput, Divider, Box, Select} from '@mantine/core';
-import { socket } from '../../services/socketService';
-import { useControllerStore } from '../../store/useControllerStore';
+import { socket } from '../../services/socketService.ts';
+import { useControllerStore } from '../../store/useControllerStore.ts';
 import type { MotorDirection } from '../../../../shared-types';
 import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../../config/calibration.ts";
 

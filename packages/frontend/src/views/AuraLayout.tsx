@@ -1,19 +1,19 @@
 // packages/frontend/src/components/aura/AuraLayout.tsx
 
 import { Box } from '@mantine/core';
-import { DynamicBackground } from './DynamicBackground';
-import { StatusOrb } from './StatusOrb';
-import { HolographicGauge } from './HolographicGauge';
-import { ControlArc } from './ControlArc';
-import { useControllerStore } from '../../store/useControllerStore';
-import { RPM_CALIBRATION_MARKS, VALID_ANGLES } from '../../config/calibration';
+import { DynamicBackground } from '../components/aura/DynamicBackground.tsx';
+import { StatusOrb } from '../components/aura/StatusOrb.tsx';
+import { HolographicGauge } from '../components/aura/HolographicGauge.tsx';
+import { ControlArc } from '../components/aura/ControlArc.tsx';
+import { useControllerStore } from '../store/useControllerStore.ts';
+import { RPM_CALIBRATION_MARKS, VALID_ANGLES } from '../config/calibration.ts';
 import classes from './AuraLayout.module.css';
-import {sendMotorPwm, sendOscillationSettings} from "../../services/socketService.ts";
-import {RecipeDrawer} from "./RecipeDrawer.tsx";
-import {pwmToClosestRpm, rpmToClosestPwm} from "../../utils/rpmUtils.ts";
-import {SessionHUD} from "./SessionHUD.tsx";
-import {ActiveModeDisplay} from "./ActiveModeDisplay.tsx";
-import {LayoutSwitchButton} from "../layout/LayoutSwitchButton.tsx";
+import {sendMotorPwm, sendOscillationSettings} from "../services/socketService.ts";
+import {RecipeDrawer} from "../components/aura/RecipeDrawer.tsx";
+import {pwmToClosestRpm, rpmToClosestPwm} from "../utils/rpmUtils.ts";
+import {SessionHUD} from "../components/aura/SessionHUD.tsx";
+import {ActiveModeDisplay} from "../components/aura/ActiveModeDisplay.tsx";
+import {LayoutSwitchButton} from "../components/common/LayoutSwitchButton.tsx";
 
 
 export function AuraLayout() {

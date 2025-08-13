@@ -6,10 +6,10 @@ import {
     IconWifi, IconWifiOff, IconShoe, IconUsb, IconPlugConnectedX,
     IconPower, IconInfinity, IconRepeat, IconHandGrab, IconFlask, IconTerminal2
 } from '@tabler/icons-react';
-import { useControllerStore } from '../../store/useControllerStore';
-import { socket } from '../../services/socketService';
+import { useControllerStore } from '../../store/useControllerStore.ts';
+import { socket } from '../../services/socketService.ts';
 import {useDisclosure} from "@mantine/hooks";
-import {RndModal} from "../modals/RndModal.tsx";
+import {RndModal} from "./RndModal.tsx";
 
 /**
  * PWM değerini (0-255) yaklaşık RPM değerine çeviren yardımcı fonksiyon.
