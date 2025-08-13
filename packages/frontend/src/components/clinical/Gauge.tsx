@@ -180,10 +180,10 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                 </Box>
                 {(onIncrement || onDecrement) && (
                     <Group className={classes.buttonContainer} gap="xl">
-                        <ActionIcon size="lg" variant="outline" onClick={onDecrement} className={classes.stepButton}>
+                        <ActionIcon size="64" variant="outline" onClick={onDecrement} className={classes.stepButton}>
                             <IconMinus size={24} />
                         </ActionIcon>
-                        <ActionIcon size="lg" variant="outline" onClick={onIncrement} className={classes.stepButton}>
+                        <ActionIcon size="64" variant="outline" onClick={onIncrement} className={classes.stepButton}>
                             <IconPlus size={24} />
                         </ActionIcon>
                     </Group>
