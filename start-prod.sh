@@ -9,8 +9,8 @@ cd /home/proge/FUE_Controller
 
 echo "Üretim sunucusu başlatılıyor..."
 # Projeyi derle ve tek sunucuyu başlat (arka planda)
-npm start &
-
+#npm start &
+npm start-only &
 # npm start işleminin PID'sini al
 NPM_START_PID=$!
 
