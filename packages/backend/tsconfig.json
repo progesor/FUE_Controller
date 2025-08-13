@@ -3,6 +3,7 @@
     "target": "es2016",
     "module": "commonjs",
     "outDir": "./dist",
+    "rootDir": "./src",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -10,8 +11,11 @@
     "baseUrl": ".",
     "paths": {
       "*": ["src/*"],
-      "shared-types/*": ["../shared-types/*"]
+      "shared-types/*": ["../shared-types/*",],
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../shared-types" }
+  ]
 }

@@ -2,7 +2,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Recipe } from '../../../shared-types';
+import {Recipe} from "shared-types/index";
 
 // Reçetelerin saklanacağı dosyanın yolu
 const RECIPES_FILE_PATH = path.join(__dirname, '..', '..', 'recipes.json');

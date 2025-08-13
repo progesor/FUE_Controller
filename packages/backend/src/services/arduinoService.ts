@@ -3,18 +3,17 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Server } from 'socket.io';
-import {
-    MotorDirection,
-    ClientToServerEvents,
-    ServerToClientEvents,
-    OperatingMode,
-    OscillationSettings,
-    DeviceStatus,
-    PulseSettings, VibrationSettings, ContinuousSettings, RecipeStep, Recipe, ArduinoCommands
-} from '../../../shared-types';
 import config from '../config';
 import { getMsFromCalibration, pwmToCalibratedRpm } from './calibrationService';
 import {getRecipeStatus, startRecipe} from './recipeService';
+import {
+    ArduinoCommands,
+    ClientToServerEvents, ContinuousSettings,
+    DeviceStatus,
+    MotorDirection, OperatingMode, OscillationSettings, PulseSettings,
+    Recipe, RecipeStep,
+    ServerToClientEvents, VibrationSettings
+} from "shared-types/index";
 
 // ===================================================================
 //

@@ -5,13 +5,6 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import config from './config';
 import {
-    ClientToServerEvents,
-    ContinuousSettings,
-    PulseSettings, Recipe,
-    ServerToClientEvents,
-    VibrationSettings
-} from '../../shared-types';
-import {
     connectToArduino,
     initializeArduinoService,
     setMotorPwm,
@@ -30,6 +23,14 @@ import {
 import {getCalibrationData} from "./services/calibrationService";
 import {initializeRecipeService, startRecipe, stopRecipe} from "./services/recipeService";
 import {deleteRecipe, listRecipes, saveRecipe} from "./services/recipePersistenceService";
+import {
+    ClientToServerEvents,
+    ContinuousSettings,
+    PulseSettings, Recipe,
+    ServerToClientEvents,
+    VibrationSettings
+} from "shared-types/index";
+import * as fs from "node:fs";
 
 // ===================================================================
 //
@@ -61,7 +62,27 @@ const PORT = config.server.port;
 
 initializeRecipeService(io);
 
+// ===================================================================
+//                        STATIC FILE SERVING (ÜRETİM İÇİN) - *** DÜZELTİLDİ ***
+// ===================================================================
+// Bu bölüm, projenin production build'inde frontend'in derlenmiş
+// statik dosyalarını (HTML, CSS, JS) servis etmeyi sağlar.
+// DİKKAT: Bu blok, diğer tüm app.get() rotalarından ÖNCE gelmelidir.
+if (process.env.NODE_ENV === 'production') {
+    const frontendDistPath = path.join(__dirname, '..', '..', 'frontend', 'dist');
+    console.log(`[Production Mode] Frontend dosyaları şu yoldan sunulacak: ${frontendDistPath}`);
 
+    if (fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
+        console.log('[Production Mode] index.html dosyası başarıyla bulundu.');
+        app.use(express.static(frontendDistPath));
+        app.get('*', (req, res) => {
+            res.sendFile(path.join(frontendDistPath, 'index.html'));
+        });
+    } else {
+        console.error(`[HATA] Frontend dosyaları bulunamadı! Kontrol edilen yol: ${frontendDistPath}`);
+        console.error("[HATA] Lütfen projenin ana dizininde 'npm run build' komutunu çalıştırdığınızdan emin olun.");
+    }
+}
 
 
 // --- Temel HTTP Endpoint ---
@@ -202,21 +223,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// ===================================================================
-//                        STATIC FILE SERVING (ÜRETİM İÇİN)
-// ===================================================================
-// Bu bölüm, projenin production build'inde frontend'in derlenmiş
-// statik dosyalarını (HTML, CSS, JS) servis etmeyi sağlar.
-if (process.env.NODE_ENV === 'production') {
-    const frontendDistPath = path.join(__dirname, '..', '..', 'frontend', 'dist');
-    app.use(express.static(frontendDistPath));
-
-    // Arayüzdeki routing'in (react-router-dom) bozulmaması için
-    // tüm bilinmeyen istekleri index.html'e yönlendir.
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(frontendDistPath, 'index.html'));
-    });
-}
 
 // ===================================================================
 //                        Sunucuyu Başlatma

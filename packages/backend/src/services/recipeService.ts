@@ -1,8 +1,8 @@
 // packages/backend/src/services/recipeService.ts
 
 import { Server } from 'socket.io';
-import type { ClientToServerEvents, ServerToClientEvents, Recipe, RecipeStep, RecipeStatus } from '../../../shared-types';
-import { executeStep, stopMotorFromRecipe } from './arduinoService'; // arduinoService'den gelecek yeni fonksiyonlar
+import { executeStep, stopMotorFromRecipe } from './arduinoService';
+import {ClientToServerEvents, Recipe, RecipeStatus, ServerToClientEvents} from "shared-types/index";
 
 let io: Server<ClientToServerEvents, ServerToClientEvents> | null = null;
 
