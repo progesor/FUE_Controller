@@ -126,7 +126,7 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
     };
 
     const SIZE = 250;
-    const STROKE_WIDTH = 10;
+    const STROKE_WIDTH = 20;
     const RADIUS = (SIZE - STROKE_WIDTH) / 2;
     const START_ANGLE = -150;
     const END_ANGLE = -30;
