@@ -120,7 +120,7 @@ export function HolographicGauge({ value, maxValue, label, unit, color, isIntera
             transforms.push('scaleX(-1)');
         }
         if (isDragging) {
-            transforms.push('perspective(600px) translateZ(30px)');
+            transforms.push('perspective(37.5rem) translateZ(1.875rem)');
         }
         return transforms.join(' ');
     };

@@ -9,42 +9,42 @@
 
     z-index: 50;
     pointer-events: none;
-    padding: 6px 16px;
-    max-width: 250px;
+    padding: 0.375rem 1rem;
+    max-width:  15.625rem;
 
     background: rgba(15, 23, 42, 0.3);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur( 0.625rem);
 
     border-bottom: 1px solid rgba(0, 229, 255, 0.4);
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0  1.25rem rgba(0, 229, 255, 0.1);
 
-    border-top-left-radius: 120px 40px;
-    border-top-right-radius: 120px 40px;
+    border-top-left-radius:  7.5rem  2.5rem;
+    border-top-right-radius:  7.5rem  2.5rem;
 }
 
 .displayIcon {
     color: rgba(0, 229, 255, 0.9);
-    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.8));
-    margin-right: 4px;
+    filter: drop-shadow(0 0  0.5rem rgba(0, 229, 255, 0.8));
+    margin-right:  0.25rem;
     flex-shrink: 0; /* İkonun küçülmesini engelle */
 }
 
 .displayLabel {
-    font-size: 9px;
+    font-size:  0.5625rem;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 1.5px;
+    letter-spacing:  0.09375rem;
     text-transform: uppercase;
     line-height: 1;
     text-align: left;
 }
 
 .displayValue {
-    font-size: 16px;
+    font-size:  1rem;
     font-weight: 500;
     color: #fff;
     line-height: 1.2;
-    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+    text-shadow: 0 0  0.5rem rgba(0, 229, 255, 0.5);
     text-align: left;
     white-space: nowrap;
 }

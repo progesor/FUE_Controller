@@ -2,13 +2,13 @@
 
 .gaugeWrapper {
     position: relative;
-    width: 250px;
-    height: 250px;
+    width: 15.625rem;
+    height: 15.625rem;
     display: flex;
     justify-content: center;
     align-items: center;
     --gauge-color: #00e5ff;
-    --gauge-glow: 16px;
+    --gauge-glow: 1rem;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .gaugeWrapper:not(.interactive) {
@@ -19,11 +19,10 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 250px;
-    height: 250px;
+    width: 15.625rem;
+    height: 15.625rem;
     overflow: visible;
 }
-/* DEĞİŞİKLİK: circle -> path */
 .gaugeWrapper path {
     fill: none;
     transition: stroke-dashoffset 0.5s ease-out;
@@ -46,25 +45,25 @@
     transition: transform 0.3s ease; /* Transform eklendi */
 }
 .gaugeValue {
-    font-size: 48px;
+    font-size: 3rem;
     font-weight: 700;
     line-height: 1;
     color: #fff;
-    text-shadow: 0 0 10px var(--gauge-color);
+    text-shadow: 0 0 0.625rem var(--gauge-color);
 }
 .gaugeUnit {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 300;
     color: rgba(255, 255, 255, 0.7);
     line-height: 1;
 }
 .gaugeLabel {
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 0.125rem;
     color: rgba(255, 255, 255, 0.5);
-    margin-top: 8px;
+    margin-top: 0.5rem;
 }
 
 .interactive .gaugeTextContainer {
@@ -84,7 +83,7 @@
 }
 
 .dragging {
-    --gauge-glow: 40px; /* Parlama boyutunu kontrol eden değişken */
+    --gauge-glow: 2.5rem; /* Parlama boyutunu kontrol eden değişken */
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -100,7 +99,7 @@
 
 .interactive .gaugeProgress {
     /* İnteraktif ama sürüklenmeyen durumdaki parlamayı da biraz artıralım */
-    filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
+    filter: drop-shadow(0 0 0.625rem var(--gauge-color)) drop-shadow(0 0 1.25rem var(--gauge-color));
     animation: pulseGlow 2s infinite ease-in-out;
 }
 
@@ -111,17 +110,17 @@
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    left: -80px;
+    left: -5rem;
 }
 
 .stepButton {
-    width: 80px; /* Boyut artırıldı */
-    height: 80px; /* Boyut artırıldı */
+    width: 5rem; /* Boyut artırıldı */
+    height: 5rem; /* Boyut artırıldı */
     color: rgba(255, 255, 255, 0.7);
     background-color: rgba(15, 23, 42, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(0.5rem);
     transition: all 0.2s ease;
     display: flex;
     justify-content: center;
@@ -132,24 +131,24 @@
     color: var(--gauge-color);
     border-color: var(--gauge-color);
     background-color: rgba(15, 23, 42, 0.8);
-    box-shadow: 0 0 15px -3px var(--gauge-color);
+    box-shadow: 0 0 1rem -0.1875rem var(--gauge-color);
 }
 
 /* Mantine ActionIcon içindeki SVG'yi hedeflemek için bu seçiciyi kullanıyoruz */
 .stepButton :is(svg) {
-    width: 48px;  /* İkon boyutu artırıldı */
-    height: 48px; /* İkon boyutu artırıldı */
+    width: 3rem;  /* İkon boyutu artırıldı */
+    height: 3rem; /* İkon boyutu artırıldı */
     stroke-width: 2.5; /* İkon kalınlığı artırıldı */
 }
 
 @keyframes pulseGlow {
     0% {
-        filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
+        filter: drop-shadow(0 0 0.625rem var(--gauge-color)) drop-shadow(0 0 1.25rem var(--gauge-color));
     }
     50% {
-        filter: drop-shadow(0 0 16px var(--gauge-color)) drop-shadow(0 0 32px var(--gauge-color));
+        filter: drop-shadow(0 0 0.625rem var(--gauge-color)) drop-shadow(0 0 2rem var(--gauge-color));
     }
     100% {
-        filter: drop-shadow(0 0 10px var(--gauge-color)) drop-shadow(0 0 20px var(--gauge-color));
+        filter: drop-shadow(0 0 0.625rem var(--gauge-color)) drop-shadow(0 0 2rem var(--gauge-color));
     }
 }

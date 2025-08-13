@@ -40,7 +40,7 @@
     width: 100%;
     height: 100%;
     z-index: 1;
-    filter: blur(50px) brightness(var(--bg-brightness));
+    filter: blur(3.125rem) brightness(var(--bg-brightness));
     background-color: #020308;
     transition: filter 0.4s ease, background-color 0.4s ease;
 }
@@ -54,15 +54,15 @@
 }
 
 .dynamicBackground::before {
-    width: 400px;
-    height: 400px;
+    width: 25rem;
+    height: 25rem;
     background: radial-gradient(circle, rgba(25, 33, 72, 0.8), transparent 70%);
     animation: move1 calc(20s / var(--bg-speed)) infinite alternate;
 }
 
 .dynamicBackground::after {
-    width: 300px;
-    height: 300px;
+    width: 18.75rem;
+    height: 18.75rem;
     background: radial-gradient(circle, rgba(56, 33, 99, 0.6), transparent 70%);
     animation: move2 calc(15s / var(--bg-speed)) infinite alternate;
 }
@@ -100,16 +100,16 @@
         transform: translate(0);
     }
     20% {
-        transform: translate(-5px, 5px);
+        transform: translate(-0.3125rem, 0.3125rem);
     }
     40% {
-        transform: translate(5px, -5px);
+        transform: translate(0.3125rem, -0.3125rem);
     }
     60% {
-        transform: translate(-5px, -5px);
+        transform: translate(-0.3125rem, -0.3125rem);
     }
     80% {
-        transform: translate(5px, 5px);
+        transform: translate(0.3125rem, 0.3125rem);
     }
 }
 

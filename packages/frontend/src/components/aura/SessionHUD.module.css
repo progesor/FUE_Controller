@@ -2,25 +2,25 @@
 
 .hudWrapper {
     position: absolute;
-    bottom: 275px;
+    bottom: 17.1875rem;
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
     pointer-events: none;
-    width: 480px; /* ControlArc ile aynı genişlikte */
-    padding: 10px 30px;
+    width: 30rem; /* ControlArc ile aynı genişlikte */
+    padding: 0.625rem 1.875rem;
     box-sizing: border-box;
 
     background: rgba(15, 23, 42, 0.3); /* Daha az belirgin bir arka plan */
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.625rem);
 
     /* YENİ: Üstte ince bir parlama çizgisi ve kavisli alt kenar */
     border-top: 1px solid rgba(0, 229, 255, 0.4);
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0 1.25rem rgba(0, 229, 255, 0.1);
 
     /* YAY ŞEKLİ */
-    border-bottom-left-radius: 240px 60px;
-    border-bottom-right-radius: 240px 60px;
+    border-bottom-left-radius: 15rem 3.75rem;
+    border-bottom-right-radius: 15rem 3.75rem;
 }
 
 .hudContent {
@@ -33,22 +33,22 @@
 
 .hudIcon {
     color: rgba(0, 229, 255, 0.8);
-    filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.7));
+    filter: drop-shadow(0 0 0.3125rem rgba(0, 229, 255, 0.7));
 }
 
 .hudLabel {
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 2px;
+    letter-spacing: 0.125rem;
     text-transform: uppercase;
     line-height: 1;
 }
 
 .hudValue {
-    font-size: 26px;
+    font-size: 1.625rem;
     font-weight: 500;
     color: #fff;
     line-height: 1.2;
-    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    text-shadow: 0 0 0.625rem rgba(0, 229, 255, 0.5);
 }

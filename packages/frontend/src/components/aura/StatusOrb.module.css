@@ -1,8 +1,8 @@
 /* packages/frontend/src/components/aura/StatusOrb.module.css */
 
 .statusOrb {
-    width: 200px;
-    height: 200px;
+    width: 12.5rem;
+    height: 12.5rem;
     position: relative;
     border-radius: 50%;
     --orb-color-base: 44, 62, 80;
@@ -11,9 +11,9 @@
             radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.5), transparent 20%),
             radial-gradient(ellipse at center, rgb(var(--orb-color-base)) 0%, #0a0d1a 100%);
     box-shadow:
-            0 0 15px rgba(var(--glow-rgb-base), 0.3),
-            0 0 30px rgba(var(--glow-rgb-base), 0.2),
-            inset 0 0 10px rgba(0, 0, 0, 0.5);
+            0 0 0.9375rem rgba(var(--glow-rgb-base), 0.3),
+            0 0 1.875rem rgba(var(--glow-rgb-base), 0.2),
+            inset 0 0 0.625rem rgba(0, 0, 0, 0.5);
     transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     will-change: transform, opacity, box-shadow;
     overflow: hidden;
@@ -44,9 +44,9 @@
     --glow-rgb-base: 0, 255, 225;
     animation: heartbeat-smooth 2s ease-in-out infinite;
     box-shadow:
-            0 0 20px rgba(var(--glow-rgb-base), 0.6),
-            0 0 40px rgba(var(--glow-rgb-base), 0.4),
-            inset 0 0 15px rgba(0, 0, 0, 0.5);
+            0 0 1.25rem rgba(var(--glow-rgb-base), 0.6),
+            0 0 2.5rem rgba(var(--glow-rgb-base), 0.4),
+            inset 0 0 0.9375rem rgba(0, 0, 0, 0.5);
 }
 
 .orbGlitch {
@@ -55,8 +55,8 @@
     animation: glitch-smooth 1.5s linear infinite;
     background: radial-gradient(ellipse at center, rgb(var(--orb-color-base)) 0%, #0a0d1a 100%);
     box-shadow:
-            0 0 20px rgba(var(--glow-rgb-base), 0.6),
-            0 0 40px rgba(var(--glow-rgb-base), 0.4);
+            0 0 1.25rem rgba(var(--glow-rgb-base), 0.6),
+            0 0 2.5rem rgba(var(--glow-rgb-base), 0.4);
 }
 
 /* YENİ: Osilasyon Modu Animasyonu */
@@ -82,8 +82,8 @@
     --glow-rgb-base: 255, 100, 0;
     animation: pulse-smooth 1.2s ease-in-out infinite;
     box-shadow:
-            0 0 15px rgba(var(--glow-rgb-base), 0.5),
-            inset 0 0 10px rgba(0, 0, 0, 0.3);
+            0 0 0.9375rem rgba(var(--glow-rgb-base), 0.5),
+            inset 0 0 0.625rem rgba(0, 0, 0, 0.3);
 }
 .orbPulsing::after {
     animation: pulse-after-smooth 1.2s ease-in-out infinite;
@@ -120,16 +120,16 @@
     100% {
         transform: scale(1);
         box-shadow:
-            0 0 30px rgba(var(--glow-rgb), 0.6),
-            0 0 60px rgba(var(--glow-rgb), 0.4),
-            inset 0 0 20px rgba(0, 0, 0, 0.5);
+            0 0 1.875rem rgba(var(--glow-rgb), 0.6),
+            0 0 3.75rem rgba(var(--glow-rgb), 0.4),
+            inset 0 0 1.25rem rgba(0, 0, 0, 0.5);
     }
     50% {
         transform: scale(1.02);
         box-shadow:
-            0 0 40px rgba(var(--glow-rgb), 0.9),
-            0 0 80px rgba(var(--glow-rgb), 0.6),
-            inset 0 0 20px rgba(0, 0, 0, 0.5);
+            0 0 2.5rem rgba(var(--glow-rgb), 0.9),
+            0 0 5rem rgba(var(--glow-rgb), 0.6),
+            inset 0 0 1.25rem rgba(0, 0, 0, 0.5);
     }
 }
 
@@ -140,17 +140,17 @@
         opacity: 1;
     }
     10% {
-        transform: translate(-2px, 2px);
+        transform: translate(-0.125rem, 0.125rem);
     }
     20% {
-        transform: translate(2px, -2px);
+        transform: translate(0.125rem, -0.125rem);
     }
     30% {
-        transform: translate(-2px, -2px);
+        transform: translate(-0.125rem, -0.125rem);
         opacity: 0.8;
     }
     40% {
-        transform: translate(2px, 2px);
+        transform: translate(0.125rem, 0.125rem);
     }
     50% {
         transform: translate(0, 0);
@@ -186,20 +186,20 @@
 
 @keyframes vibrate {
     0% { transform: translate(0, 0); }
-    25% { transform: translate(1px, -1px); }
-    50% { transform: translate(-1px, 1px); }
-    75% { transform: translate(1px, 1px); }
+    25% { transform: translate(0.0625rem, -0.0625rem); }
+    50% { transform: translate(-0.0625rem, 0.0625rem); }
+    75% { transform: translate(0.0625rem, 0.0625rem); }
     100% { transform: translate(0, 0); }
 }
 
 
 @keyframes glitch-smooth {
     0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
-    10% { transform: translate(-5px, 3px) scale(0.98); opacity: 0.9; }
-    20% { transform: translate(2px, -2px) scale(1.02); opacity: 1.1; }
+    10% { transform: translate(-0.3125rem, 0.1875rem) scale(0.98); opacity: 0.9; }
+    20% { transform: translate(0.125rem, -0.125rem) scale(1.02); opacity: 1.1; }
     30%, 70% { transform: translate(0, 0) scale(1); opacity: 1; }
-    80% { transform: translate(4px, 1px) scale(0.99); opacity: 0.95; }
-    90% { transform: translate(-3px, -1px) scale(1.01); opacity: 1.05; }
+    80% { transform: translate(0.25rem, 0.0625rem) scale(0.99); opacity: 0.95; }
+    90% { transform: translate(-0.1875rem, -0.0625rem) scale(1.01); opacity: 1.05; }
 }
 
 @keyframes flow-smooth {
@@ -208,8 +208,8 @@
 }
 
 @keyframes pulse-smooth {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(var(--glow-rgb-base), 0.5), inset 0 0 10px rgba(0, 0, 0, 0.3); }
-    50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(var(--glow-rgb-base), 0.7), inset 0 0 15px rgba(0, 0, 0, 0.4); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0.9375rem rgba(var(--glow-rgb-base), 0.5), inset 0 0 0.625rem rgba(0, 0, 0, 0.3); }
+    50% { transform: scale(1.1); box-shadow: 0 0 20.3125rem rgba(var(--glow-rgb-base), 0.7), inset 0 0 0.9375rem rgba(0, 0, 0, 0.4); }
 }
 @keyframes pulse-after-smooth {
     0%, 100% { opacity: 0.7; transform: scale(1); }
@@ -222,8 +222,8 @@
 }
 @keyframes vibrate-translate {
     0% { transform: translate(0, 0); }
-    25% { transform: translate(0.5px, -0.5px); }
-    50% { transform: translate(-0.5px, 0.5px); }
-    75% { transform: translate(0.5px, 0.5px); }
+    25% { transform: translate(0.3125rem, -0.3125rem); }
+    50% { transform: translate(-0.3125rem, 0.3125rem); }
+    75% { transform: translate(0.3125rem, 0.3125rem); }
     100% { transform: translate(0, 0); }
 }
