@@ -8,4 +8,10 @@ export default defineConfig({
       react(),
     svgr()
   ],
+server: {
+    host: true, // Sunucuyu ağdaki diğer cihazlara açar
+    allowedHosts: [
+      'raspberrypi.local' // Bu adresten gelen isteklere izin ver
+    ]
+  }
 })
