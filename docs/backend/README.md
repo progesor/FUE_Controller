@@ -2,6 +2,13 @@
 
 The Backend is a Node.js application responsible for controlling the hardware, managing application state, and serving the frontend.
 
+## Detailed Documentation
+
+*   [**01. API Contract**](./01-api-contract.md): Complete list of Socket.IO events, payloads, and data structures.
+*   [**02. Serial/UniCom Bridge**](./02-serial-bridge.md): Protocol details and bridge logic for Arduino communication.
+*   [**03. Concurrency & Failure Handling**](./03-concurrency.md): Explanation of the event loop model and error recovery strategies.
+*   [**04. Deployment**](./04-deployment.md): Instructions for production deployment (Systemd, etc.).
+
 ## Directory Structure
 
 ```
