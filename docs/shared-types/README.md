@@ -1,59 +1,95 @@
 # Shared Types
 
-The `shared-types` package defines the contract between the Frontend (UI) and the Backend (Logic). This ensures that data structures passed over Socket.IO are type-safe and consistent.
+The `shared-types` package acts as the **contract** and **single source of truth** for data exchange between the Frontend (UI) and the Backend (Logic). It ensures type safety across the network boundary (Socket.IO) and guarantees that both ends agree on the data structures representing the device state.
 
-## Purpose
+## 1. Type Boundaries
 
-This package exports TypeScript interfaces, types, and enums that are used by both the Frontend and Backend packages. By centralizing these definitions, we prevent bugs related to data structure mismatches (e.g., frontend expecting a number but backend sending a string).
+This package defines the data structures that cross the process boundary between the Node.js backend and the Browser frontend.
 
-## Key Definitions
+*   **Included (The "Public API"):**
+    *   **Domain Models:** Core entities like `DeviceStatus`, `Recipe`, `OperatingMode` that represent the state of the physical device.
+    *   **Communication Protocol:** Request/Response payloads for Socket.IO events (`ClientToServerEvents`, `ServerToClientEvents`).
+    *   **Hardware Constants:** `ArduinoCommands` mapping for consistent command string generation.
 
-### 1. Device Status
-The `DeviceStatus` interface is the Single Source of Truth for the entire system state. The Backend maintains this state and broadcasts it to the Frontend whenever it changes.
+*   **Excluded (Internal Implementation Details):**
+    *   **Internal Backend Types:** Database schemas, hardware driver details, serial port configuration, specific `SerialPort` types.
+    *   **Internal Frontend Types:** React component props, UI-specific state (like `isRecipeDrawerOpen` which is local UI state, though `useControllerStore` mixes them, the shared type `DeviceStatus` only holds the hardware state).
 
-```typescript
-export interface DeviceStatus {
-    motor: MotorStatus;             // PWM, Direction, Active state
-    operatingMode: OperatingMode;   // 'continuous', 'oscillation', 'pulse', 'vibration'
-    oscillationSettings: OscillationSettings;
-    pulseSettings: PulseSettings;
-    vibrationSettings: VibrationSettings;
-    continuousSettings: ContinuousSettings;
-    recipeStatus?: RecipeStatus;    // Optional: Only present if a recipe is running
-}
-```
+**File References:**
+*   [`packages/shared-types/index.ts`](../../packages/shared-types/index.ts): The definition file containing all shared interfaces.
 
-### 2. Modes (`OperatingMode`)
-Defines the valid operational modes of the device:
-- `continuous`: Standard motor rotation.
-- `oscillation`: Alternating CW/CCW movement based on Angle/RPM.
-- `pulse`: Intermittent rotation (Run/Wait).
-- `vibration`: High-frequency, short-duration movement.
+## 2. Versioning Strategy
 
-### 3. Socket Events
-The communication protocol is strictly typed using `ServerToClientEvents` and `ClientToServerEvents` interfaces. This allows IDEs to provide autocompletion for socket.emit() calls.
+Since this project is a monorepo, we use a **Synchronized Versioning** strategy.
 
-**Example Event:**
-```typescript
-interface ClientToServerEvents {
-    'set_motor_pwm': (value: number) => void;
-    // ...
-}
-```
+*   **Strategy:** "Sync-Version". The frontend and backend are developed, versioned, and deployed together as a single unit.
+*   **Protocol:** Changes in `shared-types` are immediately consumed by both `backend` and `frontend`. There is no separate publishing step to an external registry (like npm) during development.
+*   **Workflow for Breaking Changes:**
+    1.  **Modify `shared-types`**: Change the interface (e.g., rename a property).
+    2.  **Update Backend**: Fix compilation errors in `backend` immediately.
+    3.  **Update Frontend**: Fix compilation errors in `frontend` immediately.
+    4.  **Commit Atomically**: Commit all three changes together to ensure the build is always green.
 
-### 4. Arduino Commands (`ArduinoCommands`)
-A constant object mapping human-readable command names to their protocol string values (e.g., `MOTOR_SET_PWM` -> `DEV.MOTOR.SET_PWM`). This prevents magic strings in the code.
+## 3. Mapping to Backend API and Frontend State
 
-## Usage
+The types in this package map directly to the state management systems of both applications, serving as the bridge.
 
-In both Frontend and Backend:
-```typescript
-import { DeviceStatus, OperatingMode } from 'shared-types';
-```
+### Backend Mapping
+In the backend, `DeviceStatus` acts as the in-memory database of the hardware state.
 
-## Maintenance
-When adding a new feature that involves data exchange:
-1.  Update `packages/shared-types/index.ts` first.
-2.  Run `npm run build` in `packages/shared-types` (if applicable, though usually just importing the TS file works in monorepo setups).
-3.  Update Backend implementation.
-4.  Update Frontend implementation.
+*   **State Holder:** `arduinoService.ts` holds a `let deviceStatus: DeviceStatus` variable which is the Single Source of Truth for the hardware state.
+*   **Socket API:** `server.ts` initializes the Socket.IO server using the generic types `ClientToServerEvents` and `ServerToClientEvents`. This enforces that every `socket.emit` and `socket.on` matches the defined signature at compile time.
+
+**File References:**
+*   [`packages/backend/src/services/arduinoService.ts`](../../packages/backend/src/services/arduinoService.ts):
+    ```typescript
+    let deviceStatus: DeviceStatus & { } = { ... };
+    ```
+*   [`packages/backend/src/server.ts`](../../packages/backend/src/server.ts):
+    ```typescript
+    const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, { ... });
+    ```
+
+### Frontend Mapping
+In the frontend, `DeviceStatus` is extended by the Zustand store to create the full application state.
+
+*   **State Holder:** `useControllerStore.ts` defines `ControllerState` which `extends DeviceStatus`. This means the frontend state *is* the device state, plus some UI-specific flags (like `connectionStatus`, `graftCount`).
+*   **Synchronization:** The `updateDeviceStatus` action in the store takes a `DeviceStatus` object (received via socket) and merges it into the store, ensuring the UI reflects the backend's truth.
+
+**File References:**
+*   [`packages/frontend/src/store/useControllerStore.ts`](../../packages/frontend/src/store/useControllerStore.ts):
+    ```typescript
+    interface ControllerState extends DeviceStatus {
+        connectionStatus: 'connected' | 'disconnected' | 'connecting';
+        // ... other UI state
+    }
+    ```
+
+## 4. How to Safely Evolve Types
+
+To evolve types without breaking the application during development:
+
+### Additive Changes (Safe)
+Adding a new field is generally safe and backward compatible (within the scope of a single deploy).
+1.  **Add Field:** Add optional field to `shared-types/index.ts`: `newField?: string`.
+2.  **Update Backend:** Update `arduinoService.ts` to populate/use this field.
+3.  **Update Frontend:** Update components to display/use this field.
+4.  **Finalize:** Remove `?` if it becomes required after all usages are updated.
+
+### Breaking Changes (Renaming/Removing)
+Because of the monorepo structure, "breaking" changes are handled by refactoring all call sites immediately.
+
+**Workflow for a Breaking Change (e.g., renaming `pwm` to `speed`):**
+1.  **Refactor Type:** Rename `pwm` to `speed` in `packages/shared-types/index.ts`.
+2.  **Fix Backend:** TypeScript compiler will error in `arduinoService.ts` (state definition) and `server.ts` (socket handlers). Fix these errors.
+3.  **Fix Frontend:** TypeScript compiler will error in `useControllerStore.ts` (state definition) and components using `motor.pwm`. Fix these errors.
+4.  **Verify:** Run `npm run build` in both packages to ensure no references were missed.
+
+### Deprecation (If decoupling is needed later)
+If the frontend and backend were in separate repos or deployed independently, we would use the "Expand and Contract" pattern:
+1.  Add `speed` (optional).
+2.  Populate both `pwm` and `speed` in backend.
+3.  Switch frontend to use `speed`.
+4.  Remove `pwm`.
+
+Currently, direct refactoring is preferred due to the monorepo advantage.
