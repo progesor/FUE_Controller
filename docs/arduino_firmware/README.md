@@ -6,6 +6,10 @@ This directory contains the C++ source code for the Arduino microcontroller used
 
 The firmware implements the **Unicom v4.1 Protocol** to receive commands from the backend (Raspberry Pi / Node.js) and control the connected hardware (Motor, Pedal, Switches). It is designed to be **non-blocking** (except for brief brake/debounce delays) to ensure responsive motor control and sensor reading.
 
+## Technical Deep Dive
+
+For a detailed analysis of the firmware internals, including state machines, timing constraints, and calibration workflow, please refer to the [Firmware Deep Dive](./deep_dive.md) document.
+
 ## Pinout Configuration
 
 The pin mapping is defined in `FUE_Slave_v4_1.ino`:
