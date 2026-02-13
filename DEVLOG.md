@@ -233,10 +233,70 @@ Finally, the codebase has seen significant refactoring to improve modularity, pa
   - Details: Refactored how the active mode is rendered to prevent potential race conditions in display updates.
   - Components: `ActiveModeDisplay.tsx`
 
-[2025-08-13 13:08]
-- [docs | project] Expand documentation and shared-types
-  - Details: Added comprehensive documentation for architecture, protocols, and shared types.
-  - Components: `docs/`, `README.md`
+[2025-08-09 00:53]
+- [feat | frontend] Add Layout Selector and Preference Memory
+  - Details: Introduced a selection screen to switch between Aura, Clinical, and Engineering layouts. Added logic to remember the user's last chosen interface.
+  - Components: `App.tsx`, `LayoutSelector.tsx`
+
+[2025-08-09 12:43]
+- [refactor | backend] Major Service Restructuring
+  - Details: Consolidated backend services and updated configuration management to support scalable architecture.
+  - Components: `packages/backend/src/`
+
+[2025-08-11 15:47]
+- [fix | frontend] Patch Socket Service
+  - Details: Minor fix to socket event handling logic to ensure connection stability.
+  - Components: `socketService.ts`
+
+[2025-08-11 18:21]
+- [chore | infra] Update dependencies and lockfiles
+  - Details: Updated package locks and backend service configurations to resolve version conflicts.
+  - Components: `package-lock.json`, `arduinoService.ts`
+
+[2025-08-13 09:03]
+- [feat | infra] Add Linux Kiosk Support
+  - Details: Added startup scripts (`start-kiosk.sh`) and config tweaks for deploying on Linux/Raspberry Pi environments.
+  - Components: `start-kiosk.sh`, `vite.config.ts`
+
+[2025-08-13 10:16]
+- [build | infra] Add Production Startup Scripts
+  - Details: Added `start-prod.sh` and `start-dev.sh` to streamline deployment. Built shared-types for production.
+  - Components: `start-prod.sh`, `shared-types`
+
+[2025-08-13 10:37]
+- [refactor | frontend] Reorganize Project Structure
+  - Details: Moved engineering components to a dedicated folder. Renamed `MainLayout` to `EngineeringLayout` and established clear view boundaries.
+  - Components: `src/views/`, `src/components/engineering/`
+
+[2025-08-13 13:20]
+- [refactor | frontend] Convert Aura CSS to Rem
+  - Details: Refactored Aura layout styles to use `rem` units instead of `px` for better scalability across screen sizes.
+  - Components: `src/components/aura/`
+
+[2025-08-13 16:06]
+- [fix | frontend] Minor Gauge Fix
+  - Details: Small adjustment to gauge component rendering for better visual consistency.
+  - Components: `Gauge.tsx`
+
+[2026-01-09 09:00]
+- [docs | backend] Add Serial Protocol Documentation
+  - Details: Added comprehensive documentation for the serial communication protocol.
+  - Components: `docs/SERIAL_PROTOCOL.md`
+
+[2026-02-13 09:36]
+- [docs | project] Add Documentation Pack
+  - Details: Added detailed documentation for FUE_Slave_v4_1 firmware, frontend architecture, and backend deep-dives.
+  - Components: `docs/`
+
+[2026-02-13 13:08]
+- [docs | shared-types] Expand Shared Types Docs
+  - Details: Finalized documentation for shared types and versioning strategy.
+  - Components: `docs/shared-types/`
+
+---
+
+## Coverage
+Coverage: 148/148 commits analyzed (100% coverage including branches).
 
 ---
 
