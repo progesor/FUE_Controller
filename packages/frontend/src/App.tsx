@@ -10,6 +10,7 @@ import { ClinicalLayout } from './views/ClinicalLayout.tsx';
 import {AuraLayout} from "./views/AuraLayout.tsx";
 import {LayoutSelector} from "./views/LayoutSelector.tsx";
 import {EngineeringLayout} from "./views/EngineeringLayout.tsx";
+import { HardwareTestLayout } from './views/HardwareTestLayout';
 
 function AppInitializer() {
     const navigate = useNavigate();
@@ -65,6 +66,8 @@ function App() {
                         </Container>
                     }
                 />
+
+                <Route path="/hardware-test" element={<HardwareTestLayout />} />
             </Routes>
         </BrowserRouter>
     );

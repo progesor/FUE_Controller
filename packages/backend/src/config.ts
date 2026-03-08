@@ -17,11 +17,11 @@ const config = {
     arduino: {
         // Portu manuel olarak belirtmek için bu alanı kullanın (örn: 'COM16' veya '/dev/ttyAMA0').
         // Otomatik bulma için boş bırakın ('').
-        port: '/dev/ttyAMA0',
+        port: 'COM3',
 
         baudRate: 115200,
         reconnectTimeout: 1000, // ms cinsinden yeniden bağlanma deneme süresi
-        pingInterval: 3000,     // ms cinsinden bağlantı kontrol sıklığı
+        pingInterval: 500,     // ms cinsinden bağlantı kontrol sıklığı
         logPings: false,
 
         // Arduino kartını otomatik bulmak için kullanılacak anahtar kelimeler

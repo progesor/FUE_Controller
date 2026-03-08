@@ -1,4 +1,4 @@
-// packages/frontend/src/components/layout/LayoutSelector.tsx
+// packages/frontend/src/views/LayoutSelector.tsx
 
 import { Container, Grid, Paper, Text, Title, Stack } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,7 @@ const layouts = [
     { name: 'AURA Interface', path: '/aura', description: 'Yeni nesil, dokunmatik odaklı fütüristik klinik arayüz.', image: auraPreview },
     { name: 'Clinical Layout', path: '/clinical', description: 'Veri odaklı, profesyonel klinik operasyon ekranı.', image: clinicalPreview },
     { name: 'Developer Suite', path: '/dev', description: 'Geliştirme, test ve kalibrasyon için mühendislik paneli.', image: devPreview },
+    { name: 'Hardware Test (Binary)', path: '/hardware-test', description: 'Yeni binary protokolü izole test etmek için yalın arayüz.', image: devPreview },
 ];
 
 export function LayoutSelector() {
@@ -36,10 +37,8 @@ export function LayoutSelector() {
                                 radius="md"
                                 className={classes.card}
                                 onClick={() => handleSelect(layout.path)}
-                                // DEĞİŞİKLİK: Resim, style prop'u ile arka plan olarak atanıyor
                                 style={{ backgroundImage: `url(${layout.image})` }}
                             >
-                                {/* <img> etiketi artık burada değil */}
                                 <div className={classes.cardOverlay} />
                                 <div className={classes.cardContent}>
                                     <Title order={3}>{layout.name}</Title>
