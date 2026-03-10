@@ -145,12 +145,14 @@ export interface ServerToClientEvents {
     'calibration_data_response': (data: { pwm: number; duration: number }) => void;
     /** Reçetenin anlık çalışma durumu değiştiğinde backend tarafından gönderilir. */
     'recipe_status_update': (status: RecipeStatus) => void;
-    /** YENİ: Reçete listesi güncellendiğinde backend tarafından gönderilir. */
+    /** Reçete listesi güncellendiğinde backend tarafından gönderilir. */
     'recipe_list_update': (recipes: Recipe[]) => void;
     'recipe_error': (error: { message: string }) => void;
 
     // EKSİK OLAN VE EKLENMESİ GEREKEN SATIR:
     'device_params_response': (params: string) => void;
+    /** Cihazdan gelen anlık telemetri verisinin raw hali */
+    'telemetry_data': (data: string) => void;
 }
 
 /**

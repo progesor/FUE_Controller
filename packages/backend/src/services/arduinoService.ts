@@ -132,15 +132,16 @@ const handleData = (data: string) => {
     }
 
     // 2. Telemetri Spam'ini Filtreleme
-    // Telemetri Spam'ini Filtreleme bölümünü şöyle değiştir:
-    const isTelemetry = cleanData.startsWith('<TEL') || cleanData.startsWith('<PRM');
-
-    // Eğer gelen veri cihaz parametresiyse, arayüze fırlat!
-    if (cleanData.startsWith('<PRM')) {
-        io?.emit('device_params_response', cleanData);
+    // Telemetri verisini doğrudan frontend'e fırlat ve konsola basma!
+    if (cleanData.startsWith('<TEL')) {
+        io?.emit('telemetry_data', cleanData);
+        return;
     }
 
-    if (isTelemetry) return;
+    if (cleanData.startsWith('<PRM')) {
+        io?.emit('device_params_response', cleanData);
+        return;
+    }
 
     // Sadece önemli hata veya debug mesajlarını konsola bas
     console.log(`[STM32 -> Server]: ${cleanData}`);

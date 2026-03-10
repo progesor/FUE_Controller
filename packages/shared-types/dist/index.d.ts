@@ -109,12 +109,14 @@ export interface ServerToClientEvents {
     }) => void;
     /** Reçetenin anlık çalışma durumu değiştiğinde backend tarafından gönderilir. */
     'recipe_status_update': (status: RecipeStatus) => void;
-    /** YENİ: Reçete listesi güncellendiğinde backend tarafından gönderilir. */
+    /** Reçete listesi güncellendiğinde backend tarafından gönderilir. */
     'recipe_list_update': (recipes: Recipe[]) => void;
     'recipe_error': (error: {
         message: string;
     }) => void;
     'device_params_response': (params: string) => void;
+    /** Cihazdan gelen anlık telemetri verisinin raw hali */
+    'telemetry_data': (data: string) => void;
 }
 /**
  * Arayüzden (İstemci) backend'e (Sunucu) gönderilecek Socket.IO
