@@ -38,6 +38,7 @@ let watchdogInterval: NodeJS.Timeout | null = null;
 let lastHeartbeatTime = 0;
 let isArduinoConnected = false;
 let activeRecipe: Recipe | null = null;
+let pulseTimer: NodeJS.Timeout | null = null;
 
 export const setActiveRecipe = (recipe: Recipe | null) => {
     activeRecipe = recipe;
@@ -47,9 +48,9 @@ export const setActiveRecipe = (recipe: Recipe | null) => {
 let deviceStatus: DeviceStatus = {
     motor: { isActive: false, pwm: 1000, direction: 0 },
     operatingMode: 'continuous',
-    oscillationSettings: { angle: 180 },
-    pulseSettings: { pulseDuration: 1000, pulseDelay: 500 },
-    vibrationSettings: { intensity: 100, frequency: 5 },
+    oscillationSettings: { angle: 180, mode: 'angle', timeMs: 500, accel: 5000 },
+    pulseSettings: { baseRpm: 1000, pulseRpm: 5000, pulseDuration: 100, pulseInterval: 1000 },
+    vibrationSettings: { timeMs: 20, rpm: 3000, accel: 100000 },
     continuousSettings: { rampDuration: 0 },
 };
 
@@ -240,6 +241,7 @@ export const connectToArduino = async () => {
 // ===================================================================
 
 export const stopMotor = () => {
+    if (pulseTimer) clearInterval(pulseTimer); // Pulse döngüsünü kır
     sendBinaryCommand(CMD_STOP);
     deviceStatus.motor.isActive = false;
     broadcastDeviceStatus();
@@ -284,34 +286,57 @@ export const startOscillation = (options?: { pwm?: number; angle?: number; rpm?:
     broadcastDeviceStatus();
 };
 
-export const startPulseMode = (isContinuation = false) => {
+export const startVibrationMode = (isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
-
     deviceStatus.motor.isActive = true;
 
-    // Pulse mode translates to Time-Based Oscillation (Punch) on the hardware
+    // Titreşim: Süre Odaklı Osilasyonun mikro düzeyde kullanılması
+    const { timeMs = 20, accel = 50000 } = deviceStatus.vibrationSettings || {};
+    const rpm = deviceStatus.vibrationSettings?.rpm || deviceStatus.motor.pwm;
+
     const payload = Buffer.alloc(12);
-    payload.writeFloatLE(deviceStatus.pulseSettings.pulseDuration, 0); // TimeMs
-    payload.writeFloatLE(deviceStatus.motor.pwm, 4); // Target RPM
-    payload.writeFloatLE(5000.0, 8); // Accel
+    payload.writeFloatLE(timeMs, 0);
+    payload.writeFloatLE(rpm, 4);
+    payload.writeFloatLE(accel, 8);
 
     sendBinaryCommand(CMD_OSC_TIME, payload);
     broadcastDeviceStatus();
 };
 
-export const startVibrationMode = (isContinuation = false) => {
+export const startPulseMode = (isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
     deviceStatus.motor.isActive = true;
 
-    // Emulate vibration via a rapid time-based punch if native vibration is absent
-    const payload = Buffer.alloc(12);
-    const durationMs = Math.max(15, 60 - (deviceStatus.vibrationSettings.frequency * 4));
+    if (pulseTimer) clearInterval(pulseTimer);
 
-    payload.writeFloatLE(durationMs, 0);
-    payload.writeFloatLE(deviceStatus.motor.pwm, 4);
-    payload.writeFloatLE(8000.0, 8); // Aggressive acceleration for vibration
+    const { baseRpm = 1000, pulseRpm = 5000, pulseDuration = 100, pulseInterval = 1000 } = deviceStatus.pulseSettings || {};
 
-    sendBinaryCommand(CMD_OSC_TIME, payload);
+    // 1. Motoru Base RPM ile başlat
+    const payloadBase = Buffer.alloc(4);
+    payloadBase.writeFloatLE(baseRpm, 0);
+    sendBinaryCommand(CMD_SET_RPM, payloadBase);
+
+    // 2. Darbe (Pulse) Döngüsünü Kur
+    pulseTimer = setInterval(() => {
+        if (!deviceStatus.motor.isActive || deviceStatus.operatingMode !== 'pulse') {
+            clearInterval(pulseTimer!);
+            return;
+        }
+
+        // Pik hıza çık
+        const payloadPulse = Buffer.alloc(4);
+        payloadPulse.writeFloatLE(pulseRpm, 0);
+        sendBinaryCommand(CMD_SET_RPM, payloadPulse);
+
+        // Darbe süresi bittiğinde tekrar Base RPM'e dön
+        setTimeout(() => {
+            if (deviceStatus.motor.isActive && deviceStatus.operatingMode === 'pulse') {
+                sendBinaryCommand(CMD_SET_RPM, payloadBase);
+            }
+        }, pulseDuration);
+
+    }, pulseInterval);
+
     broadcastDeviceStatus();
 };
 
@@ -368,20 +393,29 @@ export const executeStep = (step: RecipeStep) => {
     deviceStatus.operatingMode = step.mode;
 
     if (step.settings) {
-        if (step.mode === 'vibration' && 'intensity' in step.settings) {
-            deviceStatus.motor.pwm = (step.settings as VibrationSettings).intensity;
-        } else if ('pwm' in step.settings && typeof step.settings.pwm === 'number') {
+        // 1. Ortak Motor Hızını (PWM/RPM) Güncelleme
+        if ('pwm' in step.settings && typeof step.settings.pwm === 'number') {
             deviceStatus.motor.pwm = step.settings.pwm;
+        } else if (step.mode === 'vibration' && 'rpm' in step.settings) {
+            deviceStatus.motor.pwm = (step.settings as VibrationSettings).rpm;
+        } else if (step.mode === 'pulse' && 'baseRpm' in step.settings) {
+            deviceStatus.motor.pwm = (step.settings as PulseSettings).baseRpm;
         }
 
-        if (step.mode === 'continuous' && 'rampDuration' in step.settings) {
-            deviceStatus.continuousSettings = <ContinuousSettings>step.settings;
-        } else if (step.mode === 'oscillation' && 'angle' in step.settings) {
-            deviceStatus.oscillationSettings = <OscillationSettings>step.settings;
-        } else if (step.mode === 'pulse' && 'pulseDuration' in step.settings) {
-            deviceStatus.pulseSettings = <PulseSettings>step.settings;
-        } else if (step.mode === 'vibration' && 'intensity' in step.settings) {
-            deviceStatus.vibrationSettings = <VibrationSettings>step.settings;
+        // 2. Moda Özel Gelişmiş Ayarları Güncelleme
+        switch (step.mode) {
+            case 'continuous':
+                deviceStatus.continuousSettings = step.settings as ContinuousSettings;
+                break;
+            case 'oscillation':
+                deviceStatus.oscillationSettings = step.settings as OscillationSettings;
+                break;
+            case 'pulse':
+                deviceStatus.pulseSettings = step.settings as PulseSettings;
+                break;
+            case 'vibration':
+                deviceStatus.vibrationSettings = step.settings as VibrationSettings;
+                break;
         }
     }
 

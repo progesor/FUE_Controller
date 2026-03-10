@@ -14,21 +14,16 @@ export interface OscillationSettings {
     accel?: number;
     mode?: 'angle' | 'time';
 }
-/** Darbe modu için gerekli ayarları içerir. */
-export interface PulseSettings {
-    /** Motorun her bir darbede ne kadar süre döneceği (milisaniye). */
-    pulseDuration: number;
-    /** İki darbe arasındaki bekleme süresi (milisaniye). */
-    pulseDelay: number;
-    /** [YENİ] Bu adıma özel motor hızı (0-255). Belirtilmezse global hız kullanılır. */
-    pwm?: number;
-}
-/** Titreşim modu için gerekli ayarları içerir. */
 export interface VibrationSettings {
-    /** Titreşimin gücünü belirleyen PWM değeri. */
-    intensity: number;
-    /** Titreşimin ne kadar seri olacağını belirler (örn: 1-10 arası bir seviye). */
-    frequency: number;
+    timeMs: number;
+    rpm: number;
+    accel: number;
+}
+export interface PulseSettings {
+    baseRpm: number;
+    pulseRpm: number;
+    pulseDuration: number;
+    pulseInterval: number;
 }
 /** Sürekli mod için gerekli ayarları içerir. */
 export interface ContinuousSettings {
@@ -192,4 +187,15 @@ export declare const ArduinoCommands: {
     readonly DONE: "DONE:";
     readonly INFO: "INFO:";
 };
+export interface VibrationSettings {
+    timeMs: number;
+    rpm: number;
+    accel: number;
+}
+export interface PulseSettings {
+    baseRpm: number;
+    pulseRpm: number;
+    pulseDuration: number;
+    pulseInterval: number;
+}
 //# sourceMappingURL=index.d.ts.map

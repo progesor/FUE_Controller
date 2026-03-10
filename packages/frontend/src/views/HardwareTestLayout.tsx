@@ -226,6 +226,77 @@ const PIDSettingsPanel = () => {
 };
 
 // ===================================================================
+// BİLEŞEN 5: VIBRATION (TİTREŞİM) KONTROLLERİ
+// ===================================================================
+const VibrationModePanel = ({ vibrationSettings, handleSetVibration }: any) => {
+    const [timeMs, setTimeMs] = useState<number>(vibrationSettings?.timeMs || 20);
+    const [rpm, setRpm] = useState<number>(vibrationSettings?.rpm || 3000);
+    const [accel, setAccel] = useState<number>(vibrationSettings?.accel || 100000);
+
+    const handleApply = () => {
+        // Backend'deki pulseSettings setter'ına veya emit'ine bağlayacağız
+        socket.emit('set_vibration_settings', { timeMs, rpm, accel });
+    };
+
+    return (
+        <Stack gap="lg" align="stretch" justify="space-between" h="100%">
+            <Stack gap="md">
+                <Title order={3} c="dimmed" ta="center">Titreşim (Mikro-Osilasyon) Parametreleri</Title>
+                <Grid gutter="md">
+                    <Grid.Col span={4}>
+                        <NumberInput label="Vuruş Süresi (ms)" value={timeMs} onChange={(val) => setTimeMs(Number(val))} min={5} max={200} step={5} size="lg"/>
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        <NumberInput label="Şiddet (RPM)" value={rpm} onChange={(val) => setRpm(Number(val))} min={100} max={35000} step={500} size="lg"/>
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        <NumberInput label="Sertlik (Accel)" value={accel} onChange={(val) => setAccel(Number(val))} min={1000} max={1000000} step={10000} size="lg"/>
+                    </Grid.Col>
+                </Grid>
+            </Stack>
+            <Button size="xl" color="teal" variant="light" onClick={handleApply}>Değerleri Uygula</Button>
+        </Stack>
+    );
+};
+
+// ===================================================================
+// BİLEŞEN 6: PULSE (DARBE) KONTROLLERİ
+// ===================================================================
+const PulseModePanel = ({ pulseSettings, handleSetPulse }: any) => {
+    const [baseRpm, setBaseRpm] = useState<number>(pulseSettings?.baseRpm || 1000);
+    const [pulseRpm, setPulseRpm] = useState<number>(pulseSettings?.pulseRpm || 8000);
+    const [pulseDuration, setPulseDuration] = useState<number>(pulseSettings?.pulseDuration || 100);
+    const [pulseInterval, setPulseInterval] = useState<number>(pulseSettings?.pulseInterval || 1000);
+
+    const handleApply = () => {
+        socket.emit('set_pulse_settings', { baseRpm, pulseRpm, pulseDuration, pulseInterval });
+    };
+
+    return (
+        <Stack gap="lg" align="stretch" justify="space-between" h="100%">
+            <Stack gap="md">
+                <Title order={3} c="dimmed" ta="center">Darbe (Yazılımsal Sequencer) Parametreleri</Title>
+                <Grid gutter="md">
+                    <Grid.Col span={6}>
+                        <NumberInput label="Taban Hız (Base RPM)" value={baseRpm} onChange={(val) => setBaseRpm(Number(val))} min={0} max={35000} step={100} size="lg"/>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <NumberInput label="Darbe Hızı (Peak RPM)" value={pulseRpm} onChange={(val) => setPulseRpm(Number(val))} min={100} max={35000} step={500} size="lg"/>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <NumberInput label="Darbe Süresi (ms)" value={pulseDuration} onChange={(val) => setPulseDuration(Number(val))} min={10} max={2000} step={10} size="lg"/>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <NumberInput label="Darbe Aralığı (Interval ms)" value={pulseInterval} onChange={(val) => setPulseInterval(Number(val))} min={100} max={5000} step={100} size="lg"/>
+                    </Grid.Col>
+                </Grid>
+            </Stack>
+            <Button size="xl" color="orange" variant="light" onClick={handleApply}>Değerleri Uygula</Button>
+        </Stack>
+    );
+};
+
+// ===================================================================
 // ANA BİLEŞEN (MAIN LAYOUT)
 // ===================================================================
 export function HardwareTestLayout() {
@@ -250,6 +321,9 @@ export function HardwareTestLayout() {
         socket.emit('set_oscillation_settings', settings);
     };
     const handleGetParams = () => socket.emit('send_raw_command', 'GET_PARAMS');
+
+    const vibrationSettings = useControllerStore((state) => state.vibrationSettings);
+    const pulseSettings = useControllerStore((state) => state.pulseSettings);
 
     const modeColors: Record<string, string> = {
         continuous: 'blue', oscillation: 'grape', pulse: 'orange', vibration: 'teal'
@@ -294,11 +368,8 @@ export function HardwareTestLayout() {
                         <Card shadow="md" radius="lg" withBorder style={{ flexGrow: 1 }}>
                             {operatingMode === 'continuous' && <ContinuousModePanel motor={motor} handleSetPwm={handleSetPwm} />}
                             {operatingMode === 'oscillation' && <OscillationModePanel motor={motor} oscillationSettings={oscillationSettings} handleSetPwm={handleSetPwm} handleSetOscillation={handleSetOscillation} />}
-                            {(operatingMode === 'pulse' || operatingMode === 'vibration') && (
-                                <Stack align="center" justify="center" h="100%">
-                                    <Title order={3} c="dimmed">{operatingMode.toUpperCase()} Modu Geliştirme Aşamasında</Title>
-                                </Stack>
-                            )}
+                            {operatingMode === 'vibration' && <VibrationModePanel vibrationSettings={vibrationSettings} />}
+                            {operatingMode === 'pulse' && <PulseModePanel pulseSettings={pulseSettings} />}
                         </Card>
                         <TelemetryChartPanel motor={motor} />
                     </Stack>
