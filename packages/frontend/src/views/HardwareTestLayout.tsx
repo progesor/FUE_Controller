@@ -1,7 +1,7 @@
 // packages/frontend/src/views/HardwareTestLayout.tsx
 
 import { useState, useEffect, useRef } from 'react';
-import { Container, Grid, Title, Button, Group, Stack, Slider, Text, Card, Badge, ActionIcon, NumberInput, Divider, SegmentedControl, Accordion, Code } from '@mantine/core';
+import { Container, Grid, Title, Button, Group, Stack, Slider, Text, Card, Badge, ActionIcon, NumberInput, Divider, SegmentedControl, Accordion, Code, Box } from '@mantine/core';
 import { IconPlus, IconMinus, IconDeviceFloppy, IconAdjustmentsHorizontal, IconCpu, IconDownload, IconBolt, IconWaveSine } from '@tabler/icons-react';
 import { useControllerStore } from '../store/useControllerStore';
 import type {OperatingMode} from 'shared-types';
@@ -9,6 +9,8 @@ import {socket} from '../services/socketService';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title as ChartTitle, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import classes from "./ClinicalLayout.module.css";
+import {LayoutSwitchButton} from "../components/common/LayoutSwitchButton.tsx";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTitle, Tooltip, Legend, Filler);
 
@@ -330,6 +332,8 @@ export function HardwareTestLayout() {
     };
 
     return (
+        <Box className={classes.wrapper}>
+            <LayoutSwitchButton />
         <Container fluid p="xl" h="100vh" style={{ display: 'flex', flexDirection: 'column' }}>
             <Group justify="space-between" align="center" mb="lg">
                 <div>
@@ -400,5 +404,6 @@ export function HardwareTestLayout() {
                 </Accordion.Item>
             </Accordion>
         </Container>
+        </Box>
     );
 }
