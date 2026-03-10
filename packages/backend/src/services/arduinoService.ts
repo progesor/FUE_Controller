@@ -132,12 +132,15 @@ const handleData = (data: string) => {
     }
 
     // 2. Telemetri Spam'ini Filtreleme
+    // Telemetri Spam'ini Filtreleme bölümünü şöyle değiştir:
     const isTelemetry = cleanData.startsWith('<TEL') || cleanData.startsWith('<PRM');
-    if (isTelemetry) {
-        // İleride bu telemetri verilerini UI'a göndermek için parse edebiliriz.
-        // Şimdilik konsolu kirletmemesi için yoksayıyoruz.
-        return;
+
+    // Eğer gelen veri cihaz parametresiyse, arayüze fırlat!
+    if (cleanData.startsWith('<PRM')) {
+        io?.emit('device_params_response', cleanData);
     }
+
+    if (isTelemetry) return;
 
     // Sadece önemli hata veya debug mesajlarını konsola bas
     console.log(`[STM32 -> Server]: ${cleanData}`);
@@ -242,7 +245,7 @@ export const stopMotor = () => {
 };
 
 export const startContinuousMode = (isContinuation = false) => {
-    if (!isContinuation && deviceStatus.motor.isActive) return;
+    // if (!isContinuation && deviceStatus.motor.isActive) return;
 
     deviceStatus.motor.isActive = true;
 
@@ -254,23 +257,29 @@ export const startContinuousMode = (isContinuation = false) => {
     broadcastDeviceStatus();
 };
 
-export const startOscillation = (options?: { pwm: number; angle: number; rpm?: number }, isContinuation = false) => {
+export const startOscillation = (options?: { pwm?: number; angle?: number; rpm?: number }, isContinuation = false) => {
     if (!isContinuation && deviceStatus.motor.isActive) return;
 
-    if (options) {
-        deviceStatus.motor.pwm = options.pwm;
-        deviceStatus.oscillationSettings.angle = options.angle;
-    }
+    if (options?.pwm !== undefined) deviceStatus.motor.pwm = options.pwm;
+    if (options?.angle !== undefined) deviceStatus.oscillationSettings.angle = options.angle;
 
     deviceStatus.motor.isActive = true;
 
-    // Send Oscillation Angle Command (12 bytes: Angle, MaxRPM, Accel)
-    const payload = Buffer.alloc(12);
-    payload.writeFloatLE(deviceStatus.oscillationSettings.angle, 0);
-    payload.writeFloatLE(deviceStatus.motor.pwm, 4); // Target RPM
-    payload.writeFloatLE(5000.0, 8); // Default acceleration profile, adjust as needed
+    // Arayüzden gelen tüm ayarları çekiyoruz
+    const { angle = 180, timeMs = 500, accel = 5000, mode = 'angle' } = deviceStatus.oscillationSettings;
 
-    sendBinaryCommand(CMD_OSC_ANGLE, payload);
+    const payload = Buffer.alloc(12);
+    if (mode === 'time') {
+        payload.writeFloatLE(timeMs, 0);
+        payload.writeFloatLE(deviceStatus.motor.pwm, 4);
+        payload.writeFloatLE(accel, 8);
+        sendBinaryCommand(CMD_OSC_TIME, payload); // Süre Odaklı
+    } else {
+        payload.writeFloatLE(angle, 0);
+        payload.writeFloatLE(deviceStatus.motor.pwm, 4);
+        payload.writeFloatLE(accel, 8);
+        sendBinaryCommand(CMD_OSC_ANGLE, payload); // Açı Odaklı
+    }
     broadcastDeviceStatus();
 };
 
@@ -415,10 +424,39 @@ export const startMotor = () => {
  * eğer STM32 tarafında özel bir metin yakalayıcı (text parser) bırakmadıysan
  * bu komutlar cihaz tarafından görmezden gelinecektir.
  */
+/**
+ * Ar-Ge panelinden (frontend) gelen ham metin komutları için uyumluluk ve Hack'ler.
+ */
 export const sendCommand = (command: string) => {
-    console.warn(`[UYARI] Eski tip metin komutu gönderildi: ${command}. Yeni sistem binary protokolle çalışıyor!`);
+    // Gelen komutun başındaki/sonundaki gizli boşlukları veya \n karakterlerini temizle
+    const cleanCommand = command.trim();
+
+    if (cleanCommand === 'GET_PARAMS') {
+        sendBinaryCommand(CMD_GET_PARAMS);
+        return;
+    }
+
+    if (cleanCommand === 'SAVE_PARAMS') {
+        sendBinaryCommand(CMD_SAVE_PARAMS);
+        return;
+    }
+
+    if (cleanCommand.startsWith('APPLY_PID:')) {
+        const parts = cleanCommand.split(':');
+        const kp = parseFloat(parts[1]);
+        const ki = parseFloat(parts[2]);
+
+        const payload = Buffer.alloc(8);
+        payload.writeFloatLE(kp, 0);
+        payload.writeFloatLE(ki, 4);
+
+        sendBinaryCommand(CMD_SET_PID, payload);
+        console.log(`[STM32] Anlık PID Uygulandı: Kp=${kp}, Ki=${ki}`);
+        return;
+    }
+
+    console.warn(`[UYARI] Tanımsız metin komutu gönderildi: '${command}'`);
     if (port && port.isOpen) {
-        // Eski Ar-Ge paneli komutlarını yine de UART'a yazdırıyoruz
         port.write(`${command}\n`, (err) => {
             if (err) console.error('Metin komut gönderim hatası:', err.message);
         });

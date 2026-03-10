@@ -10,6 +10,9 @@ export interface OscillationSettings {
     angle: number;
     /** [YENİ] Bu adıma özel motor hızı (0-255). Belirtilmezse global hız kullanılır. */
     pwm?: number;
+    timeMs?: number;
+    accel?: number;
+    mode?: 'angle' | 'time';
 }
 /** Darbe modu için gerekli ayarları içerir. */
 export interface PulseSettings {
@@ -108,6 +111,10 @@ export interface ServerToClientEvents {
     'recipe_status_update': (status: RecipeStatus) => void;
     /** YENİ: Reçete listesi güncellendiğinde backend tarafından gönderilir. */
     'recipe_list_update': (recipes: Recipe[]) => void;
+    'recipe_error': (error: {
+        message: string;
+    }) => void;
+    'device_params_response': (params: string) => void;
 }
 /**
  * Arayüzden (İstemci) backend'e (Sunucu) gönderilecek Socket.IO
@@ -155,6 +162,11 @@ export interface ClientToServerEvents {
     'recipe_delete': (recipeId: string) => void;
     /** YENİ: Çalıştırılmak üzere seçilen aktif reçeteyi backend'e bildirir. */
     'set_active_recipe': (recipe: Recipe | null) => void;
+    /** PID parametrelerini (Kp, Ki) cihaza kalıcı olarak kaydetmek için gönderilir. */
+    'save_device_params': (params: {
+        kp: number | string;
+        ki: number | string;
+    }) => void;
 }
 export declare const ArduinoCommands: {
     readonly SYS_PING: "SYS.PING";

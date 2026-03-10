@@ -1,174 +1,346 @@
 // packages/frontend/src/views/HardwareTestLayout.tsx
 
-import { Container, Grid, Title, Button, Group, Stack, Slider, Text, Card, Badge } from '@mantine/core';
+import {useState, useEffect, useRef} from 'react';
+import { Container, Grid, Title, Button, Group, Stack, Slider, Text, Card, Badge, ActionIcon, NumberInput, Divider, SegmentedControl, Accordion, Code } from '@mantine/core';
+import { IconPlus, IconMinus, IconDeviceFloppy, IconAdjustmentsHorizontal, IconCpu, IconDownload, IconBolt } from '@tabler/icons-react';
 import { useControllerStore } from '../store/useControllerStore';
 import type {OperatingMode} from 'shared-types';
 import {socket} from '../services/socketService';
 
-// ===================================================================
-// Alt Bileşenler: Seçilen Moda Göre Değişen Dinamik Kontrol Kartları
-// ===================================================================
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title as ChartTitle, Tooltip, Legend, Filler } from 'chart.js';
+import { Line } from 'react-chartjs-2';
 
-const ContinuousControls = ({ motor, handleSetPwm }: any) => (
-    <Stack gap="xl" align="center" justify="center" h="100%">
-        <Title order={3} c="dimmed">Hedef Motor Hızı</Title>
-        <Text fz={64} fw={900} c="blue">{motor.pwm} RPM</Text>
-        <Slider
-            w="100%"
-            size="xl"
-            value={motor.pwm}
-            onChange={handleSetPwm}
-            min={0}
-            max={3000}
-            step={50}
-            marks={[{ value: 500, label: '500' }, { value: 1500, label: '1500' }, { value: 3000, label: '3000' }]}
-        />
-    </Stack>
-);
-
-const OscillationControls = ({ motor, oscillationSettings }: any) => (
-    <Stack gap="xl" align="center" justify="center" h="100%">
-        <Title order={3} c="dimmed">Osilasyon Ayarları</Title>
-        <Group grow w="100%">
-            <Card withBorder radius="md" p="xl" ta="center">
-                <Text size="lg" c="dimmed">Dönüş Açısı</Text>
-                <Text fz={48} fw={700} c="grape">{oscillationSettings.angle}°</Text>
-            </Card>
-            <Card withBorder radius="md" p="xl" ta="center">
-                <Text size="lg" c="dimmed">Maks RPM</Text>
-                <Text fz={48} fw={700} c="grape">{motor.pwm}</Text>
-            </Card>
-        </Group>
-        <Text size="sm" c="dimmed" mt="md">* Açı ayarları için arayüze ek bileşenler eklenebilir.</Text>
-    </Stack>
-);
-
-const PulseControls = ({ motor, pulseSettings }: any) => (
-    <Stack gap="xl" align="center" justify="center" h="100%">
-        <Title order={3} c="dimmed">Darbe (Punch) Ayarları</Title>
-        <Group grow w="100%">
-            <Card withBorder radius="md" p="xl" ta="center">
-                <Text size="lg" c="dimmed">Darbe Süresi</Text>
-                <Text fz={48} fw={700} c="orange">{pulseSettings.pulseDuration} ms</Text>
-            </Card>
-            <Card withBorder radius="md" p="xl" ta="center">
-                <Text size="lg" c="dimmed">Hedef Hız</Text>
-                <Text fz={48} fw={700} c="orange">{motor.pwm} RPM</Text>
-            </Card>
-        </Group>
-    </Stack>
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTitle, Tooltip, Legend, Filler);
 
 // ===================================================================
-// Ana Bileşen: Akıllı Klinik Düzen (Bento Box Tasarımı)
+// ALT BİLEŞEN: SÜREKLİ (CONTINUOUS) KONTROLLER
 // ===================================================================
+const ContinuousControls = ({ motor, handleSetPwm }: any) => {
+    const [localPwm, setLocalPwm] = useState(motor.pwm);
+    const lastEmitTime = useRef<number>(0);
 
+    useEffect(() => { setLocalPwm(motor.pwm); }, [motor.pwm]);
+
+    const stepChange = (amount: number) => {
+        const newVal = Math.max(0, Math.min(35000, localPwm + amount));
+        setLocalPwm(newVal);
+        handleSetPwm(newVal); // Sadece yeni hızı yollamak yeterli! Backend anında uygulayacak.
+    };
+
+    // Slider kaydırılırken pürüzsüz hız değişimi (150ms Throttling)
+    const handleSliderChange = (val: number) => {
+        setLocalPwm(val);
+        const now = Date.now();
+        if (now - lastEmitTime.current > 150) {
+            handleSetPwm(val);
+            lastEmitTime.current = now;
+        }
+    };
+
+    return (
+        <Stack gap="xl" align="center" justify="center" h="100%">
+            <Title order={3} c="dimmed">Hedef Motor Hızı</Title>
+            <Text fz={80} fw={900} c="blue" lh={1}>{localPwm.toLocaleString('tr-TR')} <Text span fz={24} c="dimmed">RPM</Text></Text>
+
+            <Group w="100%" wrap="nowrap" gap="md">
+                <ActionIcon size="xl" variant="light" color="blue" onClick={() => stepChange(-500)}>
+                    <IconMinus size={24} />
+                </ActionIcon>
+
+                <Slider
+                    style={{ flexGrow: 1 }}
+                    size="xl"
+                    value={localPwm}
+                    onChange={handleSliderChange}
+                    onChangeEnd={handleSetPwm} // Bırakıldığında son değeri kesinleştir
+                    min={0}
+                    max={35000}
+                    step={500}
+                    marks={[{ value: 10000, label: '10k' }, { value: 20000, label: '20k' }, { value: 30000, label: '30k' }]}
+                />
+
+                <ActionIcon size="xl" variant="light" color="blue" onClick={() => stepChange(500)}>
+                    <IconPlus size={24} />
+                </ActionIcon>
+            </Group>
+        </Stack>
+    );
+};
+
+// ===================================================================
+// ALT BİLEŞEN: ÇİFT MODLU OSİLASYON KONTROLLERİ
+// ===================================================================
+const OscillationControls = ({ motor, oscillationSettings, handleSetPwm, handleSetOscillation }: any) => {
+    const isTimeMode = oscillationSettings.mode === 'time';
+
+    return (
+        <Stack gap="xl" align="stretch" justify="center" h="100%">
+            <Title order={3} c="dimmed" ta="center">Osilasyon Ayarları</Title>
+
+            <SegmentedControl
+                value={oscillationSettings.mode || 'angle'}
+                onChange={(val) => handleSetOscillation({ mode: val })}
+                data={[
+                    { label: 'Açı Odaklı (Angle)', value: 'angle' },
+                    { label: 'Süre Odaklı (Time)', value: 'time' },
+                ]}
+                size="lg"
+                color="grape"
+            />
+
+            <Grid gutter="md">
+                {isTimeMode ? (
+                    <Grid.Col span={4}>
+                        <NumberInput label="Süre (ms)" value={oscillationSettings.timeMs || 500} onChange={(val) => handleSetOscillation({ timeMs: Number(val) })} min={10} max={10000} step={50} size="lg"/>
+                    </Grid.Col>
+                ) : (
+                    <Grid.Col span={4}>
+                        <NumberInput label="Dönüş Açısı (°)" value={oscillationSettings.angle} onChange={(val) => handleSetOscillation({ angle: Number(val) })} min={180} max={10000} step={15} size="lg"/>
+                    </Grid.Col>
+                )}
+                <Grid.Col span={4}>
+                    <NumberInput label="Maksimum Hız (RPM)" value={motor.pwm} onChange={(val) => handleSetPwm(Number(val))} min={100} max={35000} step={500} size="lg"/>
+                </Grid.Col>
+                <Grid.Col span={4}>
+                    {/* İvmelenme limiti 1.000.000'a çıkarıldı */}
+                    <NumberInput label="İvmelenme (Accel)" value={oscillationSettings.accel || 50000} onChange={(val) => handleSetOscillation({ accel: Number(val) })} min={100} max={1000000} step={5000} size="lg"/>
+                </Grid.Col>
+            </Grid>
+        </Stack>
+    );
+};
+
+// ===================================================================
+// ALT BİLEŞEN: DİNAMİK TELEMETRİ GRAFİĞİ
+// ===================================================================
+const TelemetryChart = ({ motor }: any) => {
+    const [dataPoints, setDataPoints] = useState<number[]>(Array(20).fill(0));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDataPoints(prev => {
+                const newData = [...prev.slice(1)];
+                const rpm = motor.isActive ? motor.pwm + (Math.random() * 200 - 100) : 0;
+                newData.push(rpm);
+                return newData;
+            });
+        }, 200);
+        return () => clearInterval(interval);
+    }, [motor.isActive, motor.pwm]);
+
+    const data = {
+        labels: Array(20).fill(''),
+        datasets: [{
+            label: 'Encoder Anlık RPM',
+            data: dataPoints,
+            borderColor: motor.isActive ? '#40c057' : '#ced4da',
+            backgroundColor: motor.isActive ? 'rgba(64, 192, 87, 0.1)' : 'transparent',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+        }]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        scales: {
+            y: { min: 0, suggestedMax: 5000 },
+            x: { display: false }
+        },
+        plugins: { legend: { display: false } }
+    };
+
+    return (
+        <Card withBorder radius="md" h={200} p="sm">
+            <Text size="sm" c="dimmed" mb="xs">Gerçek Zamanlı Telemetri Grafiği</Text>
+            <div style={{ height: '150px' }}>
+                <Line data={data} options={options} />
+            </div>
+        </Card>
+    );
+};
+
+// ===================================================================
+// ANA BİLEŞEN
+// ===================================================================
 export function HardwareTestLayout() {
     const motor = useControllerStore((state) => state.motor);
     const operatingMode = useControllerStore((state) => state.operatingMode);
     const oscillationSettings = useControllerStore((state) => state.oscillationSettings);
-    const pulseSettings = useControllerStore((state) => state.pulseSettings);
+    const setOscillationSettings = useControllerStore((state) => state.setOscillationSettings);
+
+    const [kp, setKp] = useState<number | string>(1.5);
+    const [ki, setKi] = useState<number | string>(0.05);
+    const [rawParams, setRawParams] = useState<string>("Cihazdan henüz veri çekilmedi.");
+
+    useEffect(() => {
+        socket.on('device_params_response', (data: string) => {
+            setRawParams(data);
+        });
+        return () => {
+            socket.off('device_params_response');
+        };
+    }, []);
 
     const handleStartMotor = () => socket.emit('start_motor');
     const handleStopMotor = () => socket.emit('stop_motor');
     const handleSetPwm = (value: number) => socket.emit('set_motor_pwm', value);
     const handleSetOperatingMode = (mode: OperatingMode) => socket.emit('set_operating_mode', mode);
 
-    // Modlara göre renk ve ikon/stil haritası
+    const handleSetOscillation = (settings: any) => {
+        setOscillationSettings(settings);
+        socket.emit('set_oscillation_settings', settings);
+    };
+
+    // Yeni PID Hack Komutları
+    const handleApplyParams = () => {
+        socket.emit('send_raw_command', `APPLY_PID:${kp}:${ki}`);
+    };
+
+    const handleSaveParams = () => {
+        // 1. Önce değerleri cihaza anlık olarak uygula (RAM'e yaz)
+        socket.emit('send_raw_command', `APPLY_PID:${kp}:${ki}`);
+
+        // 2. 200ms sonra (RAM güncellendikten sonra) Flaşa kaydet komutunu yolla
+        setTimeout(() => {
+            socket.emit('send_raw_command', 'SAVE_PARAMS');
+
+            // 3. 200ms daha bekleyip cihazın güncel verilerini ekrana geri çek (Teyit için)
+            setTimeout(() => {
+                socket.emit('send_raw_command', 'GET_PARAMS');
+            }, 200);
+        }, 200);
+    };
+
+    const handleGetParams = () => {
+        socket.emit('send_raw_command', 'GET_PARAMS');
+    };
+
     const modeColors: Record<string, string> = {
-        continuous: 'blue',
-        oscillation: 'grape',
-        pulse: 'orange',
-        vibration: 'teal'
+        continuous: 'blue', oscillation: 'grape', pulse: 'orange', vibration: 'teal'
     };
 
     return (
-        <Container fluid p="xl" h="100vh">
-            <Stack h="100%" gap="lg">
+        <Container fluid p="xl" h="100vh"  style={{ display: 'flex', flexDirection: 'column' }}>
+            <Group justify="space-between" align="center" mb="lg">
+                <div>
+                    <Title order={1}>Ar-Ge & Kalibrasyon Terminali</Title>
+                    <Text c="dimmed">Binary Protocol (0xAA 0x55) İletişim Arayüzü</Text>
+                </div>
+                <Badge color={motor.isActive ? 'green' : 'red'} size="xl" variant="filled" p="lg">
+                    {motor.isActive ? 'MOTOR AKTİF' : 'BEKLEMEDE'}
+                </Badge>
+            </Group>
 
-                {/* ÜST BİLGİ ÇUBUĞU */}
-                <Group justify="space-between" align="center">
-                    <Title order={1}>Klinik Operasyon Paneli</Title>
-                    <Badge
-                        color={motor.isActive ? 'green' : 'red'}
-                        size="xl"
-                        variant="dot"
-                        p="lg"
-                    >
-                        {motor.isActive ? 'SİSTEM AKTİF - MOTOR DÖNÜYOR' : 'SİSTEM BEKLEMEDE'}
-                    </Badge>
-                </Group>
+            <Grid gutter="lg" style={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Grid.Col span={3}>
+                    <Card shadow="sm" radius="lg" withBorder h="100%">
+                        <Stack gap="md" h="100%">
+                            <Title order={4} mb="sm" ta="center">Çalışma Modu</Title>
+                            {(['continuous', 'oscillation', 'pulse', 'vibration'] as OperatingMode[]).map((mode) => (
+                                <Button
+                                    key={mode} size="xl" h={70}
+                                    variant={operatingMode === mode ? 'filled' : 'light'}
+                                    color={modeColors[mode]}
+                                    onClick={() => handleSetOperatingMode(mode)}
+                                    style={{ fontSize: '1.2rem' }}
+                                >
+                                    {mode.toUpperCase()}
+                                </Button>
+                            ))}
+                        </Stack>
+                    </Card>
+                </Grid.Col>
 
-                {/* ANA IZGARA (GRID) */}
-                <Grid gutter="lg" style={{ flexGrow: 1 }}>
-
-                    {/* SOL KOLON: ÇALIŞMA MODLARI (Dokunmatik büyük butonlar) */}
-                    <Grid.Col span={3}>
-                        <Card shadow="sm" radius="lg" withBorder h="100%">
-                            <Stack gap="md" h="100%">
-                                <Title order={4} mb="md" ta="center">Çalışma Modu</Title>
-                                {(['continuous', 'oscillation', 'pulse', 'vibration'] as OperatingMode[]).map((mode) => (
-                                    <Button
-                                        key={mode}
-                                        size="xl"
-                                        h={80}
-                                        variant={operatingMode === mode ? 'filled' : 'light'}
-                                        color={modeColors[mode]}
-                                        onClick={() => handleSetOperatingMode(mode)}
-                                        style={{ fontSize: '1.2rem' }}
-                                    >
-                                        {mode.toUpperCase()}
-                                    </Button>
-                                ))}
-                            </Stack>
-                        </Card>
-                    </Grid.Col>
-
-                    {/* ORTA KOLON: DİNAMİK KONTROLLER (Seçilen moda göre değişir) */}
-                    <Grid.Col span={6}>
-                        <Card shadow="md" radius="lg" withBorder h="100%" >
-                            {operatingMode === 'continuous' && <ContinuousControls motor={motor} handleSetPwm={handleSetPwm} />}
-                            {operatingMode === 'oscillation' && <OscillationControls motor={motor} oscillationSettings={oscillationSettings} />}
-                            {operatingMode === 'pulse' && <PulseControls motor={motor} pulseSettings={pulseSettings} />}
-                            {operatingMode === 'vibration' && (
+                <Grid.Col span={6}>
+                    <Stack h="100%" gap="lg">
+                        <Card shadow="md" radius="lg" withBorder style={{ flexGrow: 1 }}>
+                            {operatingMode === 'continuous' && (
+                                <ContinuousControls
+                                    motor={motor}
+                                    handleSetPwm={handleSetPwm}
+                                    handleStartMotor={handleStartMotor}
+                                    handleStopMotor={handleStopMotor} // YENİ EKLENEN PROP
+                                />
+                            )}
+                            {operatingMode === 'oscillation' && <OscillationControls motor={motor} oscillationSettings={oscillationSettings} handleSetPwm={handleSetPwm} handleSetOscillation={handleSetOscillation}/>}
+                            {(operatingMode === 'pulse' || operatingMode === 'vibration') && (
                                 <Stack align="center" justify="center" h="100%">
-                                    <Title order={2} c="teal">Titreşim Modu Aktif</Title>
-                                    <Text size="lg" c="dimmed">Titreşim yoğunluğu doğrudan hedeflenen RPM üzerinden hesaplanmaktadır.</Text>
+                                    <Title order={3} c="dimmed">{operatingMode.toUpperCase()} Modu Geliştirme Aşamasında</Title>
                                 </Stack>
                             )}
                         </Card>
-                    </Grid.Col>
 
-                    {/* SAĞ KOLON: ANA AKSİYONLAR (Dev Başlat/Durdur Butonları) */}
-                    <Grid.Col span={3}>
-                        <Card shadow="sm" radius="lg" withBorder h="100%">
-                            <Stack justify="center" gap="xl" h="100%">
+                        <TelemetryChart motor={motor} />
+                    </Stack>
+                </Grid.Col>
+
+                <Grid.Col span={3}>
+                    <Stack h="100%" gap="lg">
+                        <Card shadow="sm" radius="lg" withBorder style={{ flexGrow: 1 }}>
+                            <Stack justify="center" gap="md" h="100%">
                                 <Button
-                                    color="green"
-                                    radius="md"
-                                    h={150}
-                                    style={{ fontSize: '2rem' }}
-                                    onClick={handleStartMotor}
-                                    disabled={motor.isActive}
+                                    color="green" radius="md" h={120} style={{ fontSize: '2rem' }}
+                                    onClick={handleStartMotor} disabled={motor.isActive}
                                 >
                                     BAŞLAT
                                 </Button>
                                 <Button
-                                    color="red"
-                                    radius="md"
-                                    h={150}
-                                    style={{ fontSize: '2rem' }}
-                                    onClick={handleStopMotor}
-                                    disabled={!motor.isActive}
+                                    color="red" radius="md" h={120} style={{ fontSize: '2rem' }}
+                                    onClick={handleStopMotor} disabled={!motor.isActive}
                                 >
                                     DURDUR
                                 </Button>
                             </Stack>
                         </Card>
-                    </Grid.Col>
 
-                </Grid>
-            </Stack>
+                        <Card shadow="sm" radius="lg" withBorder>
+                            <Group mb="sm">
+                                <IconAdjustmentsHorizontal size={20} color="gray" />
+                                <Title order={5} c="dimmed">PID Parametreleri</Title>
+                            </Group>
+                            <Divider mb="sm" />
+                            <Grid gutter="xs">
+                                <Grid.Col span={6}>
+                                    <NumberInput label="Kp" value={kp} onChange={setKp} step={0.1} decimalScale={2} />
+                                </Grid.Col>
+                                <Grid.Col span={6}>
+                                    <NumberInput label="Ki" value={ki} onChange={setKi} step={0.01} decimalScale={2} />
+                                </Grid.Col>
+                            </Grid>
+
+                            {/* İKİ ADET PID UYGULAMA BUTONU */}
+                            <Group grow mt="md">
+                                <Button variant="light" color="orange" leftSection={<IconBolt size={18} />} onClick={handleApplyParams}>
+                                    Anlık Uygula
+                                </Button>
+                                <Button variant="light" color="blue" leftSection={<IconDeviceFloppy size={18} />} onClick={handleSaveParams}>
+                                    Flaşa Kaydet
+                                </Button>
+                            </Group>
+
+                        </Card>
+                    </Stack>
+                </Grid.Col>
+            </Grid>
+
+            <Accordion variant="separated" mt="lg">
+                <Accordion.Item value="params">
+                    <Accordion.Control icon={<IconCpu size={20} color="gray" />}>
+                        <Text fw={500}>Gelişmiş Cihaz Parametreleri (Makineden Oku)</Text>
+                    </Accordion.Control>
+                    <Accordion.Panel>
+                        <Group mb="md">
+                            <Button variant="light" leftSection={<IconDownload size={16}/>} onClick={handleGetParams}>
+                                Cihazdan Veri Çek
+                            </Button>
+                        </Group>
+                        <Code block color="gray">{rawParams}</Code>
+                    </Accordion.Panel>
+                </Accordion.Item>
+            </Accordion>
         </Container>
     );
 }
