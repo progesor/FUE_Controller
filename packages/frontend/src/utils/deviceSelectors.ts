@@ -14,9 +14,9 @@ export const selectEffectivePwm = (s: DeviceStatus) => {
         case 'oscillation':
             return s.oscillationSettings.pwm ?? s.motor.pwm;
         case 'pulse':
-            return s.pulseSettings.pwm ?? s.motor.pwm;
+            return s.pulseSettings.baseRpm ?? s.motor.pwm;
         case 'vibration':
-            return s.vibrationSettings.intensity ?? s.motor.pwm;
+            return s.vibrationSettings.rpm ?? s.motor.pwm;
         case 'continuous':
         default:
             return s.continuousSettings.pwm ?? s.motor.pwm;

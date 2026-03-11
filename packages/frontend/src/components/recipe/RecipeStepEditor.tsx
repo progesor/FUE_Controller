@@ -55,9 +55,9 @@ const getDefaultSettingsForMode = (mode: OperatingMode): Partial<AllModeSettings
         case 'oscillation':
             return { angle: 180 };
         case 'pulse':
-            return { pulseDuration: 100, pulseDelay: 500 };
+            return { pulseDuration: 100, pulseInterval: 500 };
         case 'vibration':
-            return { intensity: 100, frequency: 5 };
+            return { rpm: 100, timeMs: 5 };
         default:
             return {};
     }

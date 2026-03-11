@@ -230,7 +230,7 @@ const PIDSettingsPanel = () => {
 // ===================================================================
 // BİLEŞEN 5: VIBRATION (TİTREŞİM) KONTROLLERİ
 // ===================================================================
-const VibrationModePanel = ({ vibrationSettings, handleSetVibration }: any) => {
+const VibrationModePanel = ({ vibrationSettings }: any) => {
     const [timeMs, setTimeMs] = useState<number>(vibrationSettings?.timeMs || 20);
     const [rpm, setRpm] = useState<number>(vibrationSettings?.rpm || 3000);
     const [accel, setAccel] = useState<number>(vibrationSettings?.accel || 100000);
@@ -264,7 +264,7 @@ const VibrationModePanel = ({ vibrationSettings, handleSetVibration }: any) => {
 // ===================================================================
 // BİLEŞEN 6: PULSE (DARBE) KONTROLLERİ
 // ===================================================================
-const PulseModePanel = ({ pulseSettings, handleSetPulse }: any) => {
+const PulseModePanel = ({ pulseSettings }: any) => {
     const [baseRpm, setBaseRpm] = useState<number>(pulseSettings?.baseRpm || 1000);
     const [pulseRpm, setPulseRpm] = useState<number>(pulseSettings?.pulseRpm || 8000);
     const [pulseDuration, setPulseDuration] = useState<number>(pulseSettings?.pulseDuration || 100);

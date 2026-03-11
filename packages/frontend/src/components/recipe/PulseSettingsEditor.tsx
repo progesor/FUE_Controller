@@ -16,12 +16,12 @@ export function PulseSettingsEditor({ settings, onChange }: PulseSettingsEditorP
     };
 
     // --- RPM Slider Mantığı ---
-    const currentPwm = settings.pwm ?? 100;
+    const currentPwm = settings.baseRpm ?? 100;
     const currentRpmMarkIndex = findClosestMarkIndex(currentPwm);
     const handleRpmSliderChange = (markIndex: number) => {
         const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
         if (selectedMark) {
-            handleSettingChange({ pwm: selectedMark.pwm });
+            handleSettingChange({ baseRpm: selectedMark.pwm });
         }
     };
 
@@ -54,8 +54,8 @@ export function PulseSettingsEditor({ settings, onChange }: PulseSettingsEditorP
                 />
                 <NumberInput
                     label="Bekleme (ms)"
-                    value={settings.pulseDelay || 500}
-                    onChange={(val) => handleSettingChange({ pulseDelay: Number(val) || 0 })}
+                    value={settings.pulseInterval || 500}
+                    onChange={(val) => handleSettingChange({ pulseInterval: Number(val) || 0 })}
                     min={50}
                     max={2000}
                 />

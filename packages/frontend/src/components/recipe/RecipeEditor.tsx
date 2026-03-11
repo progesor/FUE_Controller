@@ -54,7 +54,7 @@ export function RecipeEditor({ initialRecipe, onSave, onCancel }: RecipeEditorPr
             id: uuidv4(),
             mode: 'pulse',
             duration: 1000,
-            settings: { pulseDuration: 150, pulseDelay: 300 }
+            settings: { pulseDuration: 150, pulseInterval: 300 }
         };
         setSteps(currentSteps => [...currentSteps, newStep]);
     };

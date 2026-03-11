@@ -34,8 +34,8 @@ export function VibrationSettingsEditor({ settings, onChange }: VibrationSetting
             <Stack gap="xs" style={{ flex: 1 }}>
                 <Text fz="sm" fw={500}>Yoğunluk</Text>
                 <Slider
-                    value={pwmToPercentage(settings.intensity || 100)}
-                    onChange={(val) => handleSettingChange('intensity', percentageToPwm(val))}
+                    value={pwmToPercentage(settings.rpm || 100)}
+                    onChange={(val) => handleSettingChange('rpm', percentageToPwm(val))}
                     min={0}
                     max={100}
                     label={(val) => `% ${val}`}
@@ -44,8 +44,8 @@ export function VibrationSettingsEditor({ settings, onChange }: VibrationSetting
             <Stack gap="xs" style={{ flex: 1 }}>
                 <Text fz="sm" fw={500}>Frekans</Text>
                 <Slider
-                    value={settings.frequency || 5}
-                    onChange={(val) => handleSettingChange('frequency', val)}
+                    value={settings.timeMs || 5}
+                    onChange={(val) => handleSettingChange('timeMs', val)}
                     min={1}
                     max={10}
                     label={(val) => `Seviye ${val}`}

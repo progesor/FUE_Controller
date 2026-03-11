@@ -140,9 +140,9 @@ export function ManualSettings() {
                     </Stack>
                     <Stack gap="xs">
                         <Text fw={500}>Darbeler Arası Bekleme</Text>
-                        <Text fz={32} fw={700}>{pulseSettings.pulseDelay} ms</Text>
+                        <Text fz={32} fw={700}>{pulseSettings.pulseInterval} ms</Text>
                         <Slider
-                            value={pulseSettings.pulseDelay}
+                            value={pulseSettings.pulseInterval}
                             // onChange kullanıyoruz
                             onChange={handlePulseDelayChange}
                             min={50}
@@ -159,10 +159,10 @@ export function ManualSettings() {
                     <Stack gap="xs">
                         <Text fw={500}>Titreşim Yoğunluğu</Text>
                         {/* Gösterilen değeri yeni fonksiyonla yüzdeye çeviriyoruz */}
-                        <Text fz={32} fw={700}>% {pwmToPercentage(vibrationSettings.intensity)}</Text>
+                        <Text fz={32} fw={700}>% {pwmToPercentage(vibrationSettings.rpm)}</Text>
                         <Slider
                             // Slider'ın değeri de yüzde olmalı
-                            value={pwmToPercentage(vibrationSettings.intensity)}
+                            value={pwmToPercentage(vibrationSettings.rpm)}
                             // onChange artık yüzde değeriyle çalışıyor
                             onChange={handleVibrationIntensityChange}
                             min={0}
@@ -175,9 +175,9 @@ export function ManualSettings() {
                     {/* Frekans Slider'ı (Aynı kalıyor) */}
                     <Stack gap="xs">
                         <Text fw={500}>Titreşim Frekansı</Text>
-                        <Text fz={32} fw={700}>Seviye {vibrationSettings.frequency}</Text>
+                        <Text fz={32} fw={700}>Seviye {vibrationSettings.timeMs}</Text>
                         <Slider
-                            value={vibrationSettings.frequency}
+                            value={vibrationSettings.timeMs}
                             onChange={handleVibrationFrequencyChange}
                             min={1}
                             max={10}

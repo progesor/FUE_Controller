@@ -8,12 +8,12 @@ interface LogSummaryProps {
     data: DeviceStatus;
 }
 
-const pwmToPercentage = (pwm: number) => {
-    const MIN_PWM = 50;
-    const MAX_PWM = 255;
-    if (pwm < MIN_PWM) return 0;
-    return Math.round(((pwm - MIN_PWM) / (MAX_PWM - MIN_PWM)) * 100);
-};
+// const pwmToPercentage = (pwm: number) => {
+//     const MIN_PWM = 50;
+//     const MAX_PWM = 255;
+//     if (pwm < MIN_PWM) return 0;
+//     return Math.round(((pwm - MIN_PWM) / (MAX_PWM - MIN_PWM)) * 100);
+// };
 
 /**
  * Modun türüne göre uygun renk ve ikonu döndüren bir yardımcı fonksiyon.
@@ -59,8 +59,8 @@ const ModeDetails = ({ data }: { data: DeviceStatus }) => {
             <Divider />
             { operatingMode === 'continuous' && renderDetail('Rampa Süresi:', `${continuousSettings.rampDuration}ms`) }
             { operatingMode === 'oscillation' && renderDetail('Açı:', `${oscillationSettings.angle}°`) }
-            { operatingMode === 'pulse' && renderDetail('Darbe/Bekleme:', `${pulseSettings.pulseDuration}ms / ${pulseSettings.pulseDelay}ms`) }
-            { operatingMode === 'vibration' && renderDetail('Yoğunluk/Frekans:', `%${pwmToPercentage(vibrationSettings.intensity)} / Sviye ${vibrationSettings.frequency}`) }
+            { operatingMode === 'pulse' && renderDetail('Darbe/Aralık:', `${pulseSettings.pulseDuration}ms / ${pulseSettings.pulseInterval}ms`) }
+            { operatingMode === 'vibration' && renderDetail('Titreşim (Hız/Süre):', `${vibrationSettings.rpm} RPM / ${vibrationSettings.timeMs} ms`) }
         </Box>
     );
 };
