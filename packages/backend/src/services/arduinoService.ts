@@ -48,7 +48,7 @@ export const setActiveRecipe = (recipe: Recipe | null) => {
 let deviceStatus: DeviceStatus = {
     motor: { isActive: false, pwm: 1000, direction: 0 },
     operatingMode: 'continuous',
-    oscillationSettings: { angle: 180, mode: 'angle', timeMs: 500, accel: 5000 },
+    oscillationSettings: { angle: 180, mode: 'angle', timeMs: 500, accel: 35000 },
     pulseSettings: { baseRpm: 1000, pulseRpm: 5000, pulseDuration: 100, pulseInterval: 1000 },
     vibrationSettings: { timeMs: 20, rpm: 3000, accel: 100000 },
     continuousSettings: { rampDuration: 0 },
