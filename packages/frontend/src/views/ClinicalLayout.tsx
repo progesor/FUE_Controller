@@ -1,6 +1,7 @@
 // packages/frontend/src/views/ClinicalLayout.tsx
 
-import { Box, Stack, Group, Text } from '@mantine/core';
+import { useState } from 'react';
+import { Box, Stack, Group, Text, SegmentedControl, Tooltip } from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
 import { Gauge } from "../components/clinical/Gauge.tsx";
 import { VALID_ANGLES } from "../config/calibration.ts";
@@ -13,82 +14,108 @@ import cx from 'clsx';
 import { TissueHardnessChartBar } from "../components/clinical/TissueHardnessChartBar.tsx";
 import { LayoutSwitchButton } from "../components/common/LayoutSwitchButton.tsx";
 
-// Maksimum donanım limitleri (Artık kalibrasyon tablosu yok, doğrudan gerçek veriler)
+// ==========================================
+// SABİTLER VE LİMİTLER
+// ==========================================
 const MAX_RPM = 35000;
-const RPM_STEP = 500; // + ve - butonlarına basıldığında atlanacak RPM miktarı
-const DEFAULT_ACCEL = 30000; // Klinik ekranından osilasyon değiştirildiğinde varsayılan sertlik
+const RPM_STEP = 500;
+const MAX_ACCEL = 50000; // Güvenlik sınırı: 50.000'i geçmeyecek
 const MAX_OSC_ANGLE = VALID_ANGLES[VALID_ANGLES.length - 1] || 600;
 
 export function ClinicalLayout() {
     const { motor, oscillationSettings, setMotorStatus, setOscillationSettings } = useControllerStore();
 
+    // UI için yerel osilasyon mod durumu (Hassas = Angle, Kuvvetli = Time)
+    const [oscModeUI, setOscModeUI] = useState<'hassas' | 'kuvvetli'>('hassas');
+
     // ==========================================
-    // RPM KONTROLLERİ (DOĞRUDAN DEVİR)
+    // RPM KONTROLLERİ
     // ==========================================
     const handleIncrementRpm = () => {
-        // Hedef hızı RPM_STEP kadar artır, MAX_RPM'i geçme
         const newVal = Math.min(MAX_RPM, motor.pwm + RPM_STEP);
         setMotorStatus({ pwm: newVal });
         sendMotorPwm(newVal);
     };
 
     const handleDecrementRpm = () => {
-        // Hedef hızı RPM_STEP kadar azalt, 0'ın altına düşme
         const newVal = Math.max(0, motor.pwm - RPM_STEP);
         setMotorStatus({ pwm: newVal });
         sendMotorPwm(newVal);
     };
 
     const handleRpmSliderChange = (sliderValue: number) => {
-        // Kullanıcı slider'ı sürüklediğinde gelen hassas değeri doğrudan uygula
         setMotorStatus({ pwm: sliderValue });
         sendMotorPwm(sliderValue);
     };
 
     // ==========================================
-    // OSİLASYON (AÇI) KONTROLLERİ
+    // OSİLASYON (AÇI VE SÜRE) KONTROLLERİ
     // ==========================================
     const handleIncrementAngle = () => {
-        // Butonlarda hala VALID_ANGLES dizisini kullanarak standart açılara zıplıyoruz
         const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
         const nextIndex = Math.min(VALID_ANGLES.length - 1, currentIndex !== -1 ? currentIndex + 1 : 0);
-        const newAngle = VALID_ANGLES[nextIndex];
-
-        applyOscillationAngle(newAngle);
+        applyOscillation(VALID_ANGLES[nextIndex], oscModeUI);
     };
 
     const handleDecrementAngle = () => {
         const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
         const prevIndex = Math.max(0, currentIndex !== -1 ? currentIndex - 1 : 0);
-        const newAngle = VALID_ANGLES[prevIndex];
-
-        applyOscillationAngle(newAngle);
+        applyOscillation(VALID_ANGLES[prevIndex], oscModeUI);
     };
 
     const handleAngleSliderChange = (sliderValue: number) => {
-        // Sürüklemede en yakın VALID_ANGLE değerine yapıştır (İstersen bunu kaldırıp serbest bırakabilirsin)
         const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
             Math.abs(curr - sliderValue) < Math.abs(prev - sliderValue) ? curr : prev
         );
-        applyOscillationAngle(closestAngle);
+        applyOscillation(closestAngle, oscModeUI);
     };
 
-    // Osilasyon komutunu arka planda her zaman Açı modu ve Sabit İvme ile gönderen yardımcı fonksiyon
-    const applyOscillationAngle = (newAngle: number) => {
-        const newSettings = {
-            ...oscillationSettings,
-            mode: 'angle' as const,
-            angle: newAngle,
-            accel: DEFAULT_ACCEL
-        };
-        setOscillationSettings(newSettings);
-        sendOscillationSettings(newSettings);
+    // 180°-600° aralığını, 50ms-500ms aralığına dönüştüren matematiksel oranlayıcı
+    const getMappedTimeMs = (angle: number) => {
+        const minAngle = VALID_ANGLES[0]; // 180
+        const maxAngle = VALID_ANGLES[VALID_ANGLES.length - 1] || 600; // 600
+        const minTime = 50;
+        const maxTime = 500;
+
+        return Math.round(minTime + ((angle - minAngle) / (maxAngle - minAngle)) * (maxTime - minTime));
+    };
+
+    // Mod değiştiğinde (Hassas <-> Kuvvetli) mevcut açıyı yeni kurallarla donanıma gönder
+    const handleModeSwitch = (newMode: 'hassas' | 'kuvvetli') => {
+        setOscModeUI(newMode);
+        applyOscillation(oscillationSettings.angle, newMode);
+    };
+
+    /**
+     * Ortak Osilasyon Uygulayıcı:
+     * UI'da her zaman Açı (Derece) görünür. Ancak donanıma giden veri seçilen moda göre değişir.
+     */
+    const applyOscillation = (targetAngle: number, activeMode: 'hassas' | 'kuvvetli') => {
+        setOscillationSettings({ ...oscillationSettings, angle: targetAngle });
+
+        if (activeMode === 'hassas') {
+            sendOscillationSettings({
+                mode: 'angle',
+                angle: targetAngle,
+                accel: MAX_ACCEL
+            });
+        } else {
+            // KUVVETLİ (Powerful) MOD: Yeni orantı fonksiyonumuzu kullanıyoruz
+            const calculatedTimeMs = getMappedTimeMs(targetAngle);
+
+            sendOscillationSettings({
+                mode: 'time',
+                timeMs: calculatedTimeMs,
+                accel: MAX_ACCEL,
+                angle: 0
+            });
+        }
     };
 
     // ==========================================
     // ORTAK KONTROLLER
     // ==========================================
-    const handleLogoDoubleClick = () => {
+    const handleLogoClick = () => {
         if (motor.isActive) {
             sendStopMotor();
         } else {
@@ -96,7 +123,6 @@ export function ClinicalLayout() {
         }
     };
 
-    // Grafik bar için yüzdelik hesaplama
     const oscPercent = Math.round((Math.max(0, oscillationSettings.angle) / MAX_OSC_ANGLE) * 100);
 
     return (
@@ -108,7 +134,7 @@ export function ClinicalLayout() {
                 <Group justify="center" align="center" w="100%" className={classes.centerGroup}>
 
                     <Gauge
-                        value={motor.pwm} // Artık motor.pwm doğrudan RPM'i temsil ediyor
+                        value={motor.pwm}
                         maxValue={MAX_RPM}
                         step={RPM_STEP}
                         label="RPM"
@@ -122,34 +148,56 @@ export function ClinicalLayout() {
                     <Stack align="center" mx="xl" className={classes.logoWrap}>
                         <ErtipLogo
                             className={cx(classes.logo, { [classes.logoActive]: motor.isActive })}
-                            onClick={handleLogoDoubleClick}
+                            onClick={handleLogoClick}
                             width="300"
+                            style={{ cursor: 'pointer' }}
                         />
                         <Box className={classes.centerGraphic}>
-                            <Text className={classes.welcomeText}>Welcome</Text>
-                            <Text className={classes.doctorName}>Dr. John Doe</Text>
+                            <Text className={classes.welcomeText}>Hoş geldiniz</Text>
+                            <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
                         </Box>
 
                         <Stack align="center" mt={8} mb={-200}>
                             <TissueHardnessChartBar
                                 isRunning={motor.isActive}
-                                rpm={motor.pwm} // Grafiğe de gerçek RPM'i veriyoruz
+                                rpm={motor.pwm}
                                 oscillation={oscPercent}
                             />
                         </Stack>
                     </Stack>
 
-                    <Gauge
-                        value={oscillationSettings.angle}
-                        maxValue={MAX_OSC_ANGLE}
-                        label="Oscillation"
-                        subLabel="°" // Yüzde (%) yerine Derece işareti (°) koymak daha mantıklı olabilir
-                        mirror={true}
-                        onIncrement={handleIncrementAngle}
-                        onDecrement={handleDecrementAngle}
-                        onChange={handleAngleSliderChange}
-                        onSliderChange={handleAngleSliderChange}
-                    />
+                    {/* SAĞ KADRAN (OSİLASYON) VE MOD SEÇİCİ */}
+                    <Stack align="center" gap="xs">
+                        {/* YENİ: Hassas / Kuvvetli Mod Seçici */}
+                        <Tooltip label={oscModeUI === 'hassas' ? "Motor açıya odaklanır." : `Motor süreye odaklanır (Tam ${getMappedTimeMs(oscillationSettings.angle)}ms vuruş süresi).`} position="top" withArrow>
+                            <SegmentedControl
+                                value={oscModeUI}
+                                onChange={(val) => handleModeSwitch(val as 'hassas' | 'kuvvetli')}
+                                data={[
+                                    { label: 'Hassas (Sensitive)', value: 'hassas' },
+                                    { label: 'Kuvvetli (Powerful)', value: 'kuvvetli' }
+                                ]}
+                                size="sm"
+                                color="grape"
+                                radius="xl"
+                                style={{ marginBottom: '-10px', zIndex: 10 }}
+                            />
+                        </Tooltip>
+
+                        <Gauge
+                            value={oscillationSettings.angle}
+                            maxValue={MAX_OSC_ANGLE}
+                            step={15}
+                            label="Oscillation"
+                            subLabel="°"
+                            mirror={true}
+                            onIncrement={handleIncrementAngle}
+                            onDecrement={handleDecrementAngle}
+                            onChange={handleAngleSliderChange}
+                            onSliderChange={handleAngleSliderChange}
+                        />
+                    </Stack>
+
                 </Group>
 
                 <Stack align="center" gap="md">
