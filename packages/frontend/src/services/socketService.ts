@@ -145,14 +145,17 @@ export const listenToEvents = () => {
 // eylemlerini backend'e iletir. Her fonksiyon, belirli bir Socket.IO
 // olayını (`emit`) tetikler.
 
-/** Motorun PWM hızını backend'e gönderir. */
+/** Motorun PWM/RPM hızını backend'e gönderir. */
 export const sendMotorPwm = (value: number) => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+    store.startIgnoringStatusUpdates(); // YENİ EKLENDİ: Geri sekmeyi (bouncing) engeller
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: set_motor_pwm`,
         data:{value},
-    })
+    });
     socket.emit('set_motor_pwm', value);
 }
 
@@ -202,23 +205,29 @@ export const sendStartOscillation = (options: { pwm: number, angle: number, rpm:
 
 /** Çalışma modunu (sürekli/osilasyon) değiştirme komutu gönderir. */
 export const sendOperatingMode = (mode: OperatingMode) => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+    store.startIgnoringStatusUpdates(); // YENİ EKLENDİ
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: set_operating_mode`,
         data:{mode},
-    })
+    });
     socket.emit('set_operating_mode', mode);
 }
 
 /** Osilasyon ayarlarını (açı gibi) değiştirme komutu gönderir. */
 export const sendOscillationSettings = (settings: OscillationSettings) => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+    store.startIgnoringStatusUpdates(); // YENİ EKLENDİ
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: set_oscillation_settings`,
         data: settings,
-    })
+    });
     socket.emit('set_oscillation_settings', settings);
 }
 
