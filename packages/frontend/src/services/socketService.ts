@@ -172,23 +172,40 @@ export const sendMotorDirection = (direction: MotorDirection) => {
 
 /** Moturu (mevcut modda) başlatma komutu gönderir. */
 export const sendStartMotor = () => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+
+    // 1. OPTIMISTIC UI: Arayüzü anında (sıfır gecikme ile) aktif yapıp logoyu renklendir.
+    store.setMotorStatus({ isActive: true });
+
+    // 2. O sırada yolda olan eski (isActive: false) paketleri 400ms boyunca görmezden gel
+    // ki logo yanıp sönmesin (Geri sekme yapmasın).
+    store.startIgnoringStatusUpdates();
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: start_motor`,
         data:{},
-    })
+    });
     socket.emit('start_motor');
 }
 
 /** Motoru durdurma komutu gönderir. */
 export const sendStopMotor = () => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+
+    // 1. OPTIMISTIC UI: Arayüzü anında (sıfır gecikme ile) durdur ve logoyu grileştir.
+    store.setMotorStatus({ isActive: false });
+
+    // 2. Yoldaki eski paketleri yoksay
+    store.startIgnoringStatusUpdates();
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: stop_motor`,
         data:{},
-    })
+    });
     socket.emit('stop_motor');
 }
 
