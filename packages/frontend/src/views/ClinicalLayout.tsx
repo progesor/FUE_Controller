@@ -48,7 +48,7 @@ import type { Recipe } from 'shared-types';
 // CONSTANTS & LIMITS
 // ==========================================
 const MAX_RPM = 35000;
-const RPM_STEP = 500;
+const RPM_STEP = 100;
 const MAX_ACCEL = 50000;
 const MAX_OSC_ANGLE = VALID_ANGLES[VALID_ANGLES.length - 1] || 600;
 
@@ -466,7 +466,26 @@ export function ClinicalLayout() {
                     <Divider my="sm" />
                     {savedRecipes.length === 0 && <Text c="dimmed" ta="center">No saved recipes yet.</Text>}
                     {savedRecipes.map(recipe => (
-                        <Card key={recipe.id} withBorder shadow="sm" p="sm" className={classes.recipeCard}>
+                        <Card key={recipe.id} withBorder shadow="sm" p="sm" className={classes.recipeCard} onClick={(e) => {
+                                sendActiveRecipe(recipe);
+                                setActiveRecipe(recipe); // Offline fallback
+                            const target = e.currentTarget;
+                            target.style.transform = 'scale(1.03)';
+                            target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                            setTimeout(() => {
+                                target.style.transform = 'scale(1)';
+                                target.style.boxShadow = 'none';
+                            }, 200);
+                            }
+                        } onMouseOver={(e) => {
+                            const target = e.currentTarget;
+                            target.style.transform = 'scale(1.02)';
+                            target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        }} onMouseLeave={(e) => {
+                            const target = e.currentTarget;
+                            target.style.transform = 'scale(1)';
+                            target.style.boxShadow = 'none';
+                        }}>
                             <Group justify="space-between">
                                 <Text fw={600}>{recipe.name}</Text>
                                 <Group>
@@ -483,6 +502,7 @@ export function ClinicalLayout() {
                                     setActiveRecipe(recipe);
                                     setIsEditorOpen(true);
                                 }}>
+                                    {/*<ActionIcon variant="light" color="blue"><IconEdit size={16}/></ActionIcon>*/}
                                     Edit
                                 </Button>
                                 </Group>
@@ -490,14 +510,27 @@ export function ClinicalLayout() {
 
                             <Group justify="space-between" mt="8px">
                             <Text size="xs" c="dimmed" mt="xs">{recipe.steps.length} steps.</Text>
-                            <Button size="xs" color="red" variant="light" onClick={() => {
-                                // 1. Backend'e Silme İsteği Gönder
-                                sendRecipeDelete(recipe.id);
+                                <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    onClick={() => {
+                                        const confirmed = window.confirm("Bu recipe silinsin mi? Bu işlem geri alınamaz.");
 
-                                // 2. Offline Fallback: Hemen Local Store'dan Kaldır (Silme işlemi geri alınamaz olduğu için onay istemiyoruz)
-                                const currentRecipes = useControllerStore.getState().savedRecipes;
-                                useControllerStore.getState().setSavedRecipes(currentRecipes.filter(r => r.id !== recipe.id));
-                            }}>Delete</Button>
+                                        if (!confirmed) return;
+
+                                        // 1. Backend'e silme isteği gönder
+                                        sendRecipeDelete(recipe.id);
+
+                                        // 2. Offline fallback: Local store'dan kaldır
+                                        const currentRecipes = useControllerStore.getState().savedRecipes;
+                                        useControllerStore.getState().setSavedRecipes(
+                                            currentRecipes.filter((r) => r.id !== recipe.id)
+                                        );
+                                    }}
+                                >
+                                    Delete
+                                </Button>
                             </Group>
                         </Card>
                     ))}
