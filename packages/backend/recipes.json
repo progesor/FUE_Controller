@@ -156,5 +156,47 @@
         }
       }
     ]
+  },
+  {
+    "id": "12fc1ef8-ec2e-4723-9707-dae4fd8d6ed8",
+    "name": "sdasd",
+    "steps": [
+      {
+        "id": "85213a37-b048-4d5f-9e4c-435a045591a5",
+        "mode": "continuous",
+        "duration": 750,
+        "settings": {
+          "rampDuration": 300,
+          "pwm": 23
+        }
+      },
+      {
+        "id": "925e7344-8870-41cf-b52d-bbd8b4de1db3",
+        "mode": "oscillation",
+        "duration": 1500,
+        "settings": {
+          "angle": 270,
+          "pwm": 16
+        }
+      },
+      {
+        "id": "73c03b13-d456-4715-bb16-73f02b3bf369",
+        "mode": "oscillation",
+        "duration": 1000,
+        "settings": {
+          "angle": 450,
+          "pwm": 25
+        }
+      },
+      {
+        "id": "09e2df14-4c64-415d-965e-3f1aacf79d20",
+        "mode": "vibration",
+        "duration": 1500,
+        "settings": {
+          "intensity": 58,
+          "frequency": 3
+        }
+      }
+    ]
   }
 ]

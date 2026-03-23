@@ -2,8 +2,6 @@
 
 import { Group, NumberInput, Stack, Text, Slider, Divider } from '@mantine/core';
 import type { PulseSettings } from '../../../../shared-types';
-import { RPM_CALIBRATION_MARKS } from '../../config/calibration';
-import { findClosestMarkIndex } from '../../utils/rpmUtils';
 
 interface PulseSettingsEditorProps {
     settings: Partial<PulseSettings>;
@@ -15,36 +13,38 @@ export function PulseSettingsEditor({ settings, onChange }: PulseSettingsEditorP
         onChange(newSetting);
     };
 
-    // --- RPM Slider Mantığı ---
-    const currentPwm = settings.baseRpm ?? 100;
-    const currentRpmMarkIndex = findClosestMarkIndex(currentPwm);
-    const handleRpmSliderChange = (markIndex: number) => {
-        const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
-        if (selectedMark) {
-            handleSettingChange({ baseRpm: selectedMark.pwm });
-        }
-    };
-
     return (
         <Stack gap="md">
-            {/* YENİ: RPM Slider */}
+            {/* YENİ: Özgür RPM Slider (Artık tabloya bağlı değil) */}
             <Stack gap="xs">
-                <Text fz="sm" fw={500}>Motor Hızı (RPM)</Text>
+                <Text fz="sm" fw={500}>Taban Motor Hızı (Base RPM)</Text>
                 <Slider
-                    value={currentRpmMarkIndex}
-                    onChange={handleRpmSliderChange}
+                    value={settings.baseRpm ?? 1000}
+                    onChange={(val) => handleSettingChange({ baseRpm: val })}
                     min={0}
-                    max={RPM_CALIBRATION_MARKS.length - 1}
-                    step={1}
-                    label={(value) => `${RPM_CALIBRATION_MARKS[value]?.rpm || 0} RPM`}
-                    marks={RPM_CALIBRATION_MARKS.map((mark, index) => ({ value: index, label: `${mark.rpm}` }))}
+                    max={35000}
+                    step={500}
+                    label={(value) => `${value} RPM`}
+                    marks={[
+                        { value: 10000, label: '10k' },
+                        { value: 20000, label: '20k' },
+                        { value: 30000, label: '30k' }
+                    ]}
                 />
             </Stack>
 
             <Divider />
 
-            {/* Mevcut Darbe Süresi ve Bekleme Ayarları */}
+            {/* Mevcut Darbe Süresi, Bekleme ve Pik Hız Ayarları */}
             <Group grow>
+                <NumberInput
+                    label="Pik Hız (Pulse RPM)"
+                    value={settings.pulseRpm || 5000}
+                    onChange={(val) => handleSettingChange({ pulseRpm: Number(val) || 0 })}
+                    min={100}
+                    max={35000}
+                    step={500}
+                />
                 <NumberInput
                     label="Darbe Süresi (ms)"
                     value={settings.pulseDuration || 100}

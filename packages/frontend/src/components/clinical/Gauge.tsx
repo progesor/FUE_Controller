@@ -1,6 +1,6 @@
 // packages/frontend/src/components/clinical/Gauge.tsx
 
-import {Box, Group, ActionIcon, Stack} from '@mantine/core';
+import { Box, Group, ActionIcon, Stack } from '@mantine/core';
 import classes from './Gauge.module.css';
 import { IconPlus, IconMinus } from '@tabler/icons-react';
 import React, { useRef, useState, useEffect } from 'react';
@@ -31,11 +31,11 @@ const describeArcForMask = (x: number, y: number, radius: number, startAngle: nu
     return `M ${x},${y} L ${start.x},${start.y} A ${radius},${radius} 0 ${largeArcFlag} 1 ${end.x},${end.y} Z`;
 };
 
-
 interface GaugeProps {
     value: number;
     minValue?: number;
     maxValue: number;
+    step?: number; // YENİ: Hassas ayar adımı (Örn: 100 RPM)
     label: string;
     subLabel?: string;
     mirror?: boolean;
@@ -45,54 +45,65 @@ interface GaugeProps {
     onSliderChange?: (value: number) => void;
 }
 
-export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror = false, onIncrement, onDecrement, onChange, onSliderChange }: GaugeProps) {
+export function Gauge({ value, minValue = 0, maxValue, step = 1, label, subLabel, mirror = false, onIncrement, onDecrement, onChange, onSliderChange }: GaugeProps) {
+    // isDraggingGauge hayaleti silindi, sadece gerçek sürükleme state'i var
     const [isDragging, setIsDragging] = useState(false);
-    const [isDraggingGauge] = useState(false);
     const [displayValue, setDisplayValue] = useState(value);
     const lastY = useRef(0);
 
     const [sliderLiveValue, setSliderLiveValue] = useState(value);
 
     useEffect(() => {
-        if (!isDraggingGauge) {
+        // Eğer kullanıcı şu an kadranla oynamıyorsa, backend'den gelen yeni değeri ekrana yansıt
+        if (!isDragging) {
             setDisplayValue(value);
+            setSliderLiveValue(value);
         }
-        // Slider'ın da anlık değeri, sürükleme olmadığında ana değerle güncellenmeli
-        setSliderLiveValue(value);
-    }, [value, isDraggingGauge]);
+    }, [value, isDragging]);
 
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => { if (onChange) { setIsDragging(true); lastY.current = e.clientY; } };
-    const handleMouseUp = () => { if (isDragging && onChange) { setIsDragging(false); onChange(displayValue); } };
+    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (onChange) { setIsDragging(true); lastY.current = e.clientY; }
+    };
+
+    const handleMouseUp = () => {
+        if (isDragging && onChange) {
+            setIsDragging(false);
+            onChange(displayValue); // Değer zaten Move eventinde tam sayıya/step'e yuvarlandı
+        }
+    };
+
+    const processMove = (clientY: number) => {
+        const deltaY = lastY.current - clientY;
+        lastY.current = clientY;
+
+        // 300px'lik yükseklikte ne kadar yol aldığımızı hesapla
+        const sensitivity = maxValue / 300;
+        let rawNewValue = displayValue + (deltaY * sensitivity);
+
+        // Değeri verilen "step" miktarına yuvarla (Örn: 50, 100, 500 gibi)
+        // Eğer step 1 ise, normal tam sayıya yuvarlar ve float karmaşasını çözer.
+        rawNewValue = Math.round(rawNewValue / step) * step;
+
+        setDisplayValue(Math.min(maxValue, Math.max(minValue, rawNewValue)));
+    };
+
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !onChange) return;
-        const deltaY = lastY.current - e.clientY;
-        lastY.current = e.clientY;
-        const sensitivity = maxValue / 300;
-        setDisplayValue(prev => Math.min(maxValue, Math.max(minValue, prev + (deltaY * sensitivity))));
+        processMove(e.clientY);
     };
 
     const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-        if (onChange) {
-            setIsDragging(true);
-            lastY.current = e.touches[0].clientY;
-        }
+        if (onChange) { setIsDragging(true); lastY.current = e.touches[0].clientY; }
     };
 
     const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
         if (!isDragging || !onChange) return;
-        const touchY = e.touches[0].clientY;
-        const deltaY = lastY.current - touchY;
-        lastY.current = touchY;
-        const sensitivity = maxValue / 300;
-        setDisplayValue(prev => Math.min(maxValue, Math.max(minValue, prev + (deltaY * sensitivity))));
-        e.preventDefault();
+        processMove(e.touches[0].clientY);
+        e.preventDefault(); // Mobilde ekranın kaymasını engelle
     };
 
     const handleTouchEnd = () => {
-        if (isDragging && onChange) {
-            setIsDragging(false);
-            onChange(displayValue);
-        }
+        handleMouseUp();
     };
 
     const valueRatio = Math.min(1, Math.max(0, (displayValue - minValue) / (maxValue - minValue)));
@@ -108,13 +119,13 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                 vertical
                 min={minValue}
                 max={maxValue}
+                step={step} // YENİ: Slider artık bizim step kurallarımıza uyuyor
                 value={sliderLiveValue}
                 onChange={(val) => {
                     if (typeof val === 'number') {
                         setSliderLiveValue(val);
                     }
                 }}
-                // DEĞİŞİKLİK: onAfterChange, nihai değeri ana bileşene gönderir
                 onChangeComplete={(val) => {
                     if (typeof val === 'number') {
                         onSliderChange(val);
@@ -124,7 +135,6 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
             />
         </div>
     );
-
 
     return (
         <Group align="flex-start" gap="xs" wrap="nowrap">
@@ -142,6 +152,7 @@ export function Gauge({ value, minValue = 0, maxValue, label, subLabel, mirror =
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchEnd}
+                    style={{ cursor: onChange ? 'ns-resize' : 'default' }}
                 >
                     <svg width={CONFIG.SIZE} height={CONFIG.SIZE} viewBox={`0 0 ${CONFIG.SIZE} ${CONFIG.SIZE}`}>
                         <defs>

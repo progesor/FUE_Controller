@@ -2,12 +2,10 @@
 
 import { Slider, Text, Stack, Divider } from '@mantine/core';
 import type { OscillationSettings } from '../../../../shared-types';
-import { VALID_ANGLES, RPM_CALIBRATION_MARKS } from '../../config/calibration';
-import { findClosestMarkIndex } from '../../utils/rpmUtils';
+import { VALID_ANGLES } from '../../config/calibration';
 
 interface OscillationSettingsEditorProps {
     settings: Partial<OscillationSettings>;
-    // DÜZELTME: onChange artık kısmi güncellemeleri kabul ediyor.
     onChange: (newSettings: Partial<OscillationSettings>) => void;
 }
 
@@ -19,6 +17,7 @@ export function OscillationSettingsEditor({ settings, onChange }: OscillationSet
     // --- Açı Slider Mantığı ---
     const currentAngle = settings.angle || 180;
     const currentAngleMarkIndex = VALID_ANGLES.indexOf(currentAngle);
+
     const handleAngleSliderChange = (markIndex: number) => {
         const selectedAngle = VALID_ANGLES[markIndex];
         if (selectedAngle !== undefined) {
@@ -26,29 +25,25 @@ export function OscillationSettingsEditor({ settings, onChange }: OscillationSet
         }
     };
 
-    // --- RPM Slider Mantığı ---
-    const currentPwm = settings.pwm ?? 100;
-    const currentRpmMarkIndex = findClosestMarkIndex(currentPwm);
-    const handleRpmSliderChange = (markIndex: number) => {
-        const selectedMark = RPM_CALIBRATION_MARKS[markIndex];
-        if (selectedMark) {
-            handleSettingChange({ pwm: selectedMark.pwm });
-        }
-    };
-
     return (
         <Stack gap="md">
-            {/* YENİ: RPM Slider */}
+            {/* YENİ: Gerçek RPM Slider (Tablo Bağımlılığı Kaldırıldı) */}
             <Stack gap="xs">
-                <Text fz="sm" fw={500}>Motor Hızı (RPM)</Text>
+                <Text fz="sm" fw={500}>Maksimum Motor Hızı (RPM)</Text>
                 <Slider
-                    value={currentRpmMarkIndex}
-                    onChange={handleRpmSliderChange}
+                    value={settings.pwm ?? 1500}
+                    onChange={(val) => handleSettingChange({ pwm: val })}
                     min={0}
-                    max={RPM_CALIBRATION_MARKS.length - 1}
-                    step={1}
-                    label={(value) => `${RPM_CALIBRATION_MARKS[value]?.rpm || 0} RPM`}
-                    marks={RPM_CALIBRATION_MARKS.map((mark, index) => ({ value: index, label: `${mark.rpm}` }))}
+                    max={5000}
+                    step={100}
+                    label={(value) => `${value} RPM`}
+                    marks={[
+                        { value: 1000, label: '1k' },
+                        { value: 2000, label: '2k' },
+                        { value: 3000, label: '3k' },
+                        { value: 4000, label: '4k' },
+                        { value: 5000, label: '5k' }
+                    ]}
                 />
             </Stack>
 

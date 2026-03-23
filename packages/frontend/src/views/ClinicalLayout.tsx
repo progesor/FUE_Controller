@@ -1,91 +1,93 @@
-import {Box, Stack, Group, Text} from '@mantine/core';
+// packages/frontend/src/views/ClinicalLayout.tsx
+
+import { Box, Stack, Group, Text } from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
-import {Gauge} from "../components/clinical/Gauge.tsx";
-import {RPM_CALIBRATION_MARKS, VALID_ANGLES} from "../config/calibration.ts";
-import {useControllerStore} from "../store/useControllerStore.ts";
-import {InfoPanel} from "../components/clinical/InfoPanel.tsx";
-import {pwmToClosestRpm, rpmToClosestPwm} from "../utils/rpmUtils.ts";
-import {PresetButtons} from "../components/clinical/PresetButtons.tsx";
-import {sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor} from "../services/socketService.ts";
+import { Gauge } from "../components/clinical/Gauge.tsx";
+import { VALID_ANGLES } from "../config/calibration.ts";
+import { useControllerStore } from "../store/useControllerStore.ts";
+import { InfoPanel } from "../components/clinical/InfoPanel.tsx";
+import { PresetButtons } from "../components/clinical/PresetButtons.tsx";
+import { sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor } from "../services/socketService.ts";
 import ErtipLogo from '../assets/clinical/ertip-logo.svg?react';
 import cx from 'clsx';
-// import {TissueHardnessChart} from "./TissueHardnessChart.tsx";
-import {MAX_OSC_ANGLE, pwmToRpm} from "../utils/deviceSelectors.ts";
-import {TissueHardnessChartBar} from "../components/clinical/TissueHardnessChartBar.tsx";
-import {LayoutSwitchButton} from "../components/common/LayoutSwitchButton.tsx";
+import { TissueHardnessChartBar } from "../components/clinical/TissueHardnessChartBar.tsx";
+import { LayoutSwitchButton } from "../components/common/LayoutSwitchButton.tsx";
 
+// Maksimum donanım limitleri (Artık kalibrasyon tablosu yok, doğrudan gerçek veriler)
+const MAX_RPM = 35000;
+const RPM_STEP = 500; // + ve - butonlarına basıldığında atlanacak RPM miktarı
+const DEFAULT_ACCEL = 30000; // Klinik ekranından osilasyon değiştirildiğinde varsayılan sertlik
+const MAX_OSC_ANGLE = VALID_ANGLES[VALID_ANGLES.length - 1] || 600;
 
 export function ClinicalLayout() {
     const { motor, oscillationSettings, setMotorStatus, setOscillationSettings } = useControllerStore();
-    const maxRpm = RPM_CALIBRATION_MARKS[RPM_CALIBRATION_MARKS.length - 1].rpm;
-    // const maxAngle = 600;
-    const maxAngle=VALID_ANGLES[VALID_ANGLES.length-1];
 
+    // ==========================================
+    // RPM KONTROLLERİ (DOĞRUDAN DEVİR)
+    // ==========================================
     const handleIncrementRpm = () => {
-        const currentMark = RPM_CALIBRATION_MARKS.find(m => m.pwm === motor.pwm) || RPM_CALIBRATION_MARKS[0];
-        const currentIndex = RPM_CALIBRATION_MARKS.indexOf(currentMark);
-        const nextIndex = Math.min(RPM_CALIBRATION_MARKS.length - 1, currentIndex + 1);
-        if (currentIndex !== nextIndex) {
-            const newPwm = RPM_CALIBRATION_MARKS[nextIndex].pwm;
-            setMotorStatus({ pwm: newPwm });
-            sendMotorPwm(newPwm);
-        }
+        // Hedef hızı RPM_STEP kadar artır, MAX_RPM'i geçme
+        const newVal = Math.min(MAX_RPM, motor.pwm + RPM_STEP);
+        setMotorStatus({ pwm: newVal });
+        sendMotorPwm(newVal);
     };
 
     const handleDecrementRpm = () => {
-        const currentMark = RPM_CALIBRATION_MARKS.find(m => m.pwm === motor.pwm) || RPM_CALIBRATION_MARKS[0];
-        const currentIndex = RPM_CALIBRATION_MARKS.indexOf(currentMark);
-        const prevIndex = Math.max(0, currentIndex - 1);
-        if (currentIndex !== prevIndex) {
-            const newPwm = RPM_CALIBRATION_MARKS[prevIndex].pwm;
-            setMotorStatus({ pwm: newPwm });
-            sendMotorPwm(newPwm);
-        }
+        // Hedef hızı RPM_STEP kadar azalt, 0'ın altına düşme
+        const newVal = Math.max(0, motor.pwm - RPM_STEP);
+        setMotorStatus({ pwm: newVal });
+        sendMotorPwm(newVal);
     };
 
+    const handleRpmSliderChange = (sliderValue: number) => {
+        // Kullanıcı slider'ı sürüklediğinde gelen hassas değeri doğrudan uygula
+        setMotorStatus({ pwm: sliderValue });
+        sendMotorPwm(sliderValue);
+    };
+
+    // ==========================================
+    // OSİLASYON (AÇI) KONTROLLERİ
+    // ==========================================
     const handleIncrementAngle = () => {
+        // Butonlarda hala VALID_ANGLES dizisini kullanarak standart açılara zıplıyoruz
         const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
-        const nextIndex = Math.min(VALID_ANGLES.length - 1, currentIndex + 1);
-        if (currentIndex !== nextIndex) {
-            const newAngle = VALID_ANGLES[nextIndex];
-            setOscillationSettings({ angle: newAngle });
-            sendOscillationSettings({ angle: newAngle });
-        }
+        const nextIndex = Math.min(VALID_ANGLES.length - 1, currentIndex !== -1 ? currentIndex + 1 : 0);
+        const newAngle = VALID_ANGLES[nextIndex];
+
+        applyOscillationAngle(newAngle);
     };
 
     const handleDecrementAngle = () => {
         const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle);
-        const prevIndex = Math.max(0, currentIndex - 1);
-        if (currentIndex !== prevIndex) {
-            const newAngle = VALID_ANGLES[prevIndex];
-            setOscillationSettings({ angle: newAngle });
-            sendOscillationSettings({ angle: newAngle });
-        }
-    };
+        const prevIndex = Math.max(0, currentIndex !== -1 ? currentIndex - 1 : 0);
+        const newAngle = VALID_ANGLES[prevIndex];
 
-    const handleRpmSliderChange = (sliderValue: number) => {
-        const newPwm = rpmToClosestPwm(sliderValue);
-        setMotorStatus({ pwm: newPwm });
-        sendMotorPwm(newPwm);
+        applyOscillationAngle(newAngle);
     };
 
     const handleAngleSliderChange = (sliderValue: number) => {
+        // Sürüklemede en yakın VALID_ANGLE değerine yapıştır (İstersen bunu kaldırıp serbest bırakabilirsin)
         const closestAngle = VALID_ANGLES.reduce((prev, curr) =>
             Math.abs(curr - sliderValue) < Math.abs(prev - sliderValue) ? curr : prev
         );
-        setOscillationSettings({ angle: closestAngle });
-        sendOscillationSettings({ angle: closestAngle });
+        applyOscillationAngle(closestAngle);
     };
 
-    // YENİ: Dokunmatik sürükleme için handler'lar (slider ile aynı mantık)
-    const handleRpmGaugeChange = (gaugeValue: number) => {
-        handleRpmSliderChange(gaugeValue); // Aynı mantığı kullanabiliriz
+    // Osilasyon komutunu arka planda her zaman Açı modu ve Sabit İvme ile gönderen yardımcı fonksiyon
+    const applyOscillationAngle = (newAngle: number) => {
+        const newSettings = {
+            ...oscillationSettings,
+            mode: 'angle' as const,
+            angle: newAngle,
+            accel: DEFAULT_ACCEL
+        };
+        setOscillationSettings(newSettings);
+        sendOscillationSettings(newSettings);
     };
 
-    const handleAngleGaugeChange = (gaugeValue: number) => {
-        handleAngleSliderChange(gaugeValue);
-    };
-
+    // ==========================================
+    // ORTAK KONTROLLER
+    // ==========================================
     const handleLogoDoubleClick = () => {
         if (motor.isActive) {
             sendStopMotor();
@@ -94,12 +96,8 @@ export function ClinicalLayout() {
         }
     };
 
-    //temp
-    const rpm = pwmToRpm(motor.pwm);
-    const oscPercent = Math.round(
-        (Math.max(0, oscillationSettings.angle) / MAX_OSC_ANGLE) * 100
-    );
-
+    // Grafik bar için yüzdelik hesaplama
+    const oscPercent = Math.round((Math.max(0, oscillationSettings.angle) / MAX_OSC_ANGLE) * 100);
 
     return (
         <Box className={classes.wrapper}>
@@ -110,15 +108,17 @@ export function ClinicalLayout() {
                 <Group justify="center" align="center" w="100%" className={classes.centerGroup}>
 
                     <Gauge
-                        value={pwmToClosestRpm(motor.pwm)}
-                        maxValue={maxRpm}
+                        value={motor.pwm} // Artık motor.pwm doğrudan RPM'i temsil ediyor
+                        maxValue={MAX_RPM}
+                        step={RPM_STEP}
                         label="RPM"
                         mirror={false}
                         onIncrement={handleIncrementRpm}
                         onDecrement={handleDecrementRpm}
-                        onChange={handleRpmGaugeChange}
+                        onChange={handleRpmSliderChange}
                         onSliderChange={handleRpmSliderChange}
                     />
+
                     <Stack align="center" mx="xl" className={classes.logoWrap}>
                         <ErtipLogo
                             className={cx(classes.logo, { [classes.logoActive]: motor.isActive })}
@@ -133,7 +133,7 @@ export function ClinicalLayout() {
                         <Stack align="center" mt={8} mb={-200}>
                             <TissueHardnessChartBar
                                 isRunning={motor.isActive}
-                                rpm={rpm}
+                                rpm={motor.pwm} // Grafiğe de gerçek RPM'i veriyoruz
                                 oscillation={oscPercent}
                             />
                         </Stack>
@@ -141,22 +141,18 @@ export function ClinicalLayout() {
 
                     <Gauge
                         value={oscillationSettings.angle}
-                        maxValue={maxAngle}
+                        maxValue={MAX_OSC_ANGLE}
                         label="Oscillation"
-                        subLabel="%"
+                        subLabel="°" // Yüzde (%) yerine Derece işareti (°) koymak daha mantıklı olabilir
                         mirror={true}
                         onIncrement={handleIncrementAngle}
                         onDecrement={handleDecrementAngle}
-                        onChange={handleAngleGaugeChange}
+                        onChange={handleAngleSliderChange}
                         onSliderChange={handleAngleSliderChange}
                     />
                 </Group>
-                {/*<Stack align="center" gap={8} className={classes.chartStack}>*/}
-                {/*    <TissueHardnessChart />*/}
-                {/*</Stack>*/}
+
                 <Stack align="center" gap="md">
-                    {/*<InfoPanel />*/}
-                    {/*<Clock />*/}
                     <InfoPanel showClock/>
                 </Stack>
             </Stack>
