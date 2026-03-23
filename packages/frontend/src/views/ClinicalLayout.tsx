@@ -1,14 +1,42 @@
 // packages/frontend/src/views/ClinicalLayout.tsx
 
 import { useState, useEffect } from 'react';
-import { Box, Stack, Group, Text, SegmentedControl, Tooltip, Button, Drawer, Modal, ScrollArea, Card, ActionIcon, NumberInput, TextInput, Divider, Badge, Flex } from '@mantine/core';
+import {
+    Box,
+    Stack,
+    Group,
+    Text,
+    SegmentedControl,
+    Tooltip,
+    Button,
+    Drawer,
+    Modal,
+    ScrollArea,
+    Card,
+    ActionIcon,
+    NumberInput,
+    TextInput,
+    Divider,
+    Badge,
+    Flex
+} from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
 import { Gauge } from "../components/clinical/Gauge.tsx";
 import { VALID_ANGLES } from "../config/calibration.ts";
 import { useControllerStore } from "../store/useControllerStore.ts";
 import { InfoPanel } from "../components/clinical/InfoPanel.tsx";
 import { PresetButtons } from "../components/clinical/PresetButtons.tsx";
-import { sendMotorPwm, sendOscillationSettings, sendStartMotor, sendStopMotor, sendRecipeStart, sendRecipeStop, sendRecipeSave, sendActiveRecipe } from "../services/socketService.ts";
+import {
+    sendMotorPwm,
+    sendOscillationSettings,
+    sendStartMotor,
+    sendStopMotor,
+    sendRecipeStart,
+    sendRecipeStop,
+    sendRecipeSave,
+    sendActiveRecipe,
+    sendRecipeDelete
+} from "../services/socketService.ts";
 import ErtipLogo from '../assets/clinical/ertip-logo.svg?react';
 import cx from 'clsx';
 import { TissueHardnessChartBar } from "../components/clinical/TissueHardnessChartBar.tsx";
@@ -139,7 +167,12 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                         placeholder="e.g. Aggressive Extraction"
                         w={400}
                     />
-                    <Button size="xl" color="green" leftSection={<IconDeviceFloppy size={24}/>} onClick={handleSave}>Save & Apply</Button>
+                    <Group>
+                        <Button size="xl" color="green" leftSection={<IconDeviceFloppy size={24}/>} onClick={handleSave}>Save & Apply</Button>
+
+                        <Button size="xl" variant="light" color="red" onClick={onClose}>Close</Button>
+                    </Group>
+
                 </Group>
 
                 <Divider my="md" />
@@ -436,15 +469,36 @@ export function ClinicalLayout() {
                         <Card key={recipe.id} withBorder shadow="sm" p="sm" className={classes.recipeCard}>
                             <Group justify="space-between">
                                 <Text fw={600}>{recipe.name}</Text>
+                                <Group>
                                 <Button size="sm" color="green" variant="light" onClick={() => {
                                     sendActiveRecipe(recipe);
                                     setActiveRecipe(recipe); // Offline fallback
                                     setIsDrawerOpen(false);
                                 }}>
-                                    Select
+                                    Favorite
                                 </Button>
+
+                                <Button size="sm" color="blue" variant="light" onClick={() => {
+                                    setIsDrawerOpen(true);
+                                    setActiveRecipe(recipe);
+                                    setIsEditorOpen(true);
+                                }}>
+                                    Edit
+                                </Button>
+                                </Group>
                             </Group>
+
+                            <Group justify="space-between" mt="8px">
                             <Text size="xs" c="dimmed" mt="xs">{recipe.steps.length} steps.</Text>
+                            <Button size="xs" color="red" variant="light" onClick={() => {
+                                // 1. Backend'e Silme İsteği Gönder
+                                sendRecipeDelete(recipe.id);
+
+                                // 2. Offline Fallback: Hemen Local Store'dan Kaldır (Silme işlemi geri alınamaz olduğu için onay istemiyoruz)
+                                const currentRecipes = useControllerStore.getState().savedRecipes;
+                                useControllerStore.getState().setSavedRecipes(currentRecipes.filter(r => r.id !== recipe.id));
+                            }}>Delete</Button>
+                            </Group>
                         </Card>
                     ))}
                 </Stack>

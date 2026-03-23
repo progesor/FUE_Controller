@@ -18,6 +18,16 @@
         "settings": {
           "angle": 180
         }
+      },
+      {
+        "id": "1774276523369",
+        "mode": "vibration",
+        "duration": 1000,
+        "settings": {
+          "rpm": 3000,
+          "timeMs": 20,
+          "accel": 100000
+        }
       }
     ]
   },
