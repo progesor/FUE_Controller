@@ -10,12 +10,12 @@ import { NotificationService } from '../../services/notificationService';
 import { IconInfinity, IconRepeat, IconBook, IconListDetails } from '@tabler/icons-react';
 
 const presets = [
-    { id: 'continuous', label: 'Sürekli', icon: IconInfinity },
-    { id: 'oscillation', label: 'Osilasyon', icon: IconRepeat },
-    { id: 'protocol1', label: 'Protokol 1', icon: IconBook },
-    { id: 'protocol2', label: 'Protokol 2', icon: IconBook },
-    { id: 'protocol3', label: 'Protokol 3', icon: IconBook },
-    { id: 'recipe1', label: 'Hızlı Reçete', icon: IconListDetails },
+    { id: 'continuous', label: 'Continius', icon: IconInfinity },
+    { id: 'oscillation', label: 'Oscilation', icon: IconRepeat },
+    { id: 'protocol1', label: 'Protocol 1', icon: IconBook },
+    { id: 'protocol2', label: 'Protocol 2', icon: IconBook },
+    { id: 'protocol3', label: 'Protocol 3', icon: IconBook },
+    { id: 'recipe1', label: 'Fast Recite', icon: IconListDetails },
 ];
 
 export function PresetButtons() {
