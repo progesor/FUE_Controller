@@ -39,6 +39,7 @@ let lastHeartbeatTime = 0;
 let isArduinoConnected = false;
 let activeRecipe: Recipe | null = null;
 let pulseTimer: NodeJS.Timeout | null = null;
+let lastStopTime = 0; // YENİ: Motorun son durdurulma zamanı
 
 export const setActiveRecipe = (recipe: Recipe | null) => {
     activeRecipe = recipe;
@@ -149,11 +150,18 @@ const handleData = (data: string) => {
 
     // 3. Donanım Event'lerini (Pedal) İşleme
     if (cleanData.startsWith('<EVT:PEDAL:1>')) {
-        if (activeRecipe && !getRecipeStatus().isRunning) {
-            startRecipe(activeRecipe);
-        } else if (!getRecipeStatus().isRunning) {
-            startCurrentMode();
+        // YENİ: Elektromanyetik Geri Besleme (EMI) Koruması!
+        // Motor durduktan sonraki 1.5 saniye (1500ms) içindeki pedal sinyallerini parazit sayıp reddet.
+        if (Date.now() - lastStopTime > 1500) {
+            if (activeRecipe && !getRecipeStatus().isRunning) {
+                startRecipe(activeRecipe);
+            } else if (!getRecipeStatus().isRunning) {
+                startCurrentMode();
+            }
+        } else {
+            console.log("[EMI KORUMASI] Motor duruşu sırasındaki elektriksel parazit (sahte pedal) engellendi.");
         }
+
         io?.emit('arduino_event', { type: 'PEDAL', state: 1 });
     } else if (cleanData.startsWith('<EVT:PEDAL:0>')) {
         if (!getRecipeStatus().isRunning) stopMotor();
@@ -244,6 +252,7 @@ export const stopMotor = () => {
     if (pulseTimer) clearInterval(pulseTimer); // Pulse döngüsünü kır
     sendBinaryCommand(CMD_STOP);
     deviceStatus.motor.isActive = false;
+    lastStopTime = Date.now(); // YENİ: Motorun durduğu anı milisaniye olarak kaydet
     broadcastDeviceStatus();
 };
 

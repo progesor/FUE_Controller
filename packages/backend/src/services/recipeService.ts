@@ -87,16 +87,15 @@ export const stopRecipe = () => {
     if (stepTimeout) clearTimeout(stepTimeout);
     if (statusInterval) clearInterval(statusInterval);
 
-    stopMotorFromRecipe();
-
-    // Durumu sıfırla
+    // 1. ÖNEMLİ: Durumu motoru durdurmadan ÖNCE sıfırla ki arayüze (Logo'ya) temiz bilgi gitsin!
     currentRecipe = null;
     currentStepIndex = -1;
     recipeStatus.isRunning = false;
     recipeStatus.currentStepIndex = null;
     recipeStatus.remainingTimeInStep = 0;
 
-    // YENİ ÇÖZÜM: Backend reçeteyi sıfırladıktan hemen sonra Arayüze "Reçete Bitti" yayınını yap!
-    // Bu sayede ekrandaki logo sonsuza kadar dönmeyi bırakıp anında durur.
+    // 2. Motoru SONRA durdur (Böylece broadcast yaparken isRunning=false gidecek)
+    stopMotorFromRecipe();
+
     io?.emit('recipe_status_update', recipeStatus);
 };
