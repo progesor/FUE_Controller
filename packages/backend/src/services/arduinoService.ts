@@ -389,6 +389,8 @@ export const setVibrationSettings = (settings: VibrationSettings) => {
     } else broadcastDeviceStatus();
 };
 
+// packages/backend/src/services/arduinoService.ts İÇİNDEKİ İLGİLİ FONKSİYONLARI DEĞİŞTİR:
+
 export const executeStep = (step: RecipeStep) => {
     deviceStatus.operatingMode = step.mode;
 
@@ -402,7 +404,7 @@ export const executeStep = (step: RecipeStep) => {
             deviceStatus.motor.pwm = (step.settings as PulseSettings).baseRpm;
         }
 
-        // 2. Moda Özel Gelişmiş Ayarları Güncelleme (GÜVENLİ BİRLEŞTİRME)
+        // 2. Moda Özel Gelişmiş Ayarları Güncelleme
         switch (step.mode) {
             case 'continuous':
                 deviceStatus.continuousSettings = { ...deviceStatus.continuousSettings, ...(step.settings as ContinuousSettings) };
@@ -419,13 +421,15 @@ export const executeStep = (step: RecipeStep) => {
         }
     }
 
-    // 3. YENİ: isContinuation = true olarak gönderiyoruz! Kilitleri aşar.
+    // YENİ: Kilitleri aşması için isContinuation bayrağını 'true' olarak gönderiyoruz!
     startCurrentMode(true);
 };
 
 export const stopMotorFromRecipe = () => {
     stopMotor();
 };
+
+// YENİ: isContinuation parametresini alt fonksiyonlara paslıyoruz
 export const startCurrentMode = (isContinuation = false) => {
     switch (deviceStatus.operatingMode) {
         case 'continuous': startContinuousMode(isContinuation); break;

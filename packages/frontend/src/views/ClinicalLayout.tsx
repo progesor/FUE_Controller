@@ -339,7 +339,7 @@ export function ClinicalLayout() {
 
                         {/* ACTIVE RECIPE INFO BANNER */}
                         {activeRecipe && (
-                            <Box style={{ position: 'absolute', top: -60, width: '100%', textAlign: 'center' }}>
+                            <Box style={{ position: 'absolute', top: -100, width: '100%', textAlign: 'center' }}>
                                 <Badge size="lg" color="green" mb="xs">ACTIVE RECIPE</Badge>
                                 <Group justify="center" gap="xs">
                                     <Text fw={700} size="xl" c="green">{activeRecipe.name}</Text>
@@ -395,7 +395,7 @@ export function ClinicalLayout() {
                                 size="sm"
                                 color="grape"
                                 radius="xl"
-                                style={{ marginBottom: '-10px', zIndex: 10 }}
+                                style={{ marginBottom: '-10px', zIndex: 10, top: -20, left: -50 }}
                             />
                         </Tooltip>
 

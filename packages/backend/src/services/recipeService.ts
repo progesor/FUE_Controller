@@ -78,12 +78,13 @@ export const startRecipe = (recipe: Recipe) => {
 /**
  * Çalışan reçeteyi durdurur.
  */
+// packages/backend/src/services/recipeService.ts İÇİNDEKİ FONKSİYONU DEĞİŞTİR:
+
 export const stopRecipe = () => {
     if (!recipeStatus.isRunning) return;
 
     console.log("Reçete durduruluyor...");
     if (stepTimeout) clearTimeout(stepTimeout);
-    // YENİ: Durum interval'ini de temizlediğimizden emin oluyoruz
     if (statusInterval) clearInterval(statusInterval);
 
     stopMotorFromRecipe();
@@ -95,4 +96,7 @@ export const stopRecipe = () => {
     recipeStatus.currentStepIndex = null;
     recipeStatus.remainingTimeInStep = 0;
 
+    // YENİ ÇÖZÜM: Backend reçeteyi sıfırladıktan hemen sonra Arayüze "Reçete Bitti" yayınını yap!
+    // Bu sayede ekrandaki logo sonsuza kadar dönmeyi bırakıp anında durur.
+    io?.emit('recipe_status_update', recipeStatus);
 };

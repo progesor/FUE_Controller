@@ -293,8 +293,15 @@ export const sendRecipeStart = (recipe: Recipe) => {
 };
 
 /** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
+/** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
 export const sendRecipeStop = () => {
-    useControllerStore.getState().addConsoleEntry({
+    const store = useControllerStore.getState();
+
+    // Arayüzü beklemeden ANINDA kapat (Sıfır Gecikme Hissi)
+    store.setRecipeStatus({ ...store.recipeStatus, isRunning: false });
+    store.setMotorStatus({ isActive: false });
+
+    store.addConsoleEntry({
         type: 'command',
         source: 'frontend',
         message: `Komut gönderildi: recipe_stop`,
