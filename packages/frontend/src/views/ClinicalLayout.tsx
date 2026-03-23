@@ -122,12 +122,12 @@ export function ClinicalLayout() {
                     <Stack align="center" mx="xl" className={classes.logoWrap}>
                         <ErtipLogo
                             className={cx(classes.logo, { [classes.logoActive]: motor.isActive })}
-                            onDoubleClick={handleLogoDoubleClick}
+                            onClick={handleLogoDoubleClick}
                             width="300"
                         />
                         <Box className={classes.centerGraphic}>
-                            <Text className={classes.welcomeText}>Hoş geldiniz</Text>
-                            <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
+                            <Text className={classes.welcomeText}>Welcome</Text>
+                            <Text className={classes.doctorName}>Dr. John Doe</Text>
                         </Box>
 
                         <Stack align="center" mt={8} mb={-200}>
