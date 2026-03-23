@@ -364,7 +364,7 @@ export function ClinicalLayout() {
                             {recipeStatus.isRunning ? (
                                 <>
                                     <Text className={classes.welcomeText} c="green">Recipe Running</Text>
-                                    <Text className={classes.doctorName}>Step: {recipeStatus.currentStepIndex !== null ? recipeStatus.currentStepIndex + 1 : '-'}</Text>
+                                    <Text className={classes.doctorName}>Automatic Mode</Text>
                                 </>
                             ) : (
                                 <>
