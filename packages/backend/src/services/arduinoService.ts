@@ -402,36 +402,36 @@ export const executeStep = (step: RecipeStep) => {
             deviceStatus.motor.pwm = (step.settings as PulseSettings).baseRpm;
         }
 
-        // 2. Moda Özel Gelişmiş Ayarları Güncelleme
+        // 2. Moda Özel Gelişmiş Ayarları Güncelleme (GÜVENLİ BİRLEŞTİRME)
         switch (step.mode) {
             case 'continuous':
-                deviceStatus.continuousSettings = step.settings as ContinuousSettings;
+                deviceStatus.continuousSettings = { ...deviceStatus.continuousSettings, ...(step.settings as ContinuousSettings) };
                 break;
             case 'oscillation':
-                deviceStatus.oscillationSettings = step.settings as OscillationSettings;
+                deviceStatus.oscillationSettings = { ...deviceStatus.oscillationSettings, ...(step.settings as OscillationSettings) };
                 break;
             case 'pulse':
-                deviceStatus.pulseSettings = step.settings as PulseSettings;
+                deviceStatus.pulseSettings = { ...deviceStatus.pulseSettings, ...(step.settings as PulseSettings) };
                 break;
             case 'vibration':
-                deviceStatus.vibrationSettings = step.settings as VibrationSettings;
+                deviceStatus.vibrationSettings = { ...deviceStatus.vibrationSettings, ...(step.settings as VibrationSettings) };
                 break;
         }
     }
 
-    startCurrentMode();
+    // 3. YENİ: isContinuation = true olarak gönderiyoruz! Kilitleri aşar.
+    startCurrentMode(true);
 };
 
 export const stopMotorFromRecipe = () => {
     stopMotor();
 };
-
-export const startCurrentMode = () => {
+export const startCurrentMode = (isContinuation = false) => {
     switch (deviceStatus.operatingMode) {
-        case 'continuous': startContinuousMode(); break;
-        case 'oscillation': startOscillation(); break;
-        case 'pulse': startPulseMode(); break;
-        case 'vibration': startVibrationMode(); break;
+        case 'continuous': startContinuousMode(isContinuation); break;
+        case 'oscillation': startOscillation(undefined, isContinuation); break;
+        case 'pulse': startPulseMode(isContinuation); break;
+        case 'vibration': startVibrationMode(isContinuation); break;
     }
 };
 
