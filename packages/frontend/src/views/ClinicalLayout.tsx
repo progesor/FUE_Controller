@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     Box, Stack, Group, Text, SegmentedControl, Tooltip, Button, Drawer, Modal,
-    ScrollArea, Card, ActionIcon, NumberInput, TextInput, Divider, Badge, Flex
+    Card, ActionIcon, NumberInput, TextInput, Divider, Badge, Flex
 } from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
 import { Gauge } from "../components/clinical/Gauge.tsx";
