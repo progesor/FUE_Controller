@@ -18,7 +18,6 @@ type Props = {
     oscillation?: number;
 };
 
-// YENİ: Ekranda aynı anda görünecek çubuk sayısı 200'e çıkarıldı!
 const MAX_POINTS = 200;
 
 const MODE_COLORS: Record<string, string> = {
@@ -35,11 +34,8 @@ export function TissueHardnessChart({ isRunning }: Props) {
     const [dataPoints, setDataPoints] = useState<number[]>([]);
     const [barColors, setBarColors] = useState<string[]>([]);
 
-    // YENİ: DİNAMİK YÜKSEKLİK (Y-AXIS) HESAPLAMA
-    // Ekrandaki mevcut en yüksek RPM değerini bulur.
-    // Minimum 1000 RPM tavan sınırı koyuyoruz ki motor durduğunda grafik sıfıra çöküp ezilmesin.
     const maxRpmInChart = dataPoints.length > 0 ? Math.max(...dataPoints) : 1000;
-    const dynamicYMax = Math.max(1000, Math.floor(maxRpmInChart * 1.15)); // Zirve noktasının %15 üstünde nefes boşluğu bırakır
+    const dynamicYMax = Math.max(1000, Math.floor(maxRpmInChart * 1.15));
 
     useEffect(() => {
         if (isRunning) {
@@ -55,10 +51,18 @@ export function TissueHardnessChart({ isRunning }: Props) {
         const handleTelemetry = (data: string) => {
             if (!isRunning) return;
 
+            // 1. YENİ: Reçete "Bekleme" (Loop) adımındaysa grafiği tamamen dondur!
+            const store = useControllerStore.getState();
+            if (store.recipeStatus.isRunning && store.activeRecipe && store.recipeStatus.currentStepIndex !== null) {
+                const currentStep = store.activeRecipe.steps[store.recipeStatus.currentStepIndex];
+                if (currentStep && (currentStep.mode as string) === 'loop') {
+                    return; // Loop adımındayken yeni veriyi grafiğe basma (ekranda son haliyle donuk kalır)
+                }
+            }
+
+            // Veri akışını biraz daha hızlandırdık (40ms -> 30ms)
             const now = Date.now();
-            // YENİ: Veri çekme hızı saniyede 10'dan 25'e (40ms) yükseltildi!
-            // Grafikte çok daha sık, EKG gibi akan çubuklar göreceksin.
-            if (now - lastUpdateTime < 40) return;
+            if (now - lastUpdateTime < 30) return;
             lastUpdateTime = now;
 
             const cleanString = data.replace('<TEL,', '').replace('>', '');
@@ -69,7 +73,11 @@ export function TissueHardnessChart({ isRunning }: Props) {
                 const absoluteRpm = Math.abs(rawRpm);
                 const timeLabel = new Date().toLocaleTimeString('en-US', { minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 });
 
-                const currentMode = useControllerStore.getState().operatingMode || 'continuous';
+                // Çubuk rengini o an çalışan reçete adımından veya manuel moddan al
+                let currentMode = store.operatingMode || 'continuous';
+                if (store.recipeStatus.isRunning && store.activeRecipe && store.recipeStatus.currentStepIndex !== null) {
+                    currentMode = store.activeRecipe.steps[store.recipeStatus.currentStepIndex]?.mode || currentMode;
+                }
                 const currentColor = MODE_COLORS[currentMode] || DEFAULT_COLOR;
 
                 setLabels((prev) => {
@@ -121,14 +129,20 @@ export function TissueHardnessChart({ isRunning }: Props) {
                                 backgroundColor: barColors,
                                 borderRadius: 4,
                                 barPercentage: 0.9,
-                                categoryPercentage: 0.85, // YENİ: Çubuklar arasına çok ince, şık bir boşluk eklendi
+                                categoryPercentage: 0.85,
                             },
                         ],
                     }}
                     options={{
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: { duration: 0 },
+                        // 2. YENİ: Chart.js'in veriyi geciktiren yumuşatma animasyonları tamamen KAPATILDI!
+                        animation: false,
+                        transitions: {
+                            active: {
+                                animation: { duration: 0 }
+                            }
+                        },
                         layout: { padding: { top: 2, bottom: 0 } },
                         plugins: { legend: { display: false }, tooltip: { intersect: false, mode: 'index' } },
                         scales: {
@@ -137,7 +151,7 @@ export function TissueHardnessChart({ isRunning }: Props) {
                             },
                             y: {
                                 min: 0,
-                                max: dynamicYMax, // YENİ: Grafiğin yüksekliği artık gelen RPM'e göre otomatik zumlanıyor (Auto-Scale)!
+                                max: dynamicYMax,
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 ticks: { maxTicksLimit: 5 },
                             },
