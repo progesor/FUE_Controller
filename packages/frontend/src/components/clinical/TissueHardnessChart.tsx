@@ -10,7 +10,6 @@ import classes from './TissueHardnessChart.module.css';
 import { socket } from '../../services/socketService';
 import { useControllerStore } from '../../store/useControllerStore';
 
-// Çizgi grafiği bileşenleri yerine BarElement'i kaydettik
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 type Props = {
@@ -19,24 +18,29 @@ type Props = {
     oscillation?: number;
 };
 
-const MAX_POINTS = 40; // Çubuk grafikte sıkışıklık olmaması için ideal nokta sayısı
+// YENİ: Ekranda aynı anda görünecek çubuk sayısı 200'e çıkarıldı!
+const MAX_POINTS = 200;
 
-// Modlara Özel Renk Paleti (Mantine Tema Renklerine Uyumlu)
 const MODE_COLORS: Record<string, string> = {
-    continuous: 'rgba(51, 154, 240, 0.9)',     // Blue
-    oscillation: 'rgba(204, 93, 232, 0.9)',    // Grape
-    vibration: 'rgba(32, 201, 151, 0.9)',      // Teal
-    pulse: 'rgba(255, 146, 43, 0.9)',          // Orange
-    loop: 'rgba(255, 107, 107, 0.9)'           // Red
+    continuous: 'rgba(51, 154, 240, 0.9)',
+    oscillation: 'rgba(204, 93, 232, 0.9)',
+    vibration: 'rgba(32, 201, 151, 0.9)',
+    pulse: 'rgba(255, 146, 43, 0.9)',
+    loop: 'rgba(255, 107, 107, 0.9)'
 };
-const DEFAULT_COLOR = 'rgba(0, 229, 255, 0.8)'; // Neon Cyan (Yedek)
+const DEFAULT_COLOR = 'rgba(0, 229, 255, 0.8)';
 
 export function TissueHardnessChart({ isRunning }: Props) {
     const [labels, setLabels] = useState<string[]>([]);
     const [dataPoints, setDataPoints] = useState<number[]>([]);
-    const [barColors, setBarColors] = useState<string[]>([]); // YENİ: Her çubuğun rengini tutan hafıza
+    const [barColors, setBarColors] = useState<string[]>([]);
 
-    // 1. Manuel başlatmalarda temizle
+    // YENİ: DİNAMİK YÜKSEKLİK (Y-AXIS) HESAPLAMA
+    // Ekrandaki mevcut en yüksek RPM değerini bulur.
+    // Minimum 1000 RPM tavan sınırı koyuyoruz ki motor durduğunda grafik sıfıra çöküp ezilmesin.
+    const maxRpmInChart = dataPoints.length > 0 ? Math.max(...dataPoints) : 1000;
+    const dynamicYMax = Math.max(1000, Math.floor(maxRpmInChart * 1.15)); // Zirve noktasının %15 üstünde nefes boşluğu bırakır
+
     useEffect(() => {
         if (isRunning) {
             setLabels([]);
@@ -45,16 +49,16 @@ export function TissueHardnessChart({ isRunning }: Props) {
         }
     }, [isRunning]);
 
-    // 2. Telemetri ve Sıfırlama Sinyallerini Dinle
     useEffect(() => {
         let lastUpdateTime = 0;
 
         const handleTelemetry = (data: string) => {
             if (!isRunning) return;
 
-            // React'i boğmamak için saniyede maks 10 render (Throttle)
             const now = Date.now();
-            if (now - lastUpdateTime < 100) return;
+            // YENİ: Veri çekme hızı saniyede 10'dan 25'e (40ms) yükseltildi!
+            // Grafikte çok daha sık, EKG gibi akan çubuklar göreceksin.
+            if (now - lastUpdateTime < 40) return;
             lastUpdateTime = now;
 
             const cleanString = data.replace('<TEL,', '').replace('>', '');
@@ -63,9 +67,8 @@ export function TissueHardnessChart({ isRunning }: Props) {
 
             if (!isNaN(rawRpm)) {
                 const absoluteRpm = Math.abs(rawRpm);
-                const timeLabel = new Date().toLocaleTimeString('en-US', { minute: '2-digit', second: '2-digit' });
+                const timeLabel = new Date().toLocaleTimeString('en-US', { minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 });
 
-                // YENİ: Store'dan o anki aktif modu çek ve rengini belirle
                 const currentMode = useControllerStore.getState().operatingMode || 'continuous';
                 const currentColor = MODE_COLORS[currentMode] || DEFAULT_COLOR;
 
@@ -79,7 +82,6 @@ export function TissueHardnessChart({ isRunning }: Props) {
                     return updated.length > MAX_POINTS ? updated.slice(updated.length - MAX_POINTS) : updated;
                 });
 
-                // YENİ: Rengi listeye ekle (Böylece mod değiştiğinde eski çubukların rengi değişmez)
                 setBarColors((prev) => {
                     const updated = [...prev, currentColor];
                     return updated.length > MAX_POINTS ? updated.slice(updated.length - MAX_POINTS) : updated;
@@ -103,13 +105,12 @@ export function TissueHardnessChart({ isRunning }: Props) {
     }, [isRunning]);
 
     return (
-        <Paper radius="lg" withBorder className={`${classes.chartContainer} ${!isRunning ? classes.paused : ''}`}>
-            {/* Şık ve İngilizce Başlık */}
+        <Paper w="100%" radius="lg" withBorder className={`${classes.chartContainer} ${!isRunning ? classes.paused : ''}`}>
             <Text className={classes.title} c="dimmed" size="sm" mb="xs" ml="xs" fw={600} style={{ letterSpacing: '1px' }}>
                 Motor Dynamics
             </Text>
 
-            <div style={{ height: '140px' }}>
+            <div style={{ height: '140px', width: '100%' }}>
                 <Bar
                     data={{
                         labels,
@@ -117,10 +118,10 @@ export function TissueHardnessChart({ isRunning }: Props) {
                             {
                                 label: 'RPM',
                                 data: dataPoints,
-                                backgroundColor: barColors, // Renk dizisi buraya bağlandı
-                                borderRadius: 4,          // Uçları hafif yuvarlak şık çubuklar
-                                barPercentage: 0.8,
-                                categoryPercentage: 0.9,
+                                backgroundColor: barColors,
+                                borderRadius: 4,
+                                barPercentage: 0.9,
+                                categoryPercentage: 0.85, // YENİ: Çubuklar arasına çok ince, şık bir boşluk eklendi
                             },
                         ],
                     }}
@@ -132,11 +133,11 @@ export function TissueHardnessChart({ isRunning }: Props) {
                         plugins: { legend: { display: false }, tooltip: { intersect: false, mode: 'index' } },
                         scales: {
                             x: {
-                                display: false // X yazıları gizli
+                                display: false
                             },
                             y: {
                                 min: 0,
-                                suggestedMax: 5000,
+                                max: dynamicYMax, // YENİ: Grafiğin yüksekliği artık gelen RPM'e göre otomatik zumlanıyor (Auto-Scale)!
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 ticks: { maxTicksLimit: 5 },
                             },
