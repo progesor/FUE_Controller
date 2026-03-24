@@ -27,44 +27,47 @@ export function PresetButtons() {
     };
 
     return (
-        <Group justify="center" gap="lg">
-            {/* SABİT MOD 1: CONTINUOUS */}
+        <Group justify="center" gap="lg" style={{ perspective: '1000px' }}>
             <Button
                 variant="default"
-                className={cx(classes.presetButton, {
-                    [classes.active]: !activeRecipe && operatingMode === 'continuous'
-                })}
+                classNames={{
+                    root: cx(classes.presetButton, { [classes.active]: !activeRecipe && operatingMode === 'continuous' }),
+                    inner: classes.buttonInner,
+                    label: classes.buttonLabel
+                }}
                 onClick={() => handleBaseModeClick('continuous')}
-                leftSection={<IconInfinity size={22} />}
+                leftSection={<IconInfinity size={24} />}
             >
-                <Text component="span" className={classes.buttonLabel}>Continuous</Text>
+                <Text component="span" className={classes.buttonText}>Continuous</Text>
             </Button>
 
-            {/* SABİT MOD 2: OSCILLATION */}
             <Button
                 variant="default"
-                className={cx(classes.presetButton, {
-                    [classes.active]: !activeRecipe && operatingMode === 'oscillation'
-                })}
+                classNames={{
+                    root: cx(classes.presetButton, { [classes.active]: !activeRecipe && operatingMode === 'oscillation' }),
+                    inner: classes.buttonInner,
+                    label: classes.buttonLabel
+                }}
                 onClick={() => handleBaseModeClick('oscillation')}
-                leftSection={<IconRepeat size={22} />}
+                leftSection={<IconRepeat size={24} />}
             >
-                <Text component="span" className={classes.buttonLabel}>Oscillation</Text>
+                <Text component="span" className={classes.buttonText}>Oscillation</Text>
             </Button>
 
-            {/* DİNAMİK OLARAK EKLENEN FAVORİ REÇETELER */}
             {favoriteRecipes.map((recipe) => (
                 <Button
                     key={recipe.id}
                     variant="default"
                     color="orange"
-                    className={cx(classes.presetButton, {
-                        [classes.active]: activeRecipe?.id === recipe.id
-                    })}
+                    classNames={{
+                        root: cx(classes.presetButton, { [classes.active]: activeRecipe?.id === recipe.id }),
+                        inner: classes.buttonInner,
+                        label: classes.buttonLabel
+                    }}
                     onClick={() => handleRecipeClick(recipe)}
-                    leftSection={<IconStar size={22} color={activeRecipe?.id === recipe.id ? "white" : "orange"} />}
+                    leftSection={<IconStar size={24} color={activeRecipe?.id === recipe.id ? "white" : "orange"} />}
                 >
-                    <Text component="span" className={classes.buttonLabel}>{recipe.name}</Text>
+                    <Text component="span" className={classes.buttonText}>{recipe.name}</Text>
                 </Button>
             ))}
         </Group>

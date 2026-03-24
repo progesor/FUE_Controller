@@ -1,7 +1,7 @@
 [
   {
     "id": "6937deba-e2bb-4728-95b8-cc7e7ba4ce1e",
-    "name": "Yeni Operasyon Reçetesi",
+    "name": "Afro",
     "steps": [
       {
         "id": "9995be9d-d396-441d-b980-5f539b28180d",
@@ -28,6 +28,12 @@
           "timeMs": 20,
           "accel": 100000
         }
+      },
+      {
+        "id": "1774336404619",
+        "mode": "loop",
+        "duration": 1000,
+        "settings": {}
       }
     ],
     "isFavorite": true
@@ -61,7 +67,7 @@
         "settings": {}
       }
     ],
-    "isFavorite": false
+    "isFavorite": true
   },
   {
     "id": "dad870ab-0350-45c3-96d0-1fed21c3165c",
@@ -122,11 +128,11 @@
         }
       }
     ],
-    "isFavorite": false
+    "isFavorite": true
   },
   {
     "id": "befb6446-4501-44c2-b09a-885b76a48007",
-    "name": "Operasyon Bla Bla",
+    "name": "Operasyon Bla Bla asd sad as a",
     "steps": [
       {
         "id": "ab839316-3cc5-43e7-a621-4ef2f675f736",
@@ -174,7 +180,8 @@
           "pwm": 38
         }
       }
-    ]
+    ],
+    "isFavorite": true
   },
   {
     "id": "12fc1ef8-ec2e-4723-9707-dae4fd8d6ed8",

@@ -2,33 +2,52 @@
 
 .presetButton {
     background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #aab0c4;
-    font-weight: 500;
-    width: 160px; /* Genişlik artırıldı */
-    height: 50px; /* Yükseklik artırıldı */
-    padding: 0 16px;
-    transition: all 0.2s ease;
-}
-
-/* Mantine'in buton içindeki flex yapısını yönetmek için */
-.presetButton > .mantine-Button-inner {
-    justify-content: flex-start;
+    width: 170px; /* Genişliği kilitledik */
+    max-width: 170px; /* Asla bu genişliği aşamaz */
+    min-height: 75px; /* Parmakla basmak için rahat yükseklik */
+    height: auto;
+    padding: 10px 16px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .presetButton:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-color: #00e5ff;
+    border-color: rgba(0, 229, 255, 0.4);
     color: #fff;
+    transform: translateY(-2px);
 }
 
 .presetButton.active {
-    background-color: rgba(0, 229, 255, 0.15);
-    border-color: #00e5ff;
+    background: linear-gradient(145deg, rgba(0, 229, 255, 0.25), rgba(0, 229, 255, 0.05));
+    border: 2px solid #00e5ff;
     color: #fff;
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+    transform: scale(1.08) translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 229, 255, 0.45);
+    z-index: 10;
+}
+
+/* Mantine buton yapısını esnetme kuralları */
+.buttonInner {
+    width: 100%;
+    justify-content: flex-start;
 }
 
 .buttonLabel {
-    font-size: 16px; /* Yazı boyutu ayarlandı */
+    width: 100%;
+    white-space: normal !important; /* Mantine'in tek satır yasağını zorla kırar */
+    word-wrap: break-word;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.buttonText {
+    font-size: 15px;
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* En fazla 2 satır gösterir, kalanı ... yapar */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
 }

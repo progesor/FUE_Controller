@@ -45,7 +45,6 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
     const removeStep = (index: number) => setLocalRecipe(prev => ({ ...prev, steps: prev.steps.filter((_, i) => i !== index) }));
 
     const getUIMode = (step: any) => { if (step.mode === 'oscillation') return step.settings?.mode === 'time' ? 'oscillation_time' : 'oscillation_angle'; return step.mode; };
-
     const cycleMode = (index: number, step: any) => {
         const currentUIMode = getUIMode(step);
         const nextUIMode = UI_MODES[(UI_MODES.indexOf(currentUIMode) + 1) % UI_MODES.length];
@@ -70,6 +69,11 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
         onClose();
     };
 
+    // YENİ: Toplam kutu sayısına göre dinamik ölçek (Scale) çarpanı hesaplama
+    // Ekranda rahatça 4 kutu sığıyor varsayımıyla (1080p ekranlar için optimal oran)
+    const totalItems = localRecipe.steps.length + 1; // Kartlar + "Yeni Adım Ekle" Butonu
+    const scaleFactor = totalItems > 4 ? 4.2 / totalItems : 1;
+
     return (
         <Modal opened={opened} onClose={onClose} fullScreen title={<Text size="xl" fw={700}>Program Editor</Text>} transitionProps={{ transition: 'fade', duration: 200 }}>
             <Stack h="100%" justify="space-between">
@@ -81,8 +85,20 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                     </Group>
                 </Group>
                 <Divider my="md" />
-                <ScrollArea type="always" w="100%" style={{ flex: 1 }} pb="xl" offsetScrollbars>
-                    <Flex wrap="nowrap" align="stretch" gap="lg" px="md" w="max-content" style={{ minHeight: '350px' }}>
+
+                {/* YENİ: ScrollArea kaldırıldı, yerine Dinamik Ölçeklenen Ortalanmış Kutu (Box) eklendi */}
+                <Box style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <Flex
+                        wrap="nowrap"
+                        align="stretch"
+                        gap="lg"
+                        w="max-content"
+                        style={{
+                            transform: `scale(${scaleFactor})`,
+                            transformOrigin: 'center center', // Tam ortadan küçülür
+                            transition: 'transform 0.3s ease-out' // Yeni adım eklendikçe yumuşakça küçülme animasyonu
+                        }}
+                    >
                         {localRecipe.steps.length === 0 && <Text c="dimmed" size="lg" mt="xl">No steps added yet. Click the button on the right.</Text>}
                         {localRecipe.steps.map((step, i) => {
                             const uiMode = getUIMode(step);
@@ -95,7 +111,6 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                                     </Group>
                                     <Button fullWidth size="xl" color={MODE_COLORS[uiMode]} onClick={() => cycleMode(i, step)} style={{ fontSize: '1.2rem', height: '60px' }}>{MODE_LABELS[uiMode]}</Button>
                                     <Stack mt="xl" gap="md">
-                                        {/* Mod 'loop' ise Bekleme Süresi yazsın, değilse Adım Süresi */}
                                         <NumberInput label={uiMode === 'loop' ? "Wait Time (ms)" : "Step Duration (ms)"} value={step.duration} onChange={(val) => updateStepDuration(i, Number(val) || 0)} min={100} step={100} size="md" />
                                         <Divider />
 
@@ -118,7 +133,7 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                             <Stack align="center" gap="xs"><IconPlus size={48} /><Text>Add New Step</Text></Stack>
                         </Button>
                     </Flex>
-                </ScrollArea>
+                </Box>
             </Stack>
         </Modal>
     );
@@ -190,7 +205,7 @@ export function ClinicalLayout() {
                         {/* YENİ: Logo ve Yazıları saran devasa ve tek bir Tıklanabilir Alan */}
                         <Box
                             onClick={handleLogoClick}
-                            style={{ cursor: 'pointer', position: 'relative' }}
+                            style={{ cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
                         >
                             <ErtipLogo
                                 className={cx(classes.logo, { [classes.logoActive]: motor.isActive || recipeStatus.isRunning })}
