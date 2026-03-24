@@ -286,6 +286,8 @@ export const sendContinuousSettings = (settings: ContinuousSettings) => {
 export const sendRecipeStart = (recipe: Recipe) => {
     const store = useControllerStore.getState();
 
+    // YENİ EKLENDİ: Gecikmeli/eski paketlerin arayüzü bozmasını 400ms boyunca engelle
+    store.startIgnoringStatusUpdates();
     // YENİ: OPTIMISTIC UI (İyimser Arayüz)
     // Backend'in cevabını beklemeden logoyu ANINDA aktif ediyoruz.
     store.setRecipeStatus({ ...store.recipeStatus, isRunning: true });
@@ -303,6 +305,9 @@ export const sendRecipeStart = (recipe: Recipe) => {
 /** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
 export const sendRecipeStop = () => {
     const store = useControllerStore.getState();
+
+    // YENİ EKLENDİ: İptal tuşuna bastığında gelen hayalet paketleri engelle
+    store.startIgnoringStatusUpdates();
 
     // YENİ: Arayüzü beklemeden ANINDA kapat (Sıfır Gecikme Hissi)
     store.setRecipeStatus({ ...store.recipeStatus, isRunning: false });

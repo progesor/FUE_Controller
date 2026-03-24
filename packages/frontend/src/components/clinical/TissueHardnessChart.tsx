@@ -34,13 +34,20 @@ export function TissueHardnessChart({ isRunning }: Props) {
 
     // 2. Telemetri ve Sıfırlama Sinyallerini Dinle
     useEffect(() => {
+        let lastUpdateTime = 0; // YENİ: Frenleme (Throttle) için zaman tutucu
+
         const handleTelemetry = (data: string) => {
-            // Reçete/Motor çalışmıyorsa veriyi yoksay (Grafik ekranda donuk kalsın)
             if (!isRunning) return;
+
+            // YENİ: PERFORMANS KORUMASI
+            // Telemetri ne kadar hızlı gelirse gelsin, React'i saniyede en fazla 10 kez (100ms'de bir) yor!
+            const now = Date.now();
+            if (now - lastUpdateTime < 100) return;
+            lastUpdateTime = now;
 
             const cleanString = data.replace('<TEL,', '').replace('>', '');
             const values = cleanString.split(',');
-            const rawRpm = parseFloat(values[0]); // Gerçek RPM verisi
+            const rawRpm = parseFloat(values[0]);
 
             if (!isNaN(rawRpm)) {
                 const absoluteRpm = Math.abs(rawRpm);
@@ -59,12 +66,10 @@ export function TissueHardnessChart({ isRunning }: Props) {
         };
 
         const handleClear = () => {
-            // Backend'den 'Yeni Döngü Başladı' sinyali geldiğinde grafiği sıfırla
             setLabels([]);
             setDataPoints([]);
         };
 
-        // Dinleyicileri kaydet (TS tiplerini aşmak için as any kullanıyoruz)
         socket.on('telemetry_data', handleTelemetry);
         (socket as any).on('chart_clear', handleClear);
 

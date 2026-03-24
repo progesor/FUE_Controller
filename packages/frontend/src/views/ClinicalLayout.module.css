@@ -15,6 +15,11 @@
     color: white;
     font-family: 'Segoe UI', sans-serif;
     overflow: hidden;
+
+    user-select: none; /* Yazıların ve elementlerin seçilmesini tamamen engeller */
+    -webkit-user-select: none; /* iOS / Safari koruması */
+    -webkit-touch-callout: none; /* Uzun basınca çıkan menüyü engeller */
+    touch-action: manipulation; /* Çift tıklama-zoom beklemesini iptal eder, buton tepkilerini 300ms HIZLANDIRIR! */
 }
 
 .presetButtonPlaceholder {
