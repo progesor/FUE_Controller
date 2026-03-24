@@ -17,10 +17,10 @@ import {
 } from "../services/socketService.ts";
 import ErtipLogo from '../assets/clinical/ertip-logo.svg?react';
 import cx from 'clsx';
-import { TissueHardnessChartBar } from "../components/clinical/TissueHardnessChartBar.tsx";
 import { LayoutSwitchButton } from "../components/common/LayoutSwitchButton.tsx";
 import { IconList, IconEdit, IconX, IconPlus, IconTrash, IconDeviceFloppy, IconStar, IconStarFilled } from '@tabler/icons-react';
 import type { Recipe } from 'shared-types';
+import {TissueHardnessChart} from "../components/clinical/TissueHardnessChart.tsx";
 
 const MAX_RPM = 35000;
 const RPM_STEP = 100;
@@ -187,24 +187,38 @@ export function ClinicalLayout() {
                             </Box>
                         )}
 
-                        <ErtipLogo className={cx(classes.logo, { [classes.logoActive]: motor.isActive || recipeStatus.isRunning })} onClick={handleLogoClick} width="300" style={{ cursor: 'pointer' }} />
+                        {/* YENİ: Logo ve Yazıları saran devasa ve tek bir Tıklanabilir Alan */}
+                        <Box
+                            onClick={handleLogoClick}
+                            style={{ cursor: 'pointer', position: 'relative' }}
+                        >
+                            <ErtipLogo
+                                className={cx(classes.logo, { [classes.logoActive]: motor.isActive || recipeStatus.isRunning })}
+                                width="300"
+                            />
 
-                        <Box className={classes.centerGraphic}>
-                            {recipeStatus.isRunning ? (
-                                <>
-                                    <Text className={classes.welcomeText} c="green">Program Running</Text>
-                                    <Text className={classes.doctorName}>Automatic Mode</Text>
-                                </>
-                            ) : (
-                                <>
-                                    <Text className={classes.welcomeText}>Welcome</Text>
-                                    <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
-                                </>
-                            )}
+                            {/* pointerEvents: 'none' -> Tıklamalar yazılara takılmasın, direkt alttaki Box'a geçsin */}
+                            <Box className={classes.centerGraphic} style={{ pointerEvents: 'none' }}>
+                                {recipeStatus.isRunning ? (
+                                    <>
+                                        <Text className={classes.welcomeText} c="green">Program Running</Text>
+                                        <Text className={classes.doctorName}>Automatic Mode</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text className={classes.welcomeText}>Welcome</Text>
+                                        <Text className={classes.doctorName}>Dr. Tayfun Oğuzoğlu</Text>
+                                    </>
+                                )}
+                            </Box>
                         </Box>
 
                         <Stack align="center" mt={8} mb={-200}>
-                            <TissueHardnessChartBar isRunning={motor.isActive || recipeStatus.isRunning} rpm={motor.pwm} oscillation={oscPercent} />
+                            <TissueHardnessChart
+                                isRunning={motor.isActive || recipeStatus.isRunning}
+                                rpm={motor.pwm}
+                                oscillation={oscPercent}
+                            />
                         </Stack>
                     </Stack>
 

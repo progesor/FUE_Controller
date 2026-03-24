@@ -36,7 +36,6 @@ export const initializeRecipeService = (socketIoServer: Server<ClientToServerEve
 const playNextStep = () => {
     if (!currentRecipe) return;
 
-    // Eğer son adımdan da ileri gitmeye çalışıyorsak, reçeteyi güvenli bir şekilde kapat
     if (currentStepIndex + 1 >= currentRecipe.steps.length) {
         stopRecipe();
         return;
@@ -45,30 +44,33 @@ const playNextStep = () => {
     currentStepIndex++;
     const step = currentRecipe.steps[currentStepIndex];
 
-    // YENİ: LOOP / RESTART MODÜLÜ
-    // Eğer bu adım bir döngü/yeniden başlatma (loop) adımı ise:
+    // YENİ: LOOP / RESTART MODÜLÜ VE SAYAÇ ARTIRMA
     if (step.mode === 'loop' as any) {
-        // 1. Motoru durdur.
         stopMotorFromRecipe();
+        io?.emit('arduino_event', { type: 'PEDAL', state: 0 }); // Sayacı artırır
 
-        // 2. Kullanıcının girdiği Bekleme Süresi (step.duration) kadar bekle
         if (stepTimeout) clearTimeout(stepTimeout);
         stepTimeout = setTimeout(() => {
-            if (!recipeStatus.isRunning) return; // O sırada iptal edildiyse dur
+            if (!recipeStatus.isRunning) return;
 
-            // 3. Süre dolunca indeksi en başa (-1) sar ve yeniden ateşle!
             console.log("[RECIPE] Restart adımı tetiklendi. Program başa sarılıyor...");
             currentStepIndex = -1;
+
+            // -----------------------------------------------------------------
+            // YENİ: Grafiğin sıfırlanması için Frontend'e temizlik sinyali gönder!
+            // (TS hatası vermemesi için 'as any' kullanıyoruz)
+            // -----------------------------------------------------------------
+            (io as any)?.emit('chart_clear');
+
             playNextStep();
         }, step.duration);
 
-        return; // Normal komutların cihaza gitmesini engellemek için buradan çıkıyoruz
+        return;
     }
 
-    // Normal bir adımsa, donanıma ilgili komutu gönder (Sürekli, Osilasyon vs.)
+    // Normal bir adımsa, donanıma ilgili komutu gönder
     executeStep(step);
 
-    // Bu adımın çalışma süresi dolduğunda bir sonraki adıma geçmek için zamanlayıcı kur
     if (stepTimeout) clearTimeout(stepTimeout);
     stepTimeout = setTimeout(playNextStep, step.duration);
 };
