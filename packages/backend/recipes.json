@@ -1,36 +1,40 @@
 [
   {
-    "id": "6937deba-e2bb-4728-95b8-cc7e7ba4ce1e",
-    "name": "Afro",
+    "id": "fac-001-standard-scalp",
+    "name": "Standard Scalp Extraction",
     "steps": [
       {
-        "id": "9995be9d-d396-441d-b980-5f539b28180d",
+        "id": "step-001-a",
         "mode": "continuous",
-        "duration": 2000,
+        "duration": 350,
         "settings": {
-          "rampDuration": 500
+          "pwm": 2750
         }
       },
       {
-        "id": "9b94e2d5-e005-4400-82ea-9db3f66e5b8e",
+        "id": "step-001-b",
         "mode": "oscillation",
-        "duration": 1000,
+        "duration": 600,
         "settings": {
-          "angle": 180
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 2750,
+          "accel": 50000
         }
       },
       {
-        "id": "1774276523369",
-        "mode": "vibration",
-        "duration": 1000,
+        "id": "step-001-c",
+        "mode": "oscillation",
+        "duration": 350,
         "settings": {
-          "rpm": 3000,
-          "timeMs": 20,
-          "accel": 100000
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 2750,
+          "accel": 50000
         }
       },
       {
-        "id": "1774336404619",
+        "id": "step-001-d",
         "mode": "loop",
         "duration": 1000,
         "settings": {}
@@ -40,191 +44,259 @@
     "isReadonly": true
   },
   {
-    "id": "5937f875-fb9f-4dc0-a1eb-41ad84f4d975",
-    "name": "Test 1",
+    "id": "fac-002-thin-scalp",
+    "name": "Delicate / Thin Scalp",
     "steps": [
       {
-        "id": "bcd13399-ece2-440e-94fb-58f1f5ef754a",
+        "id": "step-002-a",
         "mode": "continuous",
+        "duration": 500,
+        "settings": {
+          "pwm": 2750
+        }
+      },
+      {
+        "id": "step-002-b",
+        "mode": "oscillation",
         "duration": 750,
         "settings": {
-          "rampDuration": 400,
-          "pwm": 2500
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 2750,
+          "accel": 50000
         }
       },
       {
-        "id": "20ecbeb7-1f51-499b-af4e-aa0149c5a104",
+        "id": "step-002-c",
         "mode": "oscillation",
-        "duration": 1500,
+        "duration": 350,
         "settings": {
-          "angle": 225,
-          "pwm": 1000
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 2750,
+          "accel": 50000
         }
       },
       {
-        "id": "1774334680650",
+        "id": "step-002-d",
         "mode": "loop",
         "duration": 1000,
         "settings": {}
       }
     ],
-    "isFavorite": true
+    "isFavorite": true,
+    "isReadonly": true
   },
   {
-    "id": "dad870ab-0350-45c3-96d0-1fed21c3165c",
-    "name": "Test 2",
+    "id": "fac-003-afro-thick",
+    "name": "Afro-Textured & Thick Scalp",
     "steps": [
       {
-        "id": "e90d8c53-8251-4b59-ab04-f96c5082a77e",
+        "id": "step-003-a",
         "mode": "continuous",
-        "duration": 3500,
+        "duration": 500,
         "settings": {
-          "rampDuration": 1000
+          "pwm": 3400
         }
       },
       {
-        "id": "3e6f9db6-c315-45b2-80e1-f130d22b59b2",
+        "id": "step-003-b",
         "mode": "oscillation",
-        "duration": 4000,
+        "duration": 1200,
         "settings": {
-          "angle": 540,
-          "pwm": 16
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 3400,
+          "accel": 50000
         }
       },
       {
-        "id": "d6039041-6607-4df4-8070-7b9f66191846",
+        "id": "step-003-c",
+        "mode": "loop",
+        "duration": 1000,
+        "settings": {}
+      }
+    ],
+    "isFavorite": true,
+    "isReadonly": true
+  },
+  {
+    "id": "fac-004-standard-body",
+    "name": "Standard Body FUE",
+    "steps": [
+      {
+        "id": "step-004-a",
+        "mode": "continuous",
+        "duration": 1100,
+        "settings": {
+          "pwm": 2000
+        }
+      },
+      {
+        "id": "step-004-b",
         "mode": "oscillation",
+        "duration": 350,
+        "settings": {
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 2000,
+          "accel": 50000
+        }
+      },
+      {
+        "id": "step-004-c",
+        "mode": "loop",
+        "duration": 1500,
+        "settings": {}
+      }
+    ],
+    "isFavorite": false,
+    "isReadonly": true
+  },
+  {
+    "id": "fac-005-beard-nape",
+    "name": "Beard & Nape Contour",
+    "steps": [
+      {
+        "id": "step-005-a",
+        "mode": "oscillation",
+        "duration": 200,
+        "settings": {
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 1400,
+          "accel": 50000
+        }
+      },
+      {
+        "id": "step-005-b",
+        "mode": "continuous",
+        "duration": 800,
+        "settings": {
+          "pwm": 1400
+        }
+      },
+      {
+        "id": "step-005-c",
+        "mode": "oscillation",
+        "duration": 300,
+        "settings": {
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 1400,
+          "accel": 50000
+        }
+      },
+      {
+        "id": "step-005-d",
+        "mode": "loop",
+        "duration": 100,
+        "settings": {}
+      }
+    ],
+    "isFavorite": false,
+    "isReadonly": true
+  },
+  {
+    "id": "fac-006-long-hair",
+    "name": "Long Hair (U-FUE)",
+    "steps": [
+      {
+        "id": "step-006-a",
+        "mode": "oscillation",
+        "duration": 1700,
+        "settings": {
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 1850,
+          "accel": 50000
+        }
+      },
+      {
+        "id": "step-006-b",
+        "mode": "loop",
         "duration": 2000,
-        "settings": {
-          "angle": 225,
-          "pwm": 16
-        }
-      },
-      {
-        "id": "1c6594dc-383e-433b-bf66-e3894a49e8b3",
-        "mode": "pulse",
-        "duration": 1500,
-        "settings": {
-          "pulseDuration": 50,
-          "pulseDelay": 50,
-          "pwm": 230
-        }
-      },
-      {
-        "id": "85b1537e-8880-4bee-bd13-f1e6d684ab8d",
-        "mode": "vibration",
-        "duration": 1000,
-        "settings": {
-          "intensity": 91,
-          "frequency": 7
-        }
-      },
-      {
-        "id": "b1c1ab27-28c4-4f12-8f99-851fe62a514d",
-        "mode": "pulse",
-        "duration": 1000,
-        "settings": {
-          "pulseDuration": 150,
-          "pulseDelay": 300
-        }
+        "settings": {}
       }
     ],
-    "isFavorite": true
+    "isFavorite": true,
+    "isReadonly": true
   },
   {
-    "id": "befb6446-4501-44c2-b09a-885b76a48007",
-    "name": "Operasyon Bla Bla",
+    "id": "fac-007-wet-zones",
+    "name": "High-Sebum / Wet Zones",
     "steps": [
       {
-        "id": "ab839316-3cc5-43e7-a621-4ef2f675f736",
+        "id": "step-007-a",
         "mode": "continuous",
-        "duration": 1000,
+        "duration": 1400,
         "settings": {
-          "rampDuration": 300,
-          "pwm": 255
+          "pwm": 4000
         }
       },
       {
-        "id": "41325201-e61d-4282-9835-618b962ea1f2",
+        "id": "step-007-b",
         "mode": "oscillation",
-        "duration": 3000,
+        "duration": 350,
         "settings": {
-          "angle": 270,
-          "pwm": 16
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 4000,
+          "accel": 50000
         }
       },
       {
-        "id": "86002c9f-2588-4004-8e78-c6b55bf86bae",
-        "mode": "vibration",
+        "id": "step-007-c",
+        "mode": "loop",
         "duration": 1500,
-        "settings": {
-          "intensity": 97,
-          "frequency": 4
-        }
-      },
-      {
-        "id": "cd5bb93c-2c34-48e8-87c3-9e2df8fc3bd1",
-        "mode": "pulse",
-        "duration": 2000,
-        "settings": {
-          "pulseDuration": 50,
-          "pulseDelay": 50,
-          "pwm": 255
-        }
-      },
-      {
-        "id": "7653cb32-69d7-4f55-b27d-ac8a9a14105a",
-        "mode": "continuous",
-        "duration": 1000,
-        "settings": {
-          "rampDuration": 600,
-          "pwm": 38
-        }
+        "settings": {}
       }
     ],
-    "isFavorite": true
+    "isFavorite": false,
+    "isReadonly": true
   },
   {
-    "id": "12fc1ef8-ec2e-4723-9707-dae4fd8d6ed8",
-    "name": "sdasd",
+    "id": "fac-008-back-shoulder",
+    "name": "Back & Shoulder Extraction",
     "steps": [
       {
-        "id": "85213a37-b048-4d5f-9e4c-435a045591a5",
+        "id": "step-008-a",
+        "mode": "oscillation",
+        "duration": 450,
+        "settings": {
+          "mode": "time",
+          "timeMs": 50,
+          "pwm": 2000,
+          "accel": 50000
+        }
+      },
+      {
+        "id": "step-008-b",
         "mode": "continuous",
-        "duration": 750,
+        "duration": 900,
         "settings": {
-          "rampDuration": 300,
-          "pwm": 23
+          "pwm": 2000
         }
       },
       {
-        "id": "925e7344-8870-41cf-b52d-bbd8b4de1db3",
+        "id": "step-008-c",
         "mode": "oscillation",
-        "duration": 1500,
+        "duration": 450,
         "settings": {
-          "angle": 270,
-          "pwm": 16
+          "mode": "time",
+          "timeMs": 150,
+          "pwm": 2000,
+          "accel": 50000
         }
       },
       {
-        "id": "73c03b13-d456-4715-bb16-73f02b3bf369",
-        "mode": "oscillation",
-        "duration": 1000,
-        "settings": {
-          "angle": 450,
-          "pwm": 25
-        }
-      },
-      {
-        "id": "09e2df14-4c64-415d-965e-3f1aacf79d20",
-        "mode": "vibration",
+        "id": "step-008-d",
+        "mode": "loop",
         "duration": 1500,
-        "settings": {
-          "intensity": 58,
-          "frequency": 3
-        }
+        "settings": {}
       }
     ],
-    "isFavorite": false
+    "isFavorite": false,
+    "isReadonly": true
   }
 ]
