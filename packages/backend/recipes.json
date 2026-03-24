@@ -36,7 +36,8 @@
         "settings": {}
       }
     ],
-    "isFavorite": true
+    "isFavorite": true,
+    "isReadonly": true
   },
   {
     "id": "5937f875-fb9f-4dc0-a1eb-41ad84f4d975",
@@ -132,7 +133,7 @@
   },
   {
     "id": "befb6446-4501-44c2-b09a-885b76a48007",
-    "name": "Operasyon Bla Bla asd sad as a",
+    "name": "Operasyon Bla Bla",
     "steps": [
       {
         "id": "ab839316-3cc5-43e7-a621-4ef2f675f736",

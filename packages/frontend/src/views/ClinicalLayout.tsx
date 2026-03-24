@@ -20,14 +20,12 @@ import cx from 'clsx';
 import { LayoutSwitchButton } from "../components/common/LayoutSwitchButton.tsx";
 import { IconList, IconEdit, IconX, IconPlus, IconTrash, IconDeviceFloppy, IconStar, IconStarFilled } from '@tabler/icons-react';
 import type { Recipe } from 'shared-types';
-import {TissueHardnessChart} from "../components/clinical/TissueHardnessChart.tsx";
+import { TissueHardnessChart } from "../components/clinical/TissueHardnessChart.tsx";
 
-const MAX_RPM = 35000;
 const RPM_STEP = 100;
 const MAX_ACCEL = 50000;
 const MAX_OSC_ANGLE = VALID_ANGLES[VALID_ANGLES.length - 1] || 600;
 
-// YENİ: 'loop' modülü eklendi
 const UI_MODES = ['continuous', 'oscillation_angle', 'oscillation_time', 'vibration', 'pulse', 'loop'];
 const MODE_COLORS: Record<string, string> = { continuous: 'blue', oscillation_angle: 'grape', oscillation_time: 'violet', vibration: 'teal', pulse: 'orange', loop: 'red' };
 const MODE_LABELS: Record<string, string> = { continuous: 'CONTINUOUS', oscillation_angle: 'OSCILLATION (ANGLE)', oscillation_time: 'OSCILLATION (TIME)', vibration: 'VIBRATION', pulse: 'PULSE', loop: 'RESTART (LOOP)' };
@@ -53,7 +51,7 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
         else if (nextUIMode === 'oscillation_time') newSteps[index] = { ...step, mode: 'oscillation', settings: { mode: 'time', timeMs: 100, accel: MAX_ACCEL, pwm: 1500 } };
         else if (nextUIMode === 'vibration') newSteps[index] = { ...step, mode: 'vibration', settings: { rpm: 3000, timeMs: 20, accel: 100000 } };
         else if (nextUIMode === 'pulse') newSteps[index] = { ...step, mode: 'pulse', settings: { baseRpm: 1000, pulseRpm: 5000, pulseDuration: 100, pulseInterval: 1000 } };
-        else if (nextUIMode === 'loop') newSteps[index] = { ...step, mode: 'loop' as any, settings: {} }; // RESTART MODU
+        else if (nextUIMode === 'loop') newSteps[index] = { ...step, mode: 'loop' as any, settings: {} };
         else newSteps[index] = { ...step, mode: 'continuous', settings: { pwm: 1500 } };
         setLocalRecipe({ ...localRecipe, steps: newSteps });
     };
@@ -69,9 +67,7 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
         onClose();
     };
 
-    // YENİ: Toplam kutu sayısına göre dinamik ölçek (Scale) çarpanı hesaplama
-    // Ekranda rahatça 4 kutu sığıyor varsayımıyla (1080p ekranlar için optimal oran)
-    const totalItems = localRecipe.steps.length + 1; // Kartlar + "Yeni Adım Ekle" Butonu
+    const totalItems = localRecipe.steps.length + 1;
     const scaleFactor = totalItems > 4 ? 4.2 / totalItems : 1;
 
     return (
@@ -86,7 +82,6 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                 </Group>
                 <Divider my="md" />
 
-                {/* YENİ: ScrollArea kaldırıldı, yerine Dinamik Ölçeklenen Ortalanmış Kutu (Box) eklendi */}
                 <Box style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     <Flex
                         wrap="nowrap"
@@ -95,8 +90,8 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                         w="max-content"
                         style={{
                             transform: `scale(${scaleFactor})`,
-                            transformOrigin: 'center center', // Tam ortadan küçülür
-                            transition: 'transform 0.3s ease-out' // Yeni adım eklendikçe yumuşakça küçülme animasyonu
+                            transformOrigin: 'center center',
+                            transition: 'transform 0.3s ease-out'
                         }}
                     >
                         {localRecipe.steps.length === 0 && <Text c="dimmed" size="lg" mt="xl">No steps added yet. Click the button on the right.</Text>}
@@ -140,14 +135,44 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
 };
 
 export function ClinicalLayout() {
-    const { motor, oscillationSettings, setMotorStatus, setOscillationSettings, savedRecipes, activeRecipe, recipeStatus, setActiveRecipe } = useControllerStore();
+    // YENİ: operatingMode'u store'dan alıyoruz
+    const { motor, oscillationSettings, setMotorStatus, setOscillationSettings, savedRecipes, activeRecipe, recipeStatus, setActiveRecipe, operatingMode } = useControllerStore();
     const [oscModeUI, setOscModeUI] = useState<'sensitive' | 'powerful'>('sensitive');
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-    const handleIncrementRpm = () => { const newVal = Math.min(MAX_RPM, motor.pwm + RPM_STEP); setMotorStatus({ pwm: newVal }); sendMotorPwm(newVal); };
-    const handleDecrementRpm = () => { const newVal = Math.max(0, motor.pwm - RPM_STEP); setMotorStatus({ pwm: newVal }); sendMotorPwm(newVal); };
-    const handleRpmSliderChange = (sliderValue: number) => { setMotorStatus({ pwm: sliderValue }); sendMotorPwm(sliderValue); };
+    // ===================================================================
+    // DİNAMİK RPM LİMİTİ (SAFETY FEATURE)
+    // ===================================================================
+    // Eğer Osilasyon modu seçiliyse max 5000, değilse 35000 olsun.
+    const currentMaxRpm = operatingMode === 'oscillation' ? 5000 : 35000;
+
+    // Eğer kullanıcı yüksek devirdeyken osilasyona geçerse, hızı otomatik olarak güvenli sınıra (5000) çek!
+    useEffect(() => {
+        if (!activeRecipe && motor.pwm > currentMaxRpm) {
+            setMotorStatus({ pwm: currentMaxRpm });
+            sendMotorPwm(currentMaxRpm);
+        }
+    }, [currentMaxRpm]); // Sadece mod/limit değiştiğinde tetiklenir
+
+    const handleIncrementRpm = () => {
+        const newVal = Math.min(currentMaxRpm, motor.pwm + RPM_STEP);
+        setMotorStatus({ pwm: newVal });
+        sendMotorPwm(newVal);
+    };
+
+    const handleDecrementRpm = () => {
+        const newVal = Math.max(0, motor.pwm - RPM_STEP);
+        setMotorStatus({ pwm: newVal });
+        sendMotorPwm(newVal);
+    };
+
+    const handleRpmSliderChange = (sliderValue: number) => {
+        // Kullanıcı slider'ı max sınırın dışına çekmeye çalışırsa engelle
+        const clampedValue = Math.min(currentMaxRpm, sliderValue);
+        setMotorStatus({ pwm: clampedValue });
+        sendMotorPwm(clampedValue);
+    };
 
     const handleIncrementAngle = () => { const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle); applyOscillation(VALID_ANGLES[Math.min(VALID_ANGLES.length - 1, currentIndex !== -1 ? currentIndex + 1 : 0)], oscModeUI); };
     const handleDecrementAngle = () => { const currentIndex = VALID_ANGLES.indexOf(oscillationSettings.angle); applyOscillation(VALID_ANGLES[Math.max(0, currentIndex !== -1 ? currentIndex - 1 : 0)], oscModeUI); };
@@ -178,12 +203,9 @@ export function ClinicalLayout() {
         <Box className={classes.wrapper}>
             <LayoutSwitchButton />
 
-            {/* =================================================================== */}
-            {/* TOP LEFT QUICK PROGRAMS BUTTON (Touch Optimized)                      */}
-            {/* =================================================================== */}
             <Box style={{ position: 'absolute', top: 25, left: 25, zIndex: 100 }}>
                 <Button
-                    size="xl" /* Dokunmatik için büyütüldü */
+                    size="xl"
                     radius="md"
                     variant="default"
                     leftSection={<IconList size={28}/>}
@@ -201,21 +223,39 @@ export function ClinicalLayout() {
                 <PresetButtons />
 
                 <Group justify="center" align="center" w="100%" className={classes.centerGroup}>
-                    <Gauge value={motor.pwm} maxValue={MAX_RPM} step={RPM_STEP} label="RPM" mirror={false} onIncrement={handleIncrementRpm} onDecrement={handleDecrementRpm} onChange={handleRpmSliderChange} onSliderChange={handleRpmSliderChange} />
+                    {/* YENİ: Gauge maxValue özelliği artık dinamik (currentMaxRpm) */}
+                    <Gauge
+                        value={motor.pwm}
+                        maxValue={currentMaxRpm}
+                        step={RPM_STEP}
+                        label="RPM"
+                        mirror={false}
+                        onIncrement={handleIncrementRpm}
+                        onDecrement={handleDecrementRpm}
+                        onChange={handleRpmSliderChange}
+                        onSliderChange={handleRpmSliderChange}
+                    />
 
                     <Stack align="center" mx="xl" className={classes.logoWrap} style={{ position: 'relative' }}>
                         {activeRecipe && (
-                            <Box style={{ position: 'absolute', top: -100, width: '100%', textAlign: 'center' }}>
-                                <Badge size="lg" color="green" mb="xs">ACTIVE PROGRAM</Badge>
-                                <Group justify="center" gap="xs">
-                                    <Text fw={700} size="xl" c="green">{activeRecipe.name}</Text>
-                                    <ActionIcon variant="light" color="blue" onClick={() => setIsEditorOpen(true)}><IconEdit size={18}/></ActionIcon>
-                                    <ActionIcon variant="light" color="red" onClick={() => { sendActiveRecipe(null); setActiveRecipe(null); }}><IconX size={18}/></ActionIcon>
+                            <Box style={{ position: 'absolute', top: -150, width: '100%', textAlign: 'center', zIndex: 10 }}>
+                                <Badge size="xl" color="green" mb="sm" p="md" style={{ fontSize: '14px', letterSpacing: '1px' }}>
+                                    ACTIVE PROGRAM
+                                </Badge>
+                                <Group justify="center" gap="md">
+                                    <Text fw={800} size="32px" c="green" style={{ letterSpacing: '0.5px' }}>
+                                        {activeRecipe.name}
+                                    </Text>
+                                    <ActionIcon size="xl" radius="md" variant="light" color="blue" onClick={() => setIsEditorOpen(true)}>
+                                        <IconEdit size={26}/>
+                                    </ActionIcon>
+                                    <ActionIcon size="xl" radius="md" variant="light" color="red" onClick={() => { sendActiveRecipe(null); setActiveRecipe(null); }}>
+                                        <IconX size={26}/>
+                                    </ActionIcon>
                                 </Group>
                             </Box>
                         )}
 
-                        {/* YENİ: Logo ve Yazıları saran devasa ve tek bir Tıklanabilir Alan */}
                         <Box
                             onClick={handleLogoClick}
                             style={{ cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
@@ -225,7 +265,6 @@ export function ClinicalLayout() {
                                 width="300"
                             />
 
-                            {/* pointerEvents: 'none' -> Tıklamalar yazılara takılmasın, direkt alttaki Box'a geçsin */}
                             <Box className={classes.centerGraphic} style={{ pointerEvents: 'none' }}>
                                 {recipeStatus.isRunning ? (
                                     <>
@@ -252,9 +291,38 @@ export function ClinicalLayout() {
 
                     <Stack align="center" gap="xs">
                         <Tooltip label={oscModeUI === 'sensitive' ? "Focuses on angle." : `Focuses on time (Exactly ${getMappedTimeMs(oscillationSettings.angle)}ms stroke).`} position="top" withArrow>
-                            <SegmentedControl value={oscModeUI} onChange={(val) => handleModeSwitch(val as 'sensitive' | 'powerful')} data={[{ label: 'Sensitive (Angle)', value: 'sensitive' }, { label: 'Powerful (Time)', value: 'powerful' }]} size="sm" color="grape" radius="xl" style={{ marginBottom: '-10px', zIndex: 10, top: -20, left: -50 }} />
+                            <SegmentedControl
+                                value={oscModeUI}
+                                onChange={(val) => handleModeSwitch(val as 'sensitive' | 'powerful')}
+                                data={[
+                                    { label: 'Sensitive (Angle)', value: 'sensitive' },
+                                    { label: 'Powerful (Time)', value: 'powerful' }
+                                ]}
+                                size="lg"
+                                color="grape"
+                                radius="xl"
+                                style={{
+                                    marginBottom: '0px',
+                                    zIndex: 10,
+                                    top: -30,
+                                    left: -30,
+                                    boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
+                                }}
+                            />
                         </Tooltip>
-                        <Gauge value={oscillationSettings.angle} maxValue={MAX_OSC_ANGLE} step={15} label="Oscillation" subLabel="°" mirror={true} onIncrement={handleIncrementAngle} onDecrement={handleDecrementAngle} onChange={handleAngleSliderChange} onSliderChange={handleAngleSliderChange} />
+
+                        <Gauge
+                            value={oscillationSettings.angle}
+                            maxValue={MAX_OSC_ANGLE}
+                            step={15}
+                            label="Oscillation"
+                            subLabel="°"
+                            mirror={true}
+                            onIncrement={handleIncrementAngle}
+                            onDecrement={handleDecrementAngle}
+                            onChange={handleAngleSliderChange}
+                            onSliderChange={handleAngleSliderChange}
+                        />
                     </Stack>
                 </Group>
 
@@ -263,22 +331,19 @@ export function ClinicalLayout() {
                 </Stack>
             </Stack>
 
-            {/* =================================================================== */}
-            {/* QUICK PROGRAMS DRAWER (Kiosk Optimized)                               */}
-            {/* =================================================================== */}
             <Drawer
                 opened={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 title={<Text size="2xl" fw={700}>Quick Programs</Text>}
                 position="left"
                 size="md"
-                keepMounted={false} /* EN KRİTİK AYAR: Kapandığında arkada görünmez katman bırakmaz, kilitlenmeyi önler */
-                overlayProps={{ blur: 3, backgroundOpacity: 0.6 }} /* Arka planı koyulaştırarak menüye odaklanmayı sağlar */
+                keepMounted={false}
+                overlayProps={{ blur: 3, backgroundOpacity: 0.6 }}
                 zIndex={1000}
             >
                 <Stack gap="md" mt="sm">
                     <Button
-                        size="lg" /* Yeni program ekleme butonu büyütüldü */
+                        size="lg"
                         variant="light"
                         color="blue"
                         fullWidth
@@ -287,21 +352,19 @@ export function ClinicalLayout() {
                     >
                         Create New Program
                     </Button>
-
                     <Divider my="xs" />
-
                     {savedRecipes.length === 0 && <Text c="dimmed" ta="center">No saved programs yet.</Text>}
 
                     {savedRecipes.map(recipe => {
                         const isFav = (recipe as any).isFavorite;
-                        const isReadonly = (recipe as any).isReadonly; // YENİ: JSON'dan silinemezlik bilgisini al
+                        const isReadonly = (recipe as any).isReadonly;
 
                         return (
                             <Card
                                 key={recipe.id}
                                 withBorder
                                 shadow="sm"
-                                p="md" /* Dokunmatik alan genişletildi */
+                                p="md"
                                 radius="md"
                                 className={classes.recipeCard}
                                 style={{
@@ -315,7 +378,7 @@ export function ClinicalLayout() {
                                     <Text fw={600} size="lg" style={{ flex: 1 }}>{recipe.name}</Text>
                                     <Group gap="xs">
                                         <Button
-                                            size="md" /* Touch hedefi büyütüldü */
+                                            size="md"
                                             color={isFav ? "gray" : "orange"}
                                             variant={isFav ? "light" : "filled"}
                                             leftSection={isFav ? <IconStar size={18} /> : <IconStarFilled size={18} />}
@@ -332,12 +395,7 @@ export function ClinicalLayout() {
                                             {isFav ? "Unfavorite" : "Favorite"}
                                         </Button>
 
-                                        <Button
-                                            size="md"
-                                            color="blue"
-                                            variant="light"
-                                            onClick={(e) => { e.stopPropagation(); setIsDrawerOpen(false); setActiveRecipe(recipe); setIsEditorOpen(true); }}
-                                        >
+                                        <Button size="md" color="blue" variant="light" onClick={(e) => { e.stopPropagation(); setIsDrawerOpen(false); setActiveRecipe(recipe); setIsEditorOpen(true); }}>
                                             Edit
                                         </Button>
                                     </Group>
@@ -345,8 +403,6 @@ export function ClinicalLayout() {
 
                                 <Group justify="space-between">
                                     <Badge size="lg" color="gray" variant="light">{recipe.steps.length} steps</Badge>
-
-                                    {/* YENİ: Eğer isReadonly true DEĞİLSE (yani false veya undefined ise) silme butonunu göster */}
                                     {!isReadonly && (
                                         <Button
                                             size="sm"
