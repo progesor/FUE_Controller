@@ -31,31 +31,44 @@ export const initializeRecipeService = (socketIoServer: Server<ClientToServerEve
 };
 
 /**
- * Sıradaki reçete adımını çalıştırır.
+ * Sıradaki reçete adımını çalıştırır. RESTART (LOOP) mantığını içerir.
  */
 const playNextStep = () => {
-    if (!currentRecipe || currentStepIndex >= currentRecipe.steps.length - 1) {
+    if (!currentRecipe) return;
+
+    // Eğer son adımdan da ileri gitmeye çalışıyorsak, reçeteyi güvenli bir şekilde kapat
+    if (currentStepIndex + 1 >= currentRecipe.steps.length) {
         stopRecipe();
         return;
     }
 
     currentStepIndex++;
     const step = currentRecipe.steps[currentStepIndex];
-    let remainingTime = step.duration;
 
-    recipeStatus.currentStepIndex = currentStepIndex;
-    recipeStatus.totalSteps = currentRecipe.steps.length;
+    // YENİ: LOOP / RESTART MODÜLÜ
+    // Eğer bu adım bir döngü/yeniden başlatma (loop) adımı ise:
+    if (step.mode === 'loop' as any) {
+        // 1. Motoru durdur.
+        stopMotorFromRecipe();
 
+        // 2. Kullanıcının girdiği Bekleme Süresi (step.duration) kadar bekle
+        if (stepTimeout) clearTimeout(stepTimeout);
+        stepTimeout = setTimeout(() => {
+            if (!recipeStatus.isRunning) return; // O sırada iptal edildiyse dur
+
+            // 3. Süre dolunca indeksi en başa (-1) sar ve yeniden ateşle!
+            console.log("[RECIPE] Restart adımı tetiklendi. Program başa sarılıyor...");
+            currentStepIndex = -1;
+            playNextStep();
+        }, step.duration);
+
+        return; // Normal komutların cihaza gitmesini engellemek için buradan çıkıyoruz
+    }
+
+    // Normal bir adımsa, donanıma ilgili komutu gönder (Sürekli, Osilasyon vs.)
     executeStep(step);
 
-    // YENİ: Kalan süreyi periyodik olarak güncelleyen ve yayınlayan interval
-    if (statusInterval) clearInterval(statusInterval);
-    statusInterval = setInterval(() => {
-        remainingTime -= 100; // Her 100ms'de bir azalt
-        recipeStatus.remainingTimeInStep = Math.max(0, remainingTime);
-    }, 100);
-
-    // Bu adımın süresi dolduğunda bir sonrakine geçmek için zamanlayıcı kur
+    // Bu adımın çalışma süresi dolduğunda bir sonraki adıma geçmek için zamanlayıcı kur
     if (stepTimeout) clearTimeout(stepTimeout);
     stepTimeout = setTimeout(playNextStep, step.duration);
 };

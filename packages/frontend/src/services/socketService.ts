@@ -282,12 +282,12 @@ export const sendContinuousSettings = (settings: ContinuousSettings) => {
 }
 
 /** Belirtilen reçeteyi çalıştırması için backend'e komut gönderir. */
+/** Belirtilen reçeteyi çalıştırması için backend'e komut gönderir. */
 export const sendRecipeStart = (recipe: Recipe) => {
     const store = useControllerStore.getState();
 
     // YENİ: OPTIMISTIC UI (İyimser Arayüz)
-    // Backend'in cevabını beklemeden logoyu ve motor durumunu ANINDA aktif ediyoruz.
-    // Bu sayede ekrandaki logo tıkladığın milisaniyede dönecek ve renklenecek.
+    // Backend'in cevabını beklemeden logoyu ANINDA aktif ediyoruz.
     store.setRecipeStatus({ ...store.recipeStatus, isRunning: true });
     store.setMotorStatus({ isActive: true });
 
@@ -301,11 +301,10 @@ export const sendRecipeStart = (recipe: Recipe) => {
 };
 
 /** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
-/** Çalışan reçeteyi durdurması için backend'e komut gönderir. */
 export const sendRecipeStop = () => {
     const store = useControllerStore.getState();
 
-    // Arayüzü beklemeden ANINDA kapat (Sıfır Gecikme Hissi)
+    // YENİ: Arayüzü beklemeden ANINDA kapat (Sıfır Gecikme Hissi)
     store.setRecipeStatus({ ...store.recipeStatus, isRunning: false });
     store.setMotorStatus({ isActive: false });
 

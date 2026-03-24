@@ -2,49 +2,69 @@
 
 import { Button, Group, Text } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
-import { sendOperatingMode } from '../../services/socketService';
-import type { OperatingMode } from '../../../../shared-types';
+import { sendActiveRecipe, sendOperatingMode } from '../../services/socketService';
 import classes from './PresetButtons.module.css';
 import cx from 'clsx';
-import { NotificationService } from '../../services/notificationService';
-import { IconInfinity, IconRepeat, IconBook, IconListDetails } from '@tabler/icons-react';
-
-const presets = [
-    { id: 'continuous', label: 'Continius', icon: IconInfinity },
-    { id: 'oscillation', label: 'Oscilation', icon: IconRepeat },
-    { id: 'protocol1', label: 'Protocol 1', icon: IconBook },
-    { id: 'protocol2', label: 'Protocol 2', icon: IconBook },
-    { id: 'protocol3', label: 'Protocol 3', icon: IconBook },
-    { id: 'recipe1', label: 'Fast Recite', icon: IconListDetails },
-
-];
+import { IconStar, IconInfinity, IconRepeat } from '@tabler/icons-react';
+import type { Recipe, OperatingMode } from '../../../../shared-types';
 
 export function PresetButtons() {
-    const { operatingMode, setOperatingMode } = useControllerStore();
+    const { savedRecipes, activeRecipe, operatingMode, setOperatingMode, setActiveRecipe } = useControllerStore();
 
-    const handlePresetClick = (id: string) => {
-        if (id === 'continuous' || id === 'oscillation') {
-            const newMode = id as OperatingMode;
-            setOperatingMode(newMode);
-            sendOperatingMode(newMode);
-        } else {
-            NotificationService.showInfo(`'${presets.find(p => p.id === id)?.label}' özelliği yakında eklenecek.`);
-        }
+    // Sadece favoriye alınmış reçeteleri filtrele
+    const favoriteRecipes = savedRecipes.filter(recipe => (recipe as any).isFavorite === true);
+
+    const handleRecipeClick = (recipe: Recipe) => {
+        setActiveRecipe(recipe);
+        sendActiveRecipe(recipe);
+    };
+
+    const handleBaseModeClick = (mode: OperatingMode) => {
+        setActiveRecipe(null);
+        sendActiveRecipe(null);
+        setOperatingMode(mode);
+        sendOperatingMode(mode);
     };
 
     return (
         <Group justify="center" gap="lg">
-            {presets.map((preset) => (
+            {/* SABİT MOD 1: CONTINUOUS */}
+            <Button
+                variant="default"
+                className={cx(classes.presetButton, {
+                    [classes.active]: !activeRecipe && operatingMode === 'continuous'
+                })}
+                onClick={() => handleBaseModeClick('continuous')}
+                leftSection={<IconInfinity size={22} />}
+            >
+                <Text component="span" className={classes.buttonLabel}>Continuous</Text>
+            </Button>
+
+            {/* SABİT MOD 2: OSCILLATION */}
+            <Button
+                variant="default"
+                className={cx(classes.presetButton, {
+                    [classes.active]: !activeRecipe && operatingMode === 'oscillation'
+                })}
+                onClick={() => handleBaseModeClick('oscillation')}
+                leftSection={<IconRepeat size={22} />}
+            >
+                <Text component="span" className={classes.buttonLabel}>Oscillation</Text>
+            </Button>
+
+            {/* DİNAMİK OLARAK EKLENEN FAVORİ REÇETELER */}
+            {favoriteRecipes.map((recipe) => (
                 <Button
-                    key={preset.id}
+                    key={recipe.id}
                     variant="default"
+                    color="orange"
                     className={cx(classes.presetButton, {
-                        [classes.active]: operatingMode === preset.id
+                        [classes.active]: activeRecipe?.id === recipe.id
                     })}
-                    onClick={() => handlePresetClick(preset.id)}
-                    leftSection={<preset.icon size={22} />}
+                    onClick={() => handleRecipeClick(recipe)}
+                    leftSection={<IconStar size={22} color={activeRecipe?.id === recipe.id ? "white" : "orange"} />}
                 >
-                    <Text component="span" className={classes.buttonLabel}>{preset.label}</Text>
+                    <Text component="span" className={classes.buttonLabel}>{recipe.name}</Text>
                 </Button>
             ))}
         </Group>

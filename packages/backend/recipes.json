@@ -29,7 +29,8 @@
           "accel": 100000
         }
       }
-    ]
+    ],
+    "isFavorite": true
   },
   {
     "id": "5937f875-fb9f-4dc0-a1eb-41ad84f4d975",
@@ -38,22 +39,29 @@
       {
         "id": "bcd13399-ece2-440e-94fb-58f1f5ef754a",
         "mode": "continuous",
-        "duration": 1500,
+        "duration": 750,
         "settings": {
           "rampDuration": 400,
-          "pwm": 255
+          "pwm": 2500
         }
       },
       {
         "id": "20ecbeb7-1f51-499b-af4e-aa0149c5a104",
         "mode": "oscillation",
-        "duration": 3500,
+        "duration": 1500,
         "settings": {
           "angle": 225,
-          "pwm": 16
+          "pwm": 1000
         }
+      },
+      {
+        "id": "1774334680650",
+        "mode": "loop",
+        "duration": 1000,
+        "settings": {}
       }
-    ]
+    ],
+    "isFavorite": false
   },
   {
     "id": "dad870ab-0350-45c3-96d0-1fed21c3165c",
@@ -113,7 +121,8 @@
           "pulseDelay": 300
         }
       }
-    ]
+    ],
+    "isFavorite": false
   },
   {
     "id": "befb6446-4501-44c2-b09a-885b76a48007",
@@ -207,6 +216,7 @@
           "frequency": 3
         }
       }
-    ]
+    ],
+    "isFavorite": true
   }
 ]
