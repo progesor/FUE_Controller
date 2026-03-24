@@ -136,7 +136,10 @@ const handleData = (data: string) => {
     // 2. Telemetri Spam'ini Filtreleme
     // Telemetri verisini doğrudan frontend'e fırlat ve konsola basma!
     if (cleanData.startsWith('<TEL')) {
-        io?.emit('telemetry_data', cleanData);
+        // io?.emit('telemetry_data', cleanData);
+        if (deviceStatus.motor.isActive || getRecipeStatus().isRunning) {
+            io?.emit('telemetry_data', cleanData);
+        }
         return;
     }
 

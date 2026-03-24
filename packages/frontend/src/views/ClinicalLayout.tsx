@@ -178,8 +178,21 @@ export function ClinicalLayout() {
         <Box className={classes.wrapper}>
             <LayoutSwitchButton />
 
-            <Box style={{ position: 'absolute', top: 20, left: 20, zIndex: 100 }}>
-                <Button size="lg" variant="default" leftSection={<IconList size={24}/>} onClick={() => setIsDrawerOpen(true)}>
+            {/* =================================================================== */}
+            {/* TOP LEFT QUICK PROGRAMS BUTTON (Touch Optimized)                      */}
+            {/* =================================================================== */}
+            <Box style={{ position: 'absolute', top: 25, left: 25, zIndex: 100 }}>
+                <Button
+                    size="xl" /* Dokunmatik için büyütüldü */
+                    radius="md"
+                    variant="default"
+                    leftSection={<IconList size={28}/>}
+                    onClick={() => setIsDrawerOpen(true)}
+                    style={{
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                >
                     Quick Programs
                 </Button>
             </Box>
@@ -250,36 +263,62 @@ export function ClinicalLayout() {
                 </Stack>
             </Stack>
 
-            <Drawer opened={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title={<Text size="xl" fw={700}>Quick Programs</Text>} position="left" size="md">
-                <Stack>
-                    <Button variant="light" color="blue" fullWidth leftSection={<IconPlus size={20}/>} onClick={() => { setIsDrawerOpen(false); sendActiveRecipe(null); setActiveRecipe(null); setIsEditorOpen(true); }}>
+            {/* =================================================================== */}
+            {/* QUICK PROGRAMS DRAWER (Kiosk Optimized)                               */}
+            {/* =================================================================== */}
+            <Drawer
+                opened={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                title={<Text size="2xl" fw={700}>Quick Programs</Text>}
+                position="left"
+                size="md"
+                keepMounted={false} /* EN KRİTİK AYAR: Kapandığında arkada görünmez katman bırakmaz, kilitlenmeyi önler */
+                overlayProps={{ blur: 3, backgroundOpacity: 0.6 }} /* Arka planı koyulaştırarak menüye odaklanmayı sağlar */
+                zIndex={1000}
+            >
+                <Stack gap="md" mt="sm">
+                    <Button
+                        size="lg" /* Yeni program ekleme butonu büyütüldü */
+                        variant="light"
+                        color="blue"
+                        fullWidth
+                        leftSection={<IconPlus size={24}/>}
+                        onClick={() => { setIsDrawerOpen(false); sendActiveRecipe(null); setActiveRecipe(null); setIsEditorOpen(true); }}
+                    >
                         Create New Program
                     </Button>
-                    <Divider my="sm" />
+
+                    <Divider my="xs" />
+
                     {savedRecipes.length === 0 && <Text c="dimmed" ta="center">No saved programs yet.</Text>}
+
                     {savedRecipes.map(recipe => {
                         const isFav = (recipe as any).isFavorite;
+                        const isReadonly = (recipe as any).isReadonly; // YENİ: JSON'dan silinemezlik bilgisini al
 
                         return (
                             <Card
                                 key={recipe.id}
                                 withBorder
                                 shadow="sm"
-                                p="sm"
+                                p="md" /* Dokunmatik alan genişletildi */
+                                radius="md"
                                 className={classes.recipeCard}
-                                style={{ cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+                                style={{
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                                    border: isFav ? '1px solid var(--mantine-color-orange-5)' : undefined
+                                }}
                                 onClick={() => { sendActiveRecipe(recipe); setActiveRecipe(recipe); setIsDrawerOpen(false); }}
-                                onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
                             >
-                                <Group justify="space-between">
-                                    <Text fw={600}>{recipe.name}</Text>
+                                <Group justify="space-between" align="flex-start" mb="sm">
+                                    <Text fw={600} size="lg" style={{ flex: 1 }}>{recipe.name}</Text>
                                     <Group gap="xs">
                                         <Button
-                                            size="sm"
+                                            size="md" /* Touch hedefi büyütüldü */
                                             color={isFav ? "gray" : "orange"}
                                             variant={isFav ? "light" : "filled"}
-                                            leftSection={isFav ? <IconStar size={16} /> : <IconStarFilled size={16} />}
+                                            leftSection={isFav ? <IconStar size={18} /> : <IconStarFilled size={18} />}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 const updatedRecipe = { ...recipe, isFavorite: !isFav } as any;
@@ -293,22 +332,37 @@ export function ClinicalLayout() {
                                             {isFav ? "Unfavorite" : "Favorite"}
                                         </Button>
 
-                                        <Button size="sm" color="blue" variant="light" onClick={(e) => { e.stopPropagation(); setIsDrawerOpen(false); setActiveRecipe(recipe); setIsEditorOpen(true); }}>
+                                        <Button
+                                            size="md"
+                                            color="blue"
+                                            variant="light"
+                                            onClick={(e) => { e.stopPropagation(); setIsDrawerOpen(false); setActiveRecipe(recipe); setIsEditorOpen(true); }}
+                                        >
                                             Edit
                                         </Button>
                                     </Group>
                                 </Group>
 
-                                <Group justify="space-between" mt="8px">
-                                    <Text size="xs" c="dimmed" mt="xs">{recipe.steps.length} steps.</Text>
-                                    <Button size="xs" color="red" variant="light" onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (!window.confirm("Bu program silinsin mi? Bu işlem geri alınamaz.")) return;
-                                        sendRecipeDelete(recipe.id);
-                                        useControllerStore.getState().setSavedRecipes(useControllerStore.getState().savedRecipes.filter((r) => r.id !== recipe.id));
-                                    }}>
-                                        Delete
-                                    </Button>
+                                <Group justify="space-between">
+                                    <Badge size="lg" color="gray" variant="light">{recipe.steps.length} steps</Badge>
+
+                                    {/* YENİ: Eğer isReadonly true DEĞİLSE (yani false veya undefined ise) silme butonunu göster */}
+                                    {!isReadonly && (
+                                        <Button
+                                            size="sm"
+                                            color="red"
+                                            variant="subtle"
+                                            leftSection={<IconTrash size={16}/>}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!window.confirm("Are you sure you want to delete this program? This action cannot be undone.")) return;
+                                                sendRecipeDelete(recipe.id);
+                                                useControllerStore.getState().setSavedRecipes(useControllerStore.getState().savedRecipes.filter((r) => r.id !== recipe.id));
+                                            }}
+                                        >
+                                            Delete
+                                        </Button>
+                                    )}
                                 </Group>
                             </Card>
                         );
