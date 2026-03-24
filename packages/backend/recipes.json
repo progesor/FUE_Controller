@@ -1,7 +1,7 @@
 [
   {
     "id": "fac-001-standard-scalp",
-    "name": "Standard Scalp Extraction",
+    "name": "Standard Scalp",
     "steps": [
       {
         "id": "step-001-a",
@@ -89,7 +89,7 @@
   },
   {
     "id": "fac-003-afro-thick",
-    "name": "Afro-Textured & Thick Scalp",
+    "name": "Afro & Thick Scalp",
     "steps": [
       {
         "id": "step-003-a",
@@ -150,7 +150,7 @@
         "settings": {}
       }
     ],
-    "isFavorite": false,
+    "isFavorite": true,
     "isReadonly": true
   },
   {
@@ -194,12 +194,12 @@
         "settings": {}
       }
     ],
-    "isFavorite": false,
+    "isFavorite": true,
     "isReadonly": true
   },
   {
     "id": "fac-006-long-hair",
-    "name": "Long Hair (U-FUE)",
+    "name": "Long Hair (FUE)",
     "steps": [
       {
         "id": "step-006-a",
@@ -252,7 +252,7 @@
         "settings": {}
       }
     ],
-    "isFavorite": false,
+    "isFavorite": true,
     "isReadonly": true
   },
   {
@@ -296,7 +296,7 @@
         "settings": {}
       }
     ],
-    "isFavorite": false,
+    "isFavorite": true,
     "isReadonly": true
   }
 ]

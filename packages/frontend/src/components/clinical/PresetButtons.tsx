@@ -1,5 +1,3 @@
-// packages/frontend/src/components/clinical/PresetButtons.tsx
-
 import { Button, Group, Text } from '@mantine/core';
 import { useControllerStore } from '../../store/useControllerStore';
 import { sendActiveRecipe, sendOperatingMode } from '../../services/socketService';
@@ -11,7 +9,6 @@ import type { Recipe, OperatingMode } from '../../../../shared-types';
 export function PresetButtons() {
     const { savedRecipes, activeRecipe, operatingMode, setOperatingMode, setActiveRecipe } = useControllerStore();
 
-    // Sadece favoriye alınmış reçeteleri filtrele
     const favoriteRecipes = savedRecipes.filter(recipe => (recipe as any).isFavorite === true);
 
     const handleRecipeClick = (recipe: Recipe) => {
@@ -27,7 +24,8 @@ export function PresetButtons() {
     };
 
     return (
-        <Group justify="center" gap="lg" style={{ perspective: '1000px' }}>
+        /* YENİ: Quick Programs butonuna çarpmaması için soldan (pl) 220px boşluk eklendi. Sığmayanlar alt satıra geçecek. */
+        <Group justify="center" gap="lg" pl={250} style={{ perspective: '1000px' }}>
             <Button
                 variant="default"
                 classNames={{

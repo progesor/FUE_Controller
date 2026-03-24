@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     Box, Stack, Group, Text, SegmentedControl, Tooltip, Button, Drawer, Modal,
-    Card, ActionIcon, NumberInput, TextInput, Divider, Badge, Flex
+    Card, ActionIcon, TextInput, Divider, Badge, Flex
 } from '@mantine/core';
 import classes from './ClinicalLayout.module.css';
 import { Gauge } from "../components/clinical/Gauge.tsx";
@@ -21,6 +21,7 @@ import { LayoutSwitchButton } from "../components/common/LayoutSwitchButton.tsx"
 import { IconList, IconEdit, IconX, IconPlus, IconTrash, IconDeviceFloppy, IconStar, IconStarFilled } from '@tabler/icons-react';
 import type { Recipe } from 'shared-types';
 import { TissueHardnessChart } from "../components/clinical/TissueHardnessChart.tsx";
+import {TouchNumberInput} from "../components/clinical/TouchNumberInput.tsx";
 
 const RPM_STEP = 100;
 const MAX_ACCEL = 50000;
@@ -105,8 +106,10 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                                         <ActionIcon color="red" variant="subtle" onClick={() => removeStep(i)}><IconTrash size={20}/></ActionIcon>
                                     </Group>
                                     <Button fullWidth size="xl" color={MODE_COLORS[uiMode]} onClick={() => cycleMode(i, step)} style={{ fontSize: '1.2rem', height: '60px' }}>{MODE_LABELS[uiMode]}</Button>
+
                                     <Stack mt="xl" gap="md">
-                                        <NumberInput label={uiMode === 'loop' ? "Wait Time (ms)" : "Step Duration (ms)"} value={step.duration} onChange={(val) => updateStepDuration(i, Number(val) || 0)} min={100} step={100} size="md" />
+                                        {/* YENİ: className={classes.fatFingerInput} tüm NumberInput'lara eklendi */}
+                                        <TouchNumberInput label={uiMode === 'loop' ? "Wait Time (ms)" : "Step Duration (ms)"} value={step.duration} onChange={(val) => updateStepDuration(i, Number(val) || 0)} min={100} step={100}/>
                                         <Divider />
 
                                         {uiMode === 'loop' && (
@@ -115,12 +118,13 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
                                             </Text>
                                         )}
 
-                                        {uiMode === 'continuous' && <NumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500} size="md" />}
-                                        {uiMode === 'oscillation_angle' && <> <NumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500} size="md" /> <NumberInput label="Rotation Angle (°)" value={stepSettings?.angle || 180} onChange={(val) => updateStepSetting(i, { angle: Number(val) || 0 })} min={10} step={15} size="md" /> </>}
-                                        {uiMode === 'oscillation_time' && <> <NumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500} size="md" /> <NumberInput label="Oscillation Time (ms)" value={stepSettings?.timeMs || 100} onChange={(val) => updateStepSetting(i, { timeMs: Number(val) || 0 })} min={10} step={10} size="md" /> </>}
-                                        {uiMode === 'vibration' && <> <NumberInput label="Vibration Intensity (RPM)" value={stepSettings?.rpm || 3000} onChange={(val) => updateStepSetting(i, { rpm: Number(val) || 0 })} min={0} step={500} size="md" /> <NumberInput label="Stroke Time (ms)" value={stepSettings?.timeMs || 20} onChange={(val) => updateStepSetting(i, { timeMs: Number(val) || 0 })} min={5} step={5} size="md" /> </>}
-                                        {uiMode === 'pulse' && <> <NumberInput label="Base Speed (RPM)" value={stepSettings?.baseRpm || 1000} onChange={(val) => updateStepSetting(i, { baseRpm: Number(val) || 0 })} min={0} step={100} size="md" /> <NumberInput label="Peak Speed (RPM)" value={stepSettings?.pulseRpm || 5000} onChange={(val) => updateStepSetting(i, { pulseRpm: Number(val) || 0 })} min={0} step={500} size="md" /> </>}
+                                        {uiMode === 'continuous' && <TouchNumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500} />}
+                                        {uiMode === 'oscillation_angle' && <> <TouchNumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500} /> <TouchNumberInput label="Rotation Angle (°)" value={stepSettings?.angle || 180} onChange={(val) => updateStepSetting(i, { angle: Number(val) || 0 })} min={10} step={15} /> </>}
+                                        {uiMode === 'oscillation_time' && <> <TouchNumberInput label="Target Speed (RPM)" value={stepSettings?.pwm || 1500} onChange={(val) => updateStepSetting(i, { pwm: Number(val) || 0 })} min={0} step={500}  /> <TouchNumberInput label="Oscillation Time (ms)" value={stepSettings?.timeMs || 100} onChange={(val) => updateStepSetting(i, { timeMs: Number(val) || 0 })} min={10} step={10}  /> </>}
+                                        {uiMode === 'vibration' && <> <TouchNumberInput label="Vibration Intensity (RPM)" value={stepSettings?.rpm || 3000} onChange={(val) => updateStepSetting(i, { rpm: Number(val) || 0 })} min={0} step={500}  /> <TouchNumberInput label="Stroke Time (ms)" value={stepSettings?.timeMs || 20} onChange={(val) => updateStepSetting(i, { timeMs: Number(val) || 0 })} min={5} step={5} /> </>}
+                                        {uiMode === 'pulse' && <> <TouchNumberInput label="Base Speed (RPM)" value={stepSettings?.baseRpm || 1000} onChange={(val) => updateStepSetting(i, { baseRpm: Number(val) || 0 })} min={0} step={100} /> <TouchNumberInput label="Peak Speed (RPM)" value={stepSettings?.pulseRpm || 5000} onChange={(val) => updateStepSetting(i, { pulseRpm: Number(val) || 0 })} min={0} step={500}  /> </>}
                                     </Stack>
+
                                 </Card>
                             );
                         })}
@@ -135,25 +139,19 @@ const RecipeEditorModal = ({ opened, onClose, initialRecipe }: { opened: boolean
 };
 
 export function ClinicalLayout() {
-    // YENİ: operatingMode'u store'dan alıyoruz
     const { motor, oscillationSettings, setMotorStatus, setOscillationSettings, savedRecipes, activeRecipe, recipeStatus, setActiveRecipe, operatingMode } = useControllerStore();
     const [oscModeUI, setOscModeUI] = useState<'sensitive' | 'powerful'>('sensitive');
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-    // ===================================================================
-    // DİNAMİK RPM LİMİTİ (SAFETY FEATURE)
-    // ===================================================================
-    // Eğer Osilasyon modu seçiliyse max 5000, değilse 35000 olsun.
     const currentMaxRpm = operatingMode === 'oscillation' ? 5000 : 35000;
 
-    // Eğer kullanıcı yüksek devirdeyken osilasyona geçerse, hızı otomatik olarak güvenli sınıra (5000) çek!
     useEffect(() => {
         if (!activeRecipe && motor.pwm > currentMaxRpm) {
             setMotorStatus({ pwm: currentMaxRpm });
             sendMotorPwm(currentMaxRpm);
         }
-    }, [currentMaxRpm]); // Sadece mod/limit değiştiğinde tetiklenir
+    }, [currentMaxRpm]);
 
     const handleIncrementRpm = () => {
         const newVal = Math.min(currentMaxRpm, motor.pwm + RPM_STEP);
@@ -168,7 +166,6 @@ export function ClinicalLayout() {
     };
 
     const handleRpmSliderChange = (sliderValue: number) => {
-        // Kullanıcı slider'ı max sınırın dışına çekmeye çalışırsa engelle
         const clampedValue = Math.min(currentMaxRpm, sliderValue);
         setMotorStatus({ pwm: clampedValue });
         sendMotorPwm(clampedValue);
@@ -223,7 +220,6 @@ export function ClinicalLayout() {
                 <PresetButtons />
 
                 <Group justify="center" align="center" w="100%" className={classes.centerGroup}>
-                    {/* YENİ: Gauge maxValue özelliği artık dinamik (currentMaxRpm) */}
                     <Gauge
                         value={motor.pwm}
                         maxValue={currentMaxRpm}
@@ -238,12 +234,13 @@ export function ClinicalLayout() {
 
                     <Stack align="center" mx="xl" className={classes.logoWrap} style={{ position: 'relative' }}>
                         {activeRecipe && (
-                            <Box style={{ position: 'absolute', top: -150, width: '100%', textAlign: 'center', zIndex: 10 }}>
+                            /* YENİ: Senin yaptığın 500px ve 28px metin düzeltmesi buraya eklendi! */
+                            <Box style={{ position: 'absolute', top: -150, width: '500px', textAlign: 'center', zIndex: 10 }}>
                                 <Badge size="xl" color="green" mb="sm" p="md" style={{ fontSize: '14px', letterSpacing: '1px' }}>
                                     ACTIVE PROGRAM
                                 </Badge>
                                 <Group justify="center" gap="md">
-                                    <Text fw={800} size="32px" c="green" style={{ letterSpacing: '0.5px' }}>
+                                    <Text fw={800} size="28px" c="green" style={{ letterSpacing: '0.5px' }}>
                                         {activeRecipe.name}
                                     </Text>
                                     <ActionIcon size="xl" radius="md" variant="light" color="blue" onClick={() => setIsEditorOpen(true)}>

@@ -218,3 +218,23 @@
     0%,100% { filter: drop-shadow(0 0 2px rgba(255,255,255,.3)); }
     50%     { filter: drop-shadow(0 0 10px rgba(255,255,255,.7)); }
 }
+
+/* ========== Touch Optimized Inputs (Fat-Finger) ========== */
+.fatFingerInput :global(.mantine-NumberInput-controls) {
+    width: 60px !important; /* Okların bulunduğu alanı 60px'e genişletir */
+}
+
+.fatFingerInput :global(.mantine-NumberInput-control) {
+    width: 60px !important; /* Butonların tıklanabilir alanını devasa yapar */
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.fatFingerInput :global(.mantine-NumberInput-control:hover) {
+    background-color: rgba(0, 229, 255, 0.2) !important;
+}
+
+.fatFingerInput :global(.mantine-NumberInput-control svg) {
+    width: 26px !important; /* Artı/Eksi ikonlarını büyütür */
+    height: 26px !important;
+    color: #00e5ff !important;
+}
