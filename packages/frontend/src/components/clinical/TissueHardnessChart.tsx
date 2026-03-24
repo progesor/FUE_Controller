@@ -51,16 +51,22 @@ export function TissueHardnessChart({ isRunning }: Props) {
         const handleTelemetry = (data: string) => {
             if (!isRunning) return;
 
-            // 1. YENİ: Reçete "Bekleme" (Loop) adımındaysa grafiği tamamen dondur!
             const store = useControllerStore.getState();
-            if (store.recipeStatus.isRunning && store.activeRecipe && store.recipeStatus.currentStepIndex !== null) {
-                const currentStep = store.activeRecipe.steps[store.recipeStatus.currentStepIndex];
-                if (currentStep && (currentStep.mode as string) === 'loop') {
-                    return; // Loop adımındayken yeni veriyi grafiğe basma (ekranda son haliyle donuk kalır)
+
+            // -------------------------------------------------------------
+            // YENİ: KUSURSUZ DONDURMA (FREEZE) MANTIĞI
+            // Eğer reçete çalışıyor ama cihaz "Bekleme (Delay/Loop)" durumundaysa
+            // VEYA motor fiziksel olarak durdurulmuşsa, grafiğe "0" çizmeyi engelle!
+            // -------------------------------------------------------------
+            if (store.recipeStatus.isRunning) {
+                const currentStep = store.activeRecipe?.steps[store.recipeStatus.currentStepIndex ?? -1];
+                const isLoopStep = (currentStep?.mode as string) === 'loop';
+
+                if (!store.motor.isActive || isLoopStep) {
+                    return; // Grafiği o anki mükemmel halinde dondur. Telemetriyi yoksay!
                 }
             }
 
-            // Veri akışını biraz daha hızlandırdık (40ms -> 30ms)
             const now = Date.now();
             if (now - lastUpdateTime < 30) return;
             lastUpdateTime = now;
@@ -73,7 +79,6 @@ export function TissueHardnessChart({ isRunning }: Props) {
                 const absoluteRpm = Math.abs(rawRpm);
                 const timeLabel = new Date().toLocaleTimeString('en-US', { minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 });
 
-                // Çubuk rengini o an çalışan reçete adımından veya manuel moddan al
                 let currentMode = store.operatingMode || 'continuous';
                 if (store.recipeStatus.isRunning && store.activeRecipe && store.recipeStatus.currentStepIndex !== null) {
                     currentMode = store.activeRecipe.steps[store.recipeStatus.currentStepIndex]?.mode || currentMode;
@@ -136,7 +141,6 @@ export function TissueHardnessChart({ isRunning }: Props) {
                     options={{
                         responsive: true,
                         maintainAspectRatio: false,
-                        // 2. YENİ: Chart.js'in veriyi geciktiren yumuşatma animasyonları tamamen KAPATILDI!
                         animation: false,
                         transitions: {
                             active: {
